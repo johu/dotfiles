@@ -1,5 +1,6 @@
 syntax on
-colorscheme xoria256
+set number
+set relativenumber
 set ruler laststatus=2 number title hlsearch
 
 " autoinstall vim-plug
