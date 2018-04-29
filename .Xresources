@@ -50,7 +50,7 @@ URxvt*.colorUL: #ffffff
 URxvt.iconFile: /usr/share/icons/hicolor/scalable/apps/Terminal.svg
 
 ! urxt plugins
-URxvt.perl-ext-common: default,matcher,resize-font,url-select,keyboard-select,selection-to-clipboard,pasta
+URxvt.perl-ext-common: default,fullscreen,matcher,resize-font,url-select,keyboard-select,selection-to-clipboard,pasta
 
 URxvt.resize-font.smaller: C-minus
 URxvt.resize-font.bigger: C-plus
@@ -60,5 +60,6 @@ URxvt.underlineURLs: True
 URxvt.matcher.button: 1
 URxvt.keysym.M-Escape: perl:keyboard-select:activate
 URxvt.keysym.Control-Shift-V: perl:pasta:paste
+URxvt.keysym.F11: perl:fullscreen:switch
 URxvt.clipboard.autocopy: true
 
