@@ -1,0 +1,29 @@
+[user]
+	email = johu@gentoo.org
+	name = "Johannes Huber"
+	signingkey = 7ED0D3033AAC3C4A3143FDF8457440B7FDF4F788
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+[color "diff"]
+	meta = yellow bold
+	frag = magenta bold
+	old = red bold
+	new = green bold
+[alias]
+	show-graph = log --graph --abbrev-commit --pretty=oneline
+# KDE Repos
+[url "git://anongit.kde.org/"]
+	insteadOf = kde:
+[url "git@git.kde.org:"]
+	pushInsteadOf = kde:
+# Gentoo Repos
+[url "git://git.overlays.gentoo.org/"]
+	insteadOf = gentoo:
+[url "git@git.overlays.gentoo.org:"]
+	pushInsteadOf = gentoo:
+[push]
+	default = simple
+[pull]
+	rebase = true
