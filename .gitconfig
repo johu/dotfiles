@@ -27,3 +27,9 @@
 	default = simple
 [pull]
 	rebase = true
+[diff]
+	renames = true
+[commit]
+	gpgsign = 1
+[merge]
+	tool = meld
