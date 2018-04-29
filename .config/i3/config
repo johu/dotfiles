@@ -218,3 +218,5 @@ bindsym XF86AudioPrev exec playerctl previous
 exec_always feh --bg-scale ~/.config/i3/wallpaper.jpg 
 exec google-chrome-stable
 exec quasselclient
+
+exec --no-startup-id compton -f
