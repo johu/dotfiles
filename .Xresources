@@ -37,9 +37,15 @@ URxvt*color11: #ffaa00
 URxvt*color12: #7070f0
 URxvt*color13: #d63ae1
 URxvt*color14: #66d9ef
-URxvt*color14: #e6db74
+URxvt*color15: #e6db74
 
 ! man pages
 URxvt*.colorIT: #87af5f
 URxvt*.colorBD: #ffffff
 URxvt*.colorUL: #ffffff
+
+! urxt plugins
+URxvt.perl-ext-common: default,matcher,resize-font,url-select,keyboard-select
+
+URxvt.resize-font.smaller: C-minus
+URxvt.resize-font.bigger: C-plus
