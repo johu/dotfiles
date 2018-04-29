@@ -23,3 +23,17 @@ set background=dark
 
 highlight ColorColumn ctermbg=magenta
 call matchadd('colorColumn','\%81v',100)
+
+"unbind arrow keys
+no <up> <Nop>
+no <right> <Nop>
+no <down> <Nop>
+no <left> <Nop>
+ino <up> <Nop>
+ino <right> <Nop>
+ino <down> <Nop>
+ino <left> <Nop>
+vno <up> <Nop>
+vno <right> <Nop>
+vno <down> <Nop>
+vno <left> <Nop>
