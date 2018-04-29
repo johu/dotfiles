@@ -11,6 +11,10 @@ URxvt.scrollBar_right: false
 URxvt.scrollBar_floating: false
 URxvt.scrollstyle: rxvt
 
+URxvt*scrollTtyOutput: false
+URxvt*scrollWithBuffer: true
+URxvt*scrollTtyKeypress: true
+
 URxvt.depth: 32
 URxvt.transparent: false
 URxvt.fading: 0
