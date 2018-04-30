@@ -216,7 +216,7 @@ bindsym XF86AudioPause exec playerctl pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
-exec_always feh --bg-scale ~/.config/i3/wallpaper.jpg 
+exec_always feh --bg-scale --no-fehbg ~/.config/i3/wallpaper.jpg
 exec urxvt
 exec google-chrome-stable
 exec quasselclient
