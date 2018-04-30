@@ -46,7 +46,7 @@ URxvt*color15: #d0d0d0
 ! man pages
 URxvt*.colorIT: #87af5f
 URxvt*.colorBD: #ffffff
-URxvt*.colorUL: #ffffff
+URxvt*.colorUL: #ff0090
 URxvt.iconFile: /usr/share/icons/hicolor/scalable/apps/Terminal.svg
 
 ! urxt plugins
