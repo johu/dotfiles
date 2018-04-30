@@ -61,6 +61,7 @@ COMPLETION_WAITING_DOTS="true"
 plugins=(
   colorize
   git
+  gpg-agent
 )
 
 source $ZSH/oh-my-zsh.sh
