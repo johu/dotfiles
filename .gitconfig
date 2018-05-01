@@ -33,3 +33,6 @@
 	gpgsign = 1
 [merge]
 	tool = meld
+[credential]
+	username = johu
+	helper = cache
