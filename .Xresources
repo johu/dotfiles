@@ -23,7 +23,7 @@ URxvt.saveLines: 20000
 URxvt.internalBorder: 3
 URxvt.lineSpace: 0
 
-URxvt*background: #1b1d1e
+URxvt*background: rgba:0027/0029/0030/c800
 URxvt*foreground: #d0d0d0
 URxvt*cursorColor: #ff00ff
 URxvt*color0: #1b1d1e
