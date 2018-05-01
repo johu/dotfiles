@@ -221,10 +221,12 @@ bindsym XF86AudioPause exec playerctl pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
+# set wallpaper
 exec_always feh --bg-scale --no-fehbg ~/.config/i3/wallpaper.jpg
-exec urxvt
-exec google-chrome-stable
-exec --no-startup-id gnome-keyring
-exec quasselclient
 
+# start applications
+exec --no-startup-id gnome-keyring
+exec --no-startup-id urxvt
+exec google-chrome-stable
+exec quasselclient
 exec --no-startup-id compton -f
