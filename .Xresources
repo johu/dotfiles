@@ -55,7 +55,7 @@ URxvt.perl-ext-common: default,fullscreen,matcher,resize-font,url-select,keyboar
 URxvt.resize-font.smaller: C-minus
 URxvt.resize-font.bigger: C-plus
 URxvt.keysym.M-u: perl:url-select:select_next
-URxvt.url-launcher: /usr/bin/firefox
+URxvt.url-launcher: /usr/bin/xdg-open
 URxvt.underlineURLs: True
 URxvt.matcher.button: 1
 URxvt.keysym.M-Escape: perl:keyboard-select:activate
