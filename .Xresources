@@ -43,6 +43,10 @@ URxvt*color13: #d63ae1
 URxvt*color14: #66d9ef
 URxvt*color15: #d0d0d0
 
+! disable picture insert mode
+URxvt.iso14755: false
+URxvt.iso14755_52: false
+
 ! man pages
 URxvt*.colorIT: #87af5f
 URxvt*.colorBD: #ffffff
