@@ -18,8 +18,8 @@ set $text-color          #f3f4f5
 font pango:Hack 13
 
 # Gaps
-gaps inner 5 
-gaps outer 0
+gaps inner 10
+gaps outer 5
 smart_gaps on
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
@@ -100,6 +100,8 @@ bindsym $mod+a focus parent
 
 # focus the child container
 #bindsym $mod+d focus child
+
+for_window [class="^.*"] border pixel 1
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
