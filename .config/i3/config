@@ -143,6 +143,7 @@ bindsym $mod+Shift+0 move container to workspace $ws10
 assign [class="Google-chrome"] $ws2
 assign [class="Firefox"] $ws2
 assign [class="quassel"] $ws4
+assign [class="Thunderbird"] $ws5
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
