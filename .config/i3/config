@@ -233,6 +233,6 @@ exec_always feh --bg-scale --no-fehbg ~/.config/i3/wallpaper.jpg
 # applications
 exec --no-startup-id gnome-keyring
 exec --no-startup-id urxvt
-exec --no-sstartup-id firefox
+exec --no-startup-id firefox
 exec quasselclient
 exec --no-startup-id compton -f
