@@ -37,3 +37,6 @@ vno <up> <Nop>
 vno <right> <Nop>
 vno <down> <Nop>
 vno <left> <Nop>
+
+"use system clipboard by default
+set clipboard=unnamedplus
