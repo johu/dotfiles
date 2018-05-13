@@ -39,7 +39,7 @@ font-2 = siji:pixelsize=10;1
 
 modules-left = i3
 modules-center = xwindow
-modules-right = filesystem volume wlan battery date powermenu
+modules-right = volume wlan battery date powermenu
 
 tray-position = right
 tray-padding = 2
