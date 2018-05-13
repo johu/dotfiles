@@ -1,4 +1,4 @@
-rofi.font: Hack 14
+rofi.font: Noto Sans 14
 rofi.lines: 5
 rofi.eh: 2
 rofi.padding: 450

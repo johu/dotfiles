@@ -33,9 +33,8 @@ padding-right = 2
 module-margin-left = 1
 module-margin-right = 2
 
-font-0 = fixed:pixelsize=10:style=Bold;1
+font-0 = Noto Sans:pixelsize=12:style=Bold;1
 font-1 = FontAwesome:fontformat=truetype:size=12;1
-font-2 = siji:pixelsize=10;1
 
 modules-left = i3
 modules-center = xwindow
