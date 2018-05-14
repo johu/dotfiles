@@ -6,6 +6,8 @@ Xft.hintstyle: hintslight
 Xft.autohint: false
 Xft.lcdfilter: lcddefault
 
+#include ".config/xfiles/themes/molokai"
+
 URxvt.font: xft:hack:bold:size=12
 
 URxvt.scrollBar: false
@@ -25,34 +27,10 @@ URxvt.saveLines: 20000
 URxvt.internalBorder: 3
 URxvt.lineSpace: 0
 
-URxvt*background: rgba:0027/0029/0030/c800
-URxvt*foreground: #d0d0d0
-URxvt*cursorColor: #ff00ff
-URxvt*color0: #1b1d1e
-URxvt*color1: #ff0044
-URxvt*color2: #82b414
-URxvt*color3: #fd971f
-URxvt*color4: #1080d0
-URxvt*color5: #7e40a5
-URxvt*color6: #3579a8
-URxvt*color7: #9999aa
-URxvt*color8: #266c98
-URxvt*color9: #ff0090
-URxvt*color10: #82b414
-URxvt*color11: #ffaa00
-URxvt*color12: #7070f0
-URxvt*color13: #d63ae1
-URxvt*color14: #66d9ef
-URxvt*color15: #d0d0d0
-
 ! disable picture insert mode
 URxvt.iso14755: false
 URxvt.iso14755_52: false
 
-! man pages
-URxvt*.colorIT: #87af5f
-URxvt*.colorBD: #ffffff
-URxvt*.colorUL: #ff0090
 URxvt.iconFile: /usr/share/icons/hicolor/scalable/apps/Terminal.svg
 
 ! urxt plugins
