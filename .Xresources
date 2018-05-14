@@ -1,11 +1,4 @@
-Xft.dpi: 96
-Xft.antialias: true
-Xft.rgba: rgb
-Xft.hinting: true
-Xft.hintstyle: hintslight
-Xft.autohint: false
-Xft.lcdfilter: lcddefault
-
+#include ".config/xfiles/xft"
 #include ".config/xfiles/themes/molokai"
 
 URxvt.font: xft:hack:bold:size=12
