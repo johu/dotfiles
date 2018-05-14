@@ -1,0 +1,37 @@
+! general
+URxvt.font: xft:hack:bold:size=12
+URxvt.iconFile: /usr/share/icons/hicolor/scalable/apps/Terminal.svg
+URxvt.depth: 32
+URxvt.transparent: false
+URxvt.fading: 0
+URxvt.loginShell: true
+URxvt.saveLines: 20000
+URxvt.internalBorder: 3
+URxvt.lineSpace: 0
+
+! scroll
+URxvt.scrollBar: false
+URxvt.scrollBar_right: false
+URxvt.scrollBar_floating: false
+URxvt.scrollstyle: rxvt
+URxvt*scrollTtyOutput: false
+URxvt*scrollWithBuffer: true
+URxvt*scrollTtyKeypress: true
+
+! disable picture insert mode
+URxvt.iso14755: false
+URxvt.iso14755_52: false
+
+! plugins
+URxvt.perl-ext-common: default,fullscreen,matcher,resize-font,url-select,keyboard-select,selection-to-clipboard,pasta
+
+URxvt.resize-font.smaller: C-minus
+URxvt.resize-font.bigger: C-plus
+URxvt.keysym.M-u: perl:url-select:select_next
+URxvt.url-launcher: /usr/bin/xdg-open
+URxvt.underlineURLs: True
+URxvt.matcher.button: 1
+URxvt.keysym.M-Escape: perl:keyboard-select:activate
+URxvt.keysym.Control-Shift-V: perl:pasta:paste
+URxvt.keysym.F11: perl:fullscreen:switch
+URxvt.clipboard.autocopy: true
