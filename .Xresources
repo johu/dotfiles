@@ -3,43 +3,43 @@
 #include ".config/xfiles/xft"
 #include ".config/xfiles/urxvt"
 
-*.background: theme_bg_transparent
-*.foreground: theme_fg
-*.cursorColor: theme_cursorColor
+*background: theme_bg
+*foreground: theme_fg
+*cursorColor: theme_cursorColor
 
 ! black
-*.color0: theme_color0
-*.color8: theme_color8
+*color0: theme_color0
+*color8: theme_color8
 
 ! red
-*.color1: theme_color1
-*.color9: theme_color9
+*color1: theme_color1
+*color9: theme_color9
 
 ! green
-*.color2: theme_color2
-*.color10: theme_color10
+*color2: theme_color2
+*color10: theme_color10
 
 ! yellow
-*.color3: theme_color3
-*.color11: theme_color11
+*color3: theme_color3
+*color11: theme_color11
 
 ! blue
-*.color4: theme_color4
-*.color12: theme_color12
+*color4: theme_color4
+*color12: theme_color12
 
 ! magenta
-*.color5: theme_color5
-*.color13: theme_color13
+*color5: theme_color5
+*color13: theme_color13
 
 ! cyan
-*.color6: theme_color6
-*.color14: theme_color14
+*color6: theme_color6
+*color14: theme_color14
 
 ! white
-*.color7: theme_color7
-*.color15: theme_color15
+*color7: theme_color7
+*color15: theme_color15
 
 ! bold, italic, underline
-*.colorBD: theme_colorBD
-*.colorIT: theme_colorIT
-*.colorUL: theme_colorUL
+*colorBD: theme_colorBD
+*colorIT: theme_colorIT
+*colorUL: theme_colorUL

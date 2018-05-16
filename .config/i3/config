@@ -11,16 +11,16 @@ set $ws8 "8"
 set $ws9 "9"
 set $ws10 "10"
 
-set $bg			#2f343f
-set $bg-inactive	#2f343f
-set $bg-urgent		#e53935
-set $fg			#f3f4f5
-set $fg-inactive	#676e7d
-set $accent		#00ff00
+set_from_resource $bg i3wm.background #2f343f
+set_from_resource $bg-inactive i3wm.color8 #ffffff
+set_from_resource $bg-urgent i3wm.color1 #ff0000
+set_from_resource $fg i3wm.foreground #f3f4f5
+set_from_resource $fg-inactive i3wm.color15 #676e7d
+set_from_resource $accent i3wm.color6 #00ff00
 
 # window colors
 #			border		background	foreground	indicator
-client.focused		$bg		$bg		$fg		$accent
+client.focused		$accent		$bg		$fg		$accent
 client.unfocused	$bg-inactive	$bg-inactive	$fg-inactive	$accent
 client.focused_inactive	$bg-inactive	$bg-inactive	$fg-inactive	$accent
 client.urgent		$bg-urgent	$bg-urgent	$fg		$accent
@@ -75,7 +75,7 @@ bindsym $mod+Shift+space floating toggle
 bindsym $mod+d focus mode_toggle
 bindsym $mod+a focus parent
 
-for_window [class="^.*"] border pixel 1
+for_window [class="^.*"] border pixel 0
 
 # switch to workspace
 bindsym $mod+1 workspace $ws1
