@@ -93,7 +93,7 @@ assign [class="quassel"] $ws4
 assign [class="Thunderbird"] $ws5
 
 bindsym $mod+Shift+c reload
-bindsym $mod+Shift+r restart
+bindsym $mod+Shift+r exec ~/.config/i3/scripts/restart
 bindsym $mod+Shift+e exec ~/.config/i3/scripts/exit_menu
 
 mode "resize" {
