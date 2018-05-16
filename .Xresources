@@ -1,3 +1,4 @@
+#include ".config/xfiles/font"
 #include ".config/xfiles/themes/molokai"
 #include ".config/xfiles/xft"
 #include ".config/xfiles/urxvt"

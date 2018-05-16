@@ -1,5 +1,5 @@
 ! general
-URxvt.font: xft:hack:bold:size=12
+URxvt.font: xft:theme_font:theme_font_face:size=theme_font_size
 URxvt.iconFile: /usr/share/icons/hicolor/scalable/apps/Terminal.svg
 URxvt.depth: 32
 URxvt.transparent: false

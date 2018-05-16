@@ -1,0 +1,3 @@
+#define theme_font	hack
+#define theme_font_size	12
+#define theme_font_face	bold
