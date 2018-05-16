@@ -1,40 +1,41 @@
-*.background: rgba:0027/0029/0030/c800
-*.foreground: #d0d0d0
-*.cursorColor: #ff00ff
+#define theme_bg		#1b1d1e
+#define theme_bg_transparent	[90]#1b1d1e
+#define theme_fg 		#d0d0d0
+#define theme_cursorColor 	#ff00ff
 
 ! black
-*.color0: #1b1d1e
-*.color8: #266c98
+#define theme_color0 		#1b1d1e
+#define theme_color8 		#266c98
 
 ! red
-*.color1: #ff0044
-*.color9: #ff0090
+#define theme_color1		#ff0044
+#define theme_color9		#ff0090
 
 ! green
-*.color2: #82b414
-*.color10: #82b414
+#define theme_color2		#82b414
+#define theme_color10		#82b414
 
 ! yellow
-*.color3: #fd971f
-*.color11: #ffaa00
+#define theme_color3		#fd971f
+#define theme_color11		#ffaa00
 
 ! blue
-*.color4: #1080d0
-*.color12: #7070f0
+#define theme_color4		#1080d0
+#define theme_color12		#7070f0
 
 ! magenta
-*.color5: #7e40a5
-*.color13: #d63ae1
+#define theme_color5		#7e40a5
+#define theme_color13		#d63ae1
 
 ! cyan
-*.color6: #3579a8
-*.color14: #66d9ef
+#define theme_color6		#3579a8
+#define theme_color14		#66d9ef
 
 ! white
-*.color7: #9999aa
-*.color15: #d0d0d0
+#define theme_color7		#9999aa
+#define theme_color15		#d0d0d0
 
 ! bold, italic, underline
-*.colorBD: #ffffff
-*.colorIT: #87af5f
-*.colorUL: #ff0090
+#define theme_colorBD		#ffffff
+#define theme_colorIT		#87af5f
+#define theme_colorUL		#ff0090
