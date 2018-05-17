@@ -1,3 +1,20 @@
+! list installed fonts: 
+! $ fc-list
+
+! primary font - monospaced
 #define theme_font	hack
 #define theme_font_size	12
 #define theme_font_face	bold
+
+! secondary font - for use in gui
+#define theme_font2		"Noto Sans"
+#define theme_font2_size	12
+#define theme_font2_face	normal
+
+Xft.dpi: 96
+Xft.antialias: true
+Xft.rgba: rgb
+Xft.hinting: true
+Xft.hintstyle: hintslight
+Xft.autohint: false
+Xft.lcdfilter: lcddefault

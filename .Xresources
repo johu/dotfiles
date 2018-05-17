@@ -3,3 +3,11 @@
 #include ".config/xfiles/font"
 #include ".config/xfiles/xft"
 #include ".config/xfiles/urxvt"
+
+theme.font: theme_font
+theme.fontSize: theme_font_size
+theme.fontFace: theme_font_face
+
+theme.font2: theme_font2
+theme.font2Size: theme_font2_size
+theme.font2Face: theme_font2_face
