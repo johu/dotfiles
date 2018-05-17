@@ -9,6 +9,10 @@ primary = #fd971f
 secondary = #e60053
 alert = #bd2c40
 
+[font]
+name = ${xrdb:theme.font2:Noto Sans}
+size = ${xrdb:theme.font2Size:12}
+
 [bar/top]
 monitor = ${env:MONITOR:}
 width = 100%
@@ -33,7 +37,9 @@ padding-right = 2
 module-margin-left = 1
 module-margin-right = 2
 
-font-0 = Noto Sans:pixelsize=12:style=Bold;1
+; for now just one var per line possible
+; see github.com/jaagr/polybar/issues/954
+font-0 = ${font.name}:pixelsize=12:style=Bold;1
 font-1 = FontAwesome:fontformat=truetype:size=12;1
 
 modules-left = i3
