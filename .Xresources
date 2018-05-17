@@ -1,4 +1,5 @@
 #include ".config/xfiles/themes/molokai"
+! #include ".config/xfiles/themes/solarized-dark-high-cont"
 #include ".config/xfiles/colors"
 #include ".config/xfiles/font"
 #include ".config/xfiles/urxvt"
