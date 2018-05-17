@@ -11,6 +11,8 @@ set $ws8 "8"
 set $ws9 "9"
 set $ws10 "10"
 
+set_from_resource $font-name theme.font "Noto Sans"
+set_from_resource $font-size theme.fontSize 13
 set_from_resource $bg i3wm.background #2f343f
 set_from_resource $bg-inactive i3wm.color8 #ffffff
 set_from_resource $bg-urgent i3wm.color1 #ff0000
@@ -27,7 +29,7 @@ client.urgent		$bg-urgent	$bg-urgent	$fg		$accent
 
 hide_edge_borders both
 
-font pango:Noto Sans 13
+font pango:$font-name $font-size
 
 # Gaps
 gaps inner 10
