@@ -41,6 +41,7 @@ module-margin-right = 2
 ; see github.com/jaagr/polybar/issues/954
 font-0 = ${font.name}:pixelsize=12:style=Bold;1
 font-1 = FontAwesome:fontformat=truetype:size=12;1
+font-2 = "Wuncon Siji:pixelsize=12;1"
 
 modules-left = i3
 modules-center = xwindow
@@ -159,28 +160,6 @@ icon-next = 
 label-song-maxlen = 25
 label-song-ellipsis = true
 
-[module/xbacklight]
-type = internal/xbacklight
-
-format = <label> <bar>
-label = BL
-
-bar-width = 10
-bar-indicator = |
-bar-indicator-foreground = #ff
-bar-indicator-font = 2
-bar-fill = ─
-bar-fill-font = 2
-bar-fill-foreground = #9f78e1
-bar-empty = ─
-bar-empty-font = 2
-bar-empty-foreground = ${colors.foreground-alt}
-
-[module/backlight-acpi]
-inherit = module/xbacklight
-type = internal/backlight
-card = intel_backlight
-
 [module/wlan]
 type = internal/network
 interface = net1
@@ -244,7 +223,7 @@ label-volume-foreground = ${root.foreground}
 
 format-muted-prefix = " "
 format-muted-foreground = ${colors.foreground-alt}
-label-muted = sound muted
+label-muted = X 
 
 bar-volume-width = 10
 bar-volume-foreground-0 = #55aa55
