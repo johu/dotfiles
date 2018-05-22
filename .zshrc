@@ -64,6 +64,9 @@ plugins=(
   gpg-agent
 )
 
+# https://github.com/robbyrussell/oh-my-zsh/issues/6850
+ZSH_DISABLE_COMPFIX=true
+
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
