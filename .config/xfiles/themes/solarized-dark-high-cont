@@ -3,30 +3,39 @@
 #define theme_fg #9cc2c3
 #define theme_cursorColor #f34b00
 
+! black
 #define theme_color0 #002831
 #define theme_color8 #006488
 
+! red
 #define theme_color1 #d11c24
 #define theme_color9 #f5163b
 
+! green
 #define theme_color2 #6cbe6c
 #define theme_color10 #51ef84
 
+! yellow
 #define theme_color3 #a57706
 #define theme_color11 #b27e28
 
+! blue
 #define theme_color4 #2176c7
 #define theme_color12 #178ec8
 
+! magenta
 #define theme_color5 #c61c6f
 #define theme_color13 #e24d8e
 
+! cyan
 #define theme_color6 #259286
 #define theme_color14 #00b39e
 
+! white
 #define theme_color7 #eae3cb
 #define theme_color15 #fcf4dc
 
+! bold, italic, underline
 #define theme_colorBD #b5d5d3
 #define theme_colorIT #b5d5d3
 #define theme_colorUL #b5d5d3
