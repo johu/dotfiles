@@ -4,7 +4,7 @@
 #define theme_cursorColor 	#ff00ff
 
 ! black
-#define theme_color0 		#1b1d1e
+#define theme_color0 		#333333
 #define theme_color8 		#266c98
 
 ! red
