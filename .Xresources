@@ -11,3 +11,11 @@ theme.fontFace: theme_font_face
 theme.font2: theme_font2
 theme.font2Size: theme_font2_size
 theme.font2Face: theme_font2_face
+
+theme.fg: theme_fg
+theme.fg2: theme_color15
+theme.bg: theme_bg
+theme.bg2: theme_color0
+theme.accent: theme_color4
+theme.accent2: theme_color5
+theme.alert: theme_color1
