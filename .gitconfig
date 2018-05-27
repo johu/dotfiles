@@ -1,5 +1,5 @@
 [user]
-	email = johu@gentoo.org
+	email = johannes.huber@hmmh.de
 	name = "Johannes Huber"
 	signingkey = 7ED0D3033AAC3C4A3143FDF8457440B7FDF4F788
 [color]
@@ -30,9 +30,14 @@
 [diff]
 	renames = true
 [commit]
-	gpgsign = 1
+	gpgsign = 0
 [merge]
 	tool = meld
 [credential]
 	username = johu
 	helper = cache
+[core]
+	autocrlf = input
+	whitespace = trailing-space,space-before-tab
+[apply]
+	whitespace = fix

@@ -83,6 +83,14 @@ else
    export EDITOR='vim'
 fi
 
+# java
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+# export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+
+# hybris
+export HYBRIS_OPT_CONFIG_DIR=/home/local/HMMH/johannes.huber/.config/hybris/current
+export SONAR_ACCESS_TOKEN=81fd9536067db25c6d2db9424d0ff167bfa2da1c
+
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
