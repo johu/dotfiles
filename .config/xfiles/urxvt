@@ -8,6 +8,7 @@ URxvt.loginShell: true
 URxvt.saveLines: 20000
 URxvt.internalBorder: 3
 URxvt.lineSpace: 0
+URxvt.background: [90]theme_bg
 
 ! scroll
 URxvt.scrollBar: false
