@@ -1,0 +1,41 @@
+#define theme_bg		#300a24
+#define theme_bg_transparent	[90]#300a24
+#define theme_fg		#eeeeec
+#define theme_cursorColor	#bbbbbb
+
+! black
+#define theme_color0		#2e3436
+#define theme_color8		#555753
+
+! red
+#define theme_color1		#cc0000
+#define theme_color9		#ef2929
+
+! green
+#define theme_color2		#4e9a06
+#define theme_color10		#8ae234
+
+! yellow
+#define theme_color3		#c4a000
+#define theme_color11		#fce94f
+
+! blue
+#define theme_color4		#3465a4
+#define theme_color12		#729fcf
+
+! magenta
+#define theme_color5		#75507b
+#define theme_color13		#ad7fa8
+
+! cyan
+#define theme_color6		#06989a
+#define theme_color14		#34e2e2
+
+! white
+#define theme_color7		#d3d7cf
+#define theme_color15		#eeeeec
+
+! bold, italic, underline
+#define theme_colorBD		#eeeeec
+#define theme_colorIT		#eeeeec
+#define theme_colorUL		#eeeeec
