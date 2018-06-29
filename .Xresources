@@ -1,5 +1,5 @@
 #include ".config/xfiles/themes/molokai"
-! #include ".config/xfiles/themes/solarized-dark-high-cont"
+!#include ".config/xfiles/themes/solarized-dark-high-cont"
 #include ".config/xfiles/colors"
 #include ".config/xfiles/font"
 #include ".config/xfiles/urxvt"
@@ -16,6 +16,6 @@ theme.fg: theme_fg
 theme.fg2: theme_color15
 theme.bg: theme_bg
 theme.bg2: theme_color0
-theme.accent: theme_color4
+theme.accent: theme_cursorColor
 theme.accent2: theme_color5
 theme.alert: theme_color1
