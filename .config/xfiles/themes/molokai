@@ -1,7 +1,7 @@
 #define theme_bg		#1b1d1e
 #define theme_bg_transparent	[90]#1b1d1e
 #define theme_fg 		#d0d0d0
-#define theme_cursorColor 	#ff00ff
+#define theme_cursorColor 	#ff0090
 
 ! black
 #define theme_color0 		#333333
