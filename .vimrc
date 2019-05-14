@@ -14,6 +14,7 @@ endif
 "install plugins
 call plug#begin('~/.vim/plugged')
 	Plug 'tomasr/molokai'
+	Plug 'vim-airline/vim-airline'
 call plug#end()
 
 "colors
