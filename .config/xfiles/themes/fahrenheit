@@ -1,5 +1,5 @@
 #define theme_bg		#000000
-#define theme_bg_transparent	[90]#000000
+#define theme_bg_transparent	#cc000000
 #define theme_fg		#ffffce
 #define theme_cursorColor	#bbbbbb
 
