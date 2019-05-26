@@ -100,6 +100,12 @@ assign [class="Google-chrome"] $ws2
 assign [class="Firefox"] $ws2
 assign [class="quassel"] $ws4
 assign [class="Thunderbird"] $ws5
+assign [class="Steam"] $ws9
+
+# floating windows
+for_window [class="Pavucontrol"] floating enable
+for_window [class="(?i)TeamSpeak 3"] floating enable
+for_window [class="Steam"] floating enable
 
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r exec ~/.config/i3/scripts/restart
