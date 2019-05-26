@@ -13,14 +13,14 @@ endif
 
 "install plugins
 call plug#begin('~/.vim/plugged')
-	Plug 'tomasr/molokai'
+	Plug 'morhetz/gruvbox'
 	Plug 'tpope/vim-fugitive'
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
 call plug#end()
 
 "colors
-colorscheme molokai
+colorscheme gruvbox
 let g:rehash256 = 1
 set background=dark
 
