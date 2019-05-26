@@ -14,6 +14,7 @@ theme.font2Face: theme_font2_face
 theme.fg: theme_fg
 theme.fg2: theme_color15
 theme.bg: theme_bg
+theme.bg.trans: theme_bg_transparent
 theme.bg2: theme_color0
 theme.accent: theme_cursorColor
 theme.accent2: theme_color5
