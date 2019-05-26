@@ -1,5 +1,5 @@
 [colors]
-background = ${xrdb:theme.bg:#222}
+background = ${xrdb:theme.bg.trans:#222}
 background-alt = ${xrdb:theme.bg2:#333}
 foreground = ${xrdb:theme.fg:#444}
 foreground-alt = ${xrdb:theme.fg2:#555}
