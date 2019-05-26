@@ -101,6 +101,7 @@ assign [class="Firefox"] $ws2
 assign [class="quassel"] $ws4
 assign [class="Thunderbird"] $ws5
 assign [class="Steam"] $ws9
+assign [class="Lollypop"] $ws10
 
 # floating windows
 for_window [class="Pavucontrol"] floating enable
