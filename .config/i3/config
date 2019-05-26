@@ -146,7 +146,7 @@ bindsym XF86AudioPrev exec playerctl previous
 exec_always --no-startup-id ~/.config/polybar/launch.sh
 
 # wallpaper
-exec_always feh --bg-scale --no-fehbg ~/.config/i3/wallpaper.jpg
+exec_always feh --bg-scale --no-fehbg ~/.config/i3/wallpaper/current
 
 # applications
 exec --no-startup-id gnome-keyring
