@@ -70,7 +70,7 @@ bindsym $mod+a focus parent
 
 for_window [class="^.*"] border pixel 1
 
-workspace $ws1 output DP-0
+workspace $ws1 output DisplayPort-2
 
 # switch to workspace
 bindsym $mod+1 workspace $ws1

@@ -1,7 +1,7 @@
 #!/bin/sh
-xrandr --output DP-0 --left-of DVI-D-0
+xrandr --output DisplayPort-2 --left-of HDMI-A-0
 # 144 hz
-xrandr --output DP-0 --mode 2560x1440 --rate 144
+xrandr --output DisplayPort-2 --mode 2560x1440 --rate 144
 
 xrdb -merge -I$HOME ~/.Xresources
 i3-msg restart
