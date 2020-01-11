@@ -11,6 +11,9 @@ set $ws8 "8"
 set $ws9 "9"
 set $ws10 "10"
 
+set $scrn1 "DisplayPort-2"
+set $scrn2 "HDMI-A-0"
+
 set_from_resource $font-name theme.font "Noto Sans"
 set_from_resource $font-size theme.fontSize 13
 set_from_resource $bg theme.bg #2f343f
@@ -70,7 +73,13 @@ bindsym $mod+a focus parent
 
 for_window [class="^.*"] border pixel 1
 
-workspace $ws1 output DisplayPort-2
+workspace $ws1 output $scrn1
+workspace $ws2 output $scrn2
+workspace $ws3 output $scrn1
+workspace $ws4 output $scrn2
+workspace $ws6 output $scrn1
+workspace $ws9 output $scrn2
+workspace $ws10 output $scrn2
 
 # switch to workspace
 bindsym $mod+1 workspace $ws1
