@@ -13,6 +13,7 @@
 	new = green bold
 [alias]
 	show-graph = log --graph --abbrev-commit --pretty=oneline
+	count-lines = "! git log --author=\"$1\" --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf \"added lines: %s, removed lines: %s, total lines: %s\\n\", add, subs, loc }' #"
 # KDE Repos
 [url "git://anongit.kde.org/"]
 	insteadOf = kde:
@@ -30,7 +31,7 @@
 [diff]
 	renames = true
 [commit]
-	gpgsign = 1
+#	gpgsign = 1
 [merge]
 	tool = meld
 [credential]
