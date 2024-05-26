@@ -159,6 +159,6 @@ exec_always feh --bg-center --no-fehbg ~/.config/i3/wallpaper/current
 
 # applications
 exec --no-startup-id gnome-keyring
-exec --no-startup-id urxvt
+exec --no-startup-id alacritty
 exec --no-startup-id firefox
 exec --no-startup-id compton -f
