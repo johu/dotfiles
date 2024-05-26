@@ -112,7 +112,7 @@ alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias cfg='config'
 alias diff="colordiff"
 alias cat="bat"
-alias ls="eza --icons=always"
+alias ls="eza --icons=always --group-directories-first"
 alias vim="nvim"
 # alias cd="z"
 
