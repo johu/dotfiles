@@ -38,5 +38,4 @@ bspc rule -a Lollypop desktop="^10" follow=off
 feh --bg-center --no-fehb ~/.config/i3/wallpaper/current
 ${HOME}/.config/polybar/launch.sh
 /etc/xdg/plasma-workspace/shutdown/10-agent-shutdown.sh
-urxvt &
-urxvt &
+alacritty &
