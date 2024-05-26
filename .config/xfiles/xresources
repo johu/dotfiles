@@ -1,6 +1,6 @@
-#include ".config/xfiles/themes/gruvbox-dark"
-#include ".config/xfiles/colors"
-#include ".config/xfiles/font"
+#include "themes/gruvbox-dark"
+#include "colors"
+#include "font"
 
 theme.font: theme_font
 theme.fontSize: theme_font_size

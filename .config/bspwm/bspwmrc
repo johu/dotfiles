@@ -3,7 +3,7 @@
 export _JAVA_AWT_WM_NONREPARENTING=1
 
 sxhkd &
-xrdb -merge ~/.Xresources
+xrdb -merge ~/.config/xfiles/xresources
 picom &
 xrandr --output DP-3 --primary --mode 2560x1440 --rate 144 --left-of DP-1 &
 

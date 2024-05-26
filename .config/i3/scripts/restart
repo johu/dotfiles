@@ -3,6 +3,6 @@ xrandr --output DisplayPort-2 --left-of HDMI-A-0
 # 144 hz
 xrandr --output DisplayPort-2 --mode 2560x1440 --rate 144
 
-xrdb -merge -I$HOME ~/.Xresources
+xrdb -merge -I$HOME ~/.config/xfiles/xresources
 i3-msg restart
 polybar-msg cmd restart
