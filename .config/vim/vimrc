@@ -5,14 +5,14 @@ set relativenumber
 set ruler laststatus=2 number title hlsearch
 
 "autoinstall vim-plug
-if empty(glob('~/.vim/autoload/plug.vim'))
-	silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+if empty(glob('~/.config/vim/autoload/plug.vim'))
+	silent !curl -fLo ~/.config/vim/autoload/plug.vim --create-dirs
 	\ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 	autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 
 "install plugins
-call plug#begin('~/.vim/plugged')
+call plug#begin('~/.config/vim/plugged')
 	Plug 'morhetz/gruvbox'
 	Plug 'dracula/vim',{'as':'dracula'}
 	Plug 'tpope/vim-fugitive'
