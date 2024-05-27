@@ -115,6 +115,7 @@ alias cat="bat"
 alias ls="eza --icons=always --group-directories-first"
 alias vim="nvim"
 # alias cd="z"
+alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 
 [[ -s "/usr/share/zsh/site-functions/zsh-autosuggestions.zsh" ]] && source "/usr/share/zsh/site-functions/zsh-autosuggestions.zsh"
 [[ -s "/usr/share/zsh/site-functions/zsh-syntax-highlighting.zsh" ]] && source "/usr/share/zsh/site-functions/zsh-syntax-highlighting.zsh"
