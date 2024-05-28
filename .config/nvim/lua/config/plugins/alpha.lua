@@ -1,11 +1,13 @@
 return {
   "goolord/alpha-nvim",
+  dependencies = {
+    "nvim-tree/nvim-web-devicons",
+  },
   event = "VimEnter",
   config = function()
     local alpha = require("alpha")
     local dashboard = require("alpha.themes.dashboard")
 
-    -- set header
     dashboard.section.header.val = {
       "                                                     ",
       "  ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗ ",
@@ -17,7 +19,6 @@ return {
       "                                                     ",
     }
 
-    -- set menu
     dashboard.section.buttons.val = {
       dashboard.button("e", "  > New File", "<cmd>ene<CR>"),
       dashboard.button("SPC ee", "  > Toggle file explorer", "<cmd>NvimTreeToggle<CR>"),
@@ -27,7 +28,6 @@ return {
       dashboard.button("q", "  > Quit NVIM", "<cmd>qa<CR>"),
     }
 
-    -- send config to alpha
     alpha.setup(dashboard.opts)
 
     -- disable folding on alpha buffer

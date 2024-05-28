@@ -6,16 +6,13 @@ return {
     "windwp/nvim-ts-autotag",
   },
   config = function()
-    -- import nvim-treesitter plugin
-    local treesitter = require("nvim-treesitter.configs")
-
-    -- configure treesitter
-    treesitter.setup({ -- enable syntax highlighting
+    require("nvim-treesitter.configs").setup({
       highlight = {
         enable = true,
       },
-      -- enable indentation
-      indent = { enable = true },
+      indent = {
+        enable = true,
+      },
       -- enable autotagging (w/ nvim-ts-autotag plugin)
       autotag = {
         enable = true,
