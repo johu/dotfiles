@@ -3,10 +3,6 @@
 # extend path
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
-# deprecated
-export ZSH=$HOME/.config/zsh/oh-my-zsh
-export UPDATE_ZSH_DAYS=7
-
 # lang
 export LANG=de_DE.UTF-8
 
