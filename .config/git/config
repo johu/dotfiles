@@ -37,3 +37,5 @@
 [credential]
 	username = johu
 	helper = cache
+[safe]
+	directory = /var/db/repos/gentoo
