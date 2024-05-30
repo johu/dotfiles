@@ -1,0 +1,36 @@
+#define theme_bg #1E1E2E
+#define theme_bg_transparent #1E1E2E
+#define theme_fg #CDD6F4
+#define theme_cursorColor #F9E2AF
+
+! black
+#define theme_color0 #45475A
+#define theme_color8 #585B70
+
+! red
+#define theme_color1 #F38BA8
+#define theme_color9 #F38BA8
+
+! green
+#define theme_color2 #A6E3A1
+#define theme_color10 #A6E3A1
+
+! yellow
+#define theme_color3 #F9E2AF
+#define theme_color11 #F9E2AF
+
+! blue
+#define theme_color4 #89B4FA
+#define theme_color12 #89B4FA
+
+! magenta
+#define theme_color5 #F5C2E7
+#define theme_color13 #F5C2E7
+
+! cyan
+#define theme_color6 #94E2D5
+#define theme_color14 #94E2D5
+
+! white
+#define theme_color7 #BAC2DE
+#define theme_color15 #A6ADC8

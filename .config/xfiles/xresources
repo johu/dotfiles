@@ -1,4 +1,4 @@
-#include "themes/gruvbox-dark"
+#include "themes/catppuccin-mocha"
 #include "colors"
 #include "font"
 
