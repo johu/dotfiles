@@ -5,17 +5,34 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-source ~/.config/zsh/themes/powerlevel10k/powerlevel10k.zsh-theme
+# download plugin manager if it doesn't exist
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+if [ ! -d "$ZINIT_HOME" ]; then
+  mkdir -p "$(dirname $ZINIT_HOME)"
+  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
+
+# init plugin manager
+source "${ZINIT_HOME}/zinit.zsh"
+
+# plugins
+zinit ice depth=1;zinit light romkatv/powerlevel10k
+zinit light zsh-users/zsh-syntax-highlighting
+zinit light zsh-users/zsh-completions
+zinit light zsh-users/zsh-autosuggestions
+zinit light Aloxaf/fzf-tab
+
+# load completions
+autoload -U compinit && compinit
 
 # to customize prompt, run `p10k configure` or edit p10k.zsh.
 [[ ! -f ~/.config/zsh/themes/p10k.zsh ]] || source ~/.config/zsh/themes/p10k.zsh
 
-# plugins
-[[ -s "/usr/share/zsh/site-functions/zsh-autosuggestions.zsh" ]] && source "/usr/share/zsh/site-functions/zsh-autosuggestions.zsh"
-[[ -s "/usr/share/zsh/site-functions/zsh-syntax-highlighting.zsh" ]] && source "/usr/share/zsh/site-functions/zsh-syntax-highlighting.zsh"
-
-# load completions
-autoload -U compinit && compinit
+# keybindings
+bindkey -e
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+bindkey '^[w' kill-region
 
 # history setup
 HISTFILE=$HOME/.config/zsh/.zhistory
@@ -28,46 +45,33 @@ setopt hist_ignore_space
 setopt hist_ignore_all_dups
 setopt hist_save_no_dups
 setopt hist_ignore_dups
+setopt hist_find_no_dups
 
-# alias
+# completion style
+zstyle ':completion:*:git-checkout:*' sort false
+# zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu no
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:*' switch-group '<' '>'
+zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+
+# aliases
 alias zsh-reload="source ~/.config/zsh/.zshrc"
 alias zsh-edit="nvim ~/.config/zsh/.zshrc"
-eval $(thefuck --alias)
-eval $(thefuck --alias fk)
-# eval $(zoxide init zsh)
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias cfg='config'
 alias diff="colordiff"
 alias cat="bat"
 alias ls="eza --icons=always --group-directories-first"
 alias vim="nvim"
-# alias cd="z"
 alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 
-# set up fzf key bindings and fuzzy completion
-eval "$(fzf --zsh)"
+# shell integrations
+eval $(thefuck --alias)
+eval $(thefuck --alias fk)
+eval $(fzf --zsh)
+eval $(zoxide init --cmd cd zsh)
 
-fg="#CBE0F0"
-bg="#011628"
-bg_highlight="#143652"
-purple="#B388FF"
-blue="#06BCE4"
-cyan="#2CF9ED"
-
-export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
-export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_ALT_C_COMMAND="fd --type=d --hidden --strip-cwd-prefix --exclude .git"
-
-# Use fd (https://github.com/sharkdp/fd) for listing path candidates.
-# - The first argument to the function ($1) is the base path to start traversal
-# - See the source code (completion.{bash,zsh}) for the details.
-_fzf_compgen_path() {
-  fd --hidden --exclude .git . "$1"
-}
-
-# Use fd to generate the list for directory completion
-_fzf_compgen_dir() {
-  fd --type=d --hidden --exclude .git . "$1"
-}
-
+source ~/.config/zsh/plugins/fzf.plugin.zsh
