@@ -1,7 +1,0 @@
-#!/bin/bash
-while [ "$select" != "No" -a "$select" != "Yes" ]; do
-    select=$(echo -e 'Yes\nNo' | dmenu -nb '#2f343f' -nf '#f3f4f5' -sb '#3579a8' -sf '#f3f4f5' -fn '-*-*-medium-r-normal-*-*-*-*-*-*-100-*-*' -i -p "Are you sure you want to logout?")
-    [ -z "$select" ] && exit 0
-done
-[ "$select" = "No" ] && exit 0
-i3-msg exit
