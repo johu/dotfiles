@@ -14,6 +14,7 @@ return {
           dap_ui = true,
           indent_blankline = true,
           mason = true,
+          notify = true,
           telescope = true,
           treesitter = true,
           which_key = true,
