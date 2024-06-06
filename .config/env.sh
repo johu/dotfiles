@@ -3,9 +3,6 @@
 # extend path
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
-# lang
-export LANG=de_DE.UTF-8
-
 # xdg settings
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
