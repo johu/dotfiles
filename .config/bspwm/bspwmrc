@@ -5,10 +5,10 @@ export _JAVA_AWT_WM_NONREPARENTING=1
 sxhkd &
 xrdb -merge ~/.config/xfiles/xresources
 picom &
-xrandr --output DP-3 --primary --mode 2560x1440 --rate 144 --left-of DP-1 &
+xrandr --output DP-4 --primary --mode 2560x1440 --rate 144 --left-of DP-0 &
 
-bspc monitor DP-3 -d 1 2 3 4 5 6
-bspc monitor DP-1 -d 7 8 9 0
+bspc monitor DP-4 -d 1 2 3 4 5 6
+bspc monitor DP-0 -d 7 8 9 0
 
 bspc config border_width         2
 bspc config window_gap          12
