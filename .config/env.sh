@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # extend path
-export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=$HOME/bin:$HOME/.config/tmux/plugins/tmuxifier/bin:/usr/local/bin:$PATH
 
 # xdg settings
 export XDG_CONFIG_HOME="$HOME/.config"

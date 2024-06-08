@@ -75,6 +75,7 @@ alias vim="nvim"
 alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 
 # shell integrations
+eval $(tmuxifier init -)
 eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 eval $(fzf --zsh)
