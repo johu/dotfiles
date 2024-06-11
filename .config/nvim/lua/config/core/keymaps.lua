@@ -1,11 +1,12 @@
 -- leader key
 vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
 
 local keymap = vim.keymap
 
 keymap.set('i', 'jk', '<ESC>', { desc = 'Exit instert mode with jk' })
 keymap.set('n', 'x', '"_x') -- delete without saving in buffer
-keymap.set('n', '<leader>nh', ':nohl<CR>', { desc = 'Clear search highlight' })
+keymap.set('n', '<ESC>', ':nohlsearch<CR>')
 
 -- numbers
 keymap.set('n', '<leader>+', '<C-a>', { desc = 'Increment number' })

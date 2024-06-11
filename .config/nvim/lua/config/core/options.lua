@@ -5,9 +5,15 @@ local opt = vim.opt
 -- turn off swap files
 opt.swapfile = false
 
+-- save undo history
+opt.undofile = true
+
 -- line numbers
 opt.relativenumber = true
 opt.number = true
+
+-- mouse support (can be useful for resizing splits for example)
+opt.mouse = 'a'
 
 -- tabs & indentation
 opt.tabstop = 2
@@ -16,12 +22,15 @@ opt.softtabstop = 2
 opt.expandtab = true
 opt.autoindent = true
 opt.wrap = false
+opt.breakindent = true
 
--- search
+-- search & replace
 opt.ignorecase = true
 opt.smartcase = true
 opt.cursorline = true
 opt.iskeyword:append '-'
+opt.inccommand = 'split'
+opt.scrolloff = 10
 
 -- colors
 opt.termguicolors = true
@@ -37,6 +46,13 @@ opt.clipboard:append 'unnamedplus'
 -- splitting
 opt.splitright = true
 opt.splitbelow = true
+
+-- decrease update time
+opt.updatetime = 250
+
+-- decrease mapped sequence wait time
+-- displays which-key popup sooner
+opt.timeoutlen = 300
 
 -- highlight on yank
 vim.api.nvim_create_autocmd('TextYankPost', {
