@@ -1,15 +1,15 @@
 return {
   {
-    "nvim-tree/nvim-tree.lua",
-    dependencies = "nvim-tree/nvim-web-devicons",
+    'nvim-tree/nvim-tree.lua',
+    dependencies = 'nvim-tree/nvim-web-devicons',
     config = function()
-      local nvimtree = require("nvim-tree")
+      local nvimtree = require 'nvim-tree'
 
       -- recommended settings from nvim-tree documentation
       vim.g.loaded_netrw = 1
       vim.g.loaded_netrwPlugin = 1
 
-      nvimtree.setup({
+      nvimtree.setup {
         view = {
           width = 35,
           relativenumber = false,
@@ -22,8 +22,8 @@ return {
           icons = {
             glyphs = {
               folder = {
-                arrow_closed = "",
-                arrow_open = "",
+                arrow_closed = '',
+                arrow_open = '',
               },
             },
           },
@@ -37,31 +37,26 @@ return {
           },
         },
         filters = {
-          custom = { ".DS_Store" },
+          custom = { '.DS_Store' },
         },
         git = {
           ignore = false,
         },
-      })
+      }
 
       local keymap = vim.keymap
-      keymap.set("n", "<leader>ee", "<cmd>NvimTreeToggle<CR>", { desc = "Toggle file explorer" })
-      keymap.set(
-        "n",
-        "<leader>ef",
-        "<cmd>NvimTreeFindFileToggle<CR>",
-        { desc = "Toggle file explorer on current file" }
-      )
-      keymap.set("n", "<leader>ec", "<cmd>NvimTreeCollapse<CR>", { desc = "Collapse file explorer" })
-      keymap.set("n", "<leader>er", "<cmd>NvimTreeRefresh<CR>", { desc = "Refresh file explorer" })
+      keymap.set('n', '<leader>ee', '<cmd>NvimTreeToggle<CR>', { desc = 'Toggle file explorer' })
+      keymap.set('n', '<leader>ef', '<cmd>NvimTreeFindFileToggle<CR>', { desc = 'Toggle file explorer on current file' })
+      keymap.set('n', '<leader>ec', '<cmd>NvimTreeCollapse<CR>', { desc = 'Collapse file explorer' })
+      keymap.set('n', '<leader>er', '<cmd>NvimTreeRefresh<CR>', { desc = 'Refresh file explorer' })
     end,
   },
   {
-    "stevearc/oil.nvim",
+    'stevearc/oil.nvim',
     config = function()
-      local oil = require("oil")
+      local oil = require 'oil'
       oil.setup()
-      vim.keymap.set("n", "-", oil.toggle_float, {})
+      vim.keymap.set('n', '-', oil.toggle_float, {})
     end,
   },
 }

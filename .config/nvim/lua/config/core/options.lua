@@ -1,4 +1,4 @@
-vim.cmd("let g:netrw_liststyle = 3")
+vim.cmd 'let g:netrw_liststyle = 3'
 
 local opt = vim.opt
 
@@ -21,27 +21,27 @@ opt.wrap = false
 opt.ignorecase = true
 opt.smartcase = true
 opt.cursorline = true
-opt.iskeyword:append("-")
+opt.iskeyword:append '-'
 
 -- colors
 opt.termguicolors = true
-opt.background = "dark"
-opt.signcolumn = "yes"
+opt.background = 'dark'
+opt.signcolumn = 'yes'
 
 -- keys
-opt.backspace = "indent,eol,start"
+opt.backspace = 'indent,eol,start'
 
 -- clipboard
-opt.clipboard:append("unnamedplus")
+opt.clipboard:append 'unnamedplus'
 
 -- splitting
 opt.splitright = true
 opt.splitbelow = true
 
 -- highlight on yank
-vim.api.nvim_create_autocmd("TextYankPost", {
-  desc = "Highlight when yanking (copying) text",
-  group = vim.api.nvim_create_augroup("kickstart-highlight-yank", { clear = true }),
+vim.api.nvim_create_autocmd('TextYankPost', {
+  desc = 'Highlight when yanking (copying) text',
+  group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.highlight.on_yank()
   end,

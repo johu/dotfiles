@@ -1,6 +1,6 @@
 return {
   {
-    "ThePrimeagen/vim-be-good",
-    event = "VeryLazy",
+    'ThePrimeagen/vim-be-good',
+    event = 'VeryLazy',
   },
 }
