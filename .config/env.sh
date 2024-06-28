@@ -17,6 +17,10 @@ export EDITOR="nvim"
 export TERMINAL="alacritty"
 export BROWSER="firefox"
 
+# dotfile management
+export DOTBARE_DIR="$HOME/.cfg"
+export DOTBARE_TREE="$HOME"
+
 # java
 export JAVA_HOME=/opt/openjdk-bin-11
 export ANT_RESPECT_JAVA_HOME=y

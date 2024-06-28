@@ -17,6 +17,7 @@ source "${ZINIT_HOME}/zinit.zsh"
 
 # plugins
 zinit ice depth=1;zinit light romkatv/powerlevel10k
+zinit light kazhala/dotbare
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
@@ -67,7 +68,7 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 # aliases
 alias zsh-reload="source ~/.config/zsh/.zshrc"
 alias zsh-edit="nvim ~/.config/zsh/.zshrc"
-alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+alias config='dotbare'
 alias cfg='config'
 alias diff="colordiff"
 alias cat="bat"
