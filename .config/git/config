@@ -1,5 +1,5 @@
 [user]
-	email = johu@gentoo.org
+  email = johu@gentoo.org
 	name = "Johannes Huber"
 	signingkey = 7ED0D3033AAC3C4A3143FDF8457440B7FDF4F788
 [color]
@@ -14,6 +14,7 @@
 [alias]
 	show-graph = log --graph --abbrev-commit --pretty=oneline
 	count-lines = "! git log --author=\"$1\" --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf \"added lines: %s, removed lines: %s, total lines: %s\\n\", add, subs, loc }' #"
+  forcepull = "! git fetch ; git reset --hard @{u}"
 # KDE Repos
 [url "git://anongit.kde.org/"]
 	insteadOf = kde:
@@ -31,7 +32,7 @@
 [diff]
 	renames = true
 [commit]
-#	gpgsign = 1
+  gpgsign = 0
 [merge]
 	tool = meld
 [credential]
