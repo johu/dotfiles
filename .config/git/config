@@ -40,3 +40,5 @@
 	helper = cache
 [safe]
 	directory = /var/db/repos/gentoo
+[http]
+	postBuffer = 157286400
