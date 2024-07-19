@@ -73,6 +73,8 @@ alias cfg='config'
 alias diff="colordiff"
 alias cat="bat"
 alias ls="eza --icons=always --group-directories-first"
+alias ll="ls -l"
+alias la="ls -la"
 alias vim="nvim"
 alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 
