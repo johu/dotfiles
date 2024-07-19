@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# extend path
-export PATH=$HOME/bin:$HOME/.config/tmux/plugins/tmuxifier/bin:/usr/local/bin:$PATH
-
 # lang
 export LANG=en_US.UTF-8
 
