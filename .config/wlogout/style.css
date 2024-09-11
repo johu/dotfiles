@@ -1,0 +1,65 @@
+@import "../waybar/themes/mocha.css";
+
+* {
+  font-family: "MesloLGS Nerd Font Mono", FontAwesome;
+  font-size: 20px;
+  background-image: none;
+  transition: 20ms;
+}
+
+window {
+  background: url("../../.cache/blurred_wallpaper.png");
+  background-size: cover;
+  background-color: transparent;
+}
+
+button {
+  color: @text;
+
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 25%;
+
+  border-style: none;
+  border-radius: 15px;
+  border: 1px @text;
+  background-color: rgba(12, 12, 12, 0.3);
+  margin: 15px;
+
+  box-shadow:
+    0 4px 8px 0 rgba(0, 0, 0, 0.2),
+    0 6px 20px 0 rgba (0, 0, 0, 0.19);
+  animation: gradient_f 20s ease-in infinite;
+}
+
+button:active,
+button:hover {
+  color: @blue;
+  background-color: rgba(12, 12, 12, 0.5);
+  border: 3px none #89b4fa;
+  outline-style: none;
+}
+
+#lock {
+  background-image: image(url("icons/lock.png"));
+}
+
+#logout {
+  background-image: image(url("icons/logout.png"));
+}
+
+#suspend {
+  background-image: image(url("icons/suspend.png"));
+}
+
+#hibernate {
+  background-image: image(url("icons/hibernate.png"));
+}
+
+#reboot {
+  background-image: image(url("icons/reboot.png"));
+}
+
+#shutdown {
+  background-image: image(url("icons/shutdown.png"));
+}

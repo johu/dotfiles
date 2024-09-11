@@ -1,0 +1,122 @@
+@import "themes/mocha.css";
+
+* {
+  border: none;
+  min-height: 0;
+  box-shadow: none;
+  text-shadow: none;
+  font-family: "MesloLGS Nerd Font Mono";
+  font-size: 14px;
+  font-weight: bold;
+}
+
+tooltip * {
+  background: transparent;
+}
+
+tooltip.background {
+  background: @base;
+}
+
+#waybar {
+  background: transparent;
+}
+
+#workspaces {
+  color: @crust;
+  background: @base;
+  padding: 6px 3px;
+  border-radius: 16px;
+}
+
+#workspaces button {
+  padding: 0px 0.5px;
+  margin: 0px 3px;
+  border-radius: 16px;
+  background: @crust;
+  color: @crust;
+}
+
+#workspaces button.active {
+  background: @blue;
+  color: @blue;
+  border-radius: 16px;
+}
+
+#workspaces button:hover {
+  background: @green;
+  color: @green;
+  border-radius: 16px;
+}
+
+#navigation,
+#system {
+  background: @base;
+  border-radius: 16px;
+  margin: 7px 15px;
+  padding: 0px 10px;
+}
+
+#custom-logo {
+  font-size: 24px;
+  background: @base;
+  padding: 0px 15px 0px 10px;
+  border-radius: 16px;
+}
+
+#window {
+  color: @subtext0;
+  background: @base;
+  margin: 7px 15px;
+  padding: 0px 15px;
+  border-radius: 16px;
+}
+
+window#waybar.empty #window {
+  background-color: transparent;
+}
+
+#clock {
+  color: @flamingo;
+  background: @base;
+  margin: 7px 15px;
+  padding: 0px 15px;
+  border-radius: 16px;
+}
+
+#network,
+#pulseaudio,
+#privacy,
+#custom-notification,
+#custom-logout {
+  font-size: 24px;
+  padding: 0px 10px;
+  border-radius: 16px;
+}
+
+#network {
+  color: @yellow;
+  font-size: 14px;
+  padding: 0px 3px 0px 10px;
+}
+
+#pulseaudio {
+  color: @peach;
+}
+
+#pulseaudio.muted {
+  font-size: 14px;
+  padding: 0px 3px 0px 10px;
+}
+
+#privacy {
+  color: @mauve;
+}
+
+#custom-notification {
+  color: @blue;
+}
+
+#custom-logout {
+  color: @lavender;
+}

@@ -1,0 +1,131 @@
+{
+  "hyprland/workspaces": {
+    "format": "{name}",
+    "tooltip": false,
+    "all-outputs": true,
+    "on-scroll-up": "hyprctl dispatch workspace -1",
+    "on-scroll-down": "hyprctl dispatch workspace +1",
+    "persistent-workspaces": {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": [],
+      "5": []
+    }
+  },
+  "hyprland/window": {
+    "format": "{}",
+    "icon": false,
+    "separate-outputs": false,
+    "rewrite": {
+      "(.*) — Mozilla Firefox": "$1 󰈹",
+      "(.*)Mozilla Firefox": "Firefox 󰈹",
+      "(.*) — Dolphin": "$1 󰉋",
+      "(.*)Spotify": "Spotify 󰓇",
+      "(.*)Steam": "Steam 󰓓"
+    },
+    "max-length": 1000
+  },
+  "pulseaudio": {
+    "format": "{icon}",
+    "format-muted": " ",
+    "format-bluetooth": "{icon} {format_source}",
+    "format-bluetooth-muted": "  {icon} {format_source}",
+    "format-source": "",
+    "format-source-muted": "",
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", "", ""]
+    },
+    "on-click": "wpctl set-mute @DEFAULT_SINK@ toggle",
+    "on-click-right": "pavucontrol"
+  },
+  "network": {
+    "format": "{ifname}",
+    "format-wifi": "   {signalStrength}%",
+    "format-ethernet": " ",
+    "format-disconnected": "Not connected", // an empty format will hide the module
+    "tooltip-format": " {ifname} via {gwaddri}",
+    "tooltip-format-wifi": "   {essid} ({signalStrength}%)",
+    "tooltip-format-ethernet": " {ifname} ({ipaddr}/{cidr})",
+    "tooltip-format-disconnected": "Disconnected",
+    "max-length": 50,
+    "on-click": "alacritty -e nmtui"
+  },
+  "clock": {
+    "rotate": 0,
+    "format": "{:%a,%e.%b %H:%M}",
+    "timezone": "Europe/Berlin",
+    "tooltip-format": "<span>{calendar}</span>",
+    "calendar": {
+      "mode": "month",
+      "mode-mon-col": 3,
+      "on-scroll": 1,
+      "on-click-right": "mode",
+      "format": {
+        "months": "<span color='#f5e0dc'><b>{}</b></span>",
+        "weekdays": "<span color='#f9e2af'><b>{}</b></span>",
+        "today": "<span color='#cba5f7'><b>{}</b></span>"
+      }
+    },
+    "actions": {
+      "on-click-right": "mode",
+      "on-click-forward": "tz_up",
+      "on-click-backward": "tz_down",
+      "on-scroll-up": "shift_up",
+      "on-scroll-down": "shift_down"
+    }
+  },
+  "privacy": {
+    "icon-spacing": 4,
+    "icon-size": 20,
+    "transition-duration": 250,
+    "modules": [
+      {
+        "type": "screenshare",
+        "tooltip": true,
+        "tooltip-icon-size": 20
+      },
+      {
+        "type": "audio-out",
+        "tooltip": true,
+        "tooltip-icon-size": 20
+      }
+    ]
+  },
+  "custom/logo": {
+    "format": "<span color='#b4befe'></span>",
+    "tooltip": false,
+    "on-click": "exec rofi -show drun"
+  },
+  "custom/notification": {
+    "tooltip": false,
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "<span foreground='#f38ba8'></span>",
+      "none": "",
+      "dnd-notification": "<span foreground='#f38ba8'></span>",
+      "dnd-none": "",
+      "inhibited-notification": "<span foreground='#f38ba8'></span>",
+      "inhibited-none": "",
+      "dnd-inhibited-notification": "<span foreground='#f38ba8'></span>",
+      "dnd-inhibited-none": ""
+    },
+    "return-type": "json",
+    "exec-if": "which swaync-client",
+    "exec": "swaync-client -swb",
+    "on-click": "swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "escape": true
+  },
+  "custom/logout": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "wlogout"
+  }
+}
