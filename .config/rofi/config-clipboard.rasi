@@ -1,0 +1,235 @@
+configuration {
+    modi:                       "drun,run";
+    font:                       "MesloLGS Nerd Font 12";
+    show-icons:                 false;
+    icon-theme:                 "Papirus-Dark";
+    display-drun:               "APPS";
+    display-run:                "RUN";
+    display-filebrowser:        "FILES";
+    display-window:             "WINDOW";
+    drun-display-format:        "{icon}";
+    hover-select:               true;
+    me-select-entry:            "";
+    me-accept-entry:            "MousePrimary";
+    window-format:              "{w} · {c} · {t}";
+}
+
+@theme "themes/catppuccin-mocha"
+@import "~/.cache/current_wallpaper.rasi"
+
+element-text, element-icon , mode-switcher {
+    background-color: inherit;
+    text-color:       inherit;
+}
+
+window {
+    width:                        400px;
+    x-offset:                     -14px;
+    y-offset:                     65px;
+    spacing:                      0px;
+    padding:                      0px;
+    margin:                       0px; 
+    color:                        @fg-col;
+    border:                       3px;
+    border-color:                 @bg-col;
+    cursor:                       "default";
+    transparency:                 "real";
+    location:                     northeast;
+    anchor:                       northeast;
+    fullscreen:                   false;
+    enabled:                      true;
+    border-radius:                10px;
+    background-color:             transparent;
+}
+
+mainbox {
+    enabled:                      true;
+    orientation:                  horizontal;
+    spacing:                      0px;
+    margin:                       0px;
+    background-color:             @bg-col;
+    background-image:             @current-image;
+    children:                     ["listbox"];
+}
+
+imagebox {
+    padding:                      18px;
+    background-color:             transparent;
+    orientation:                  vertical;
+    children:                     [ "inputbar", "dummy", "mode-switcher" ];
+}
+
+listbox {
+    spacing:                     20px;
+    background-color:            transparent;
+    orientation:                 vertical;
+    children:                    [ "inputbar", "message", "listview" ];
+}
+
+dummy {
+    background-color:            transparent;
+}
+
+inputbar {
+    enabled:                      true;
+    text-color:                   @fg-col;
+    spacing:                      10px;
+    padding:                      15px;
+    border-radius:                0px;
+    border-color:                 @fg-col;
+    background-color:             @bg-col;
+    children:                     [ "textbox-prompt-colon", "entry" ];
+}
+
+textbox-prompt-colon {
+    enabled:                      true;
+    expand:                       false;
+    str:                          "";
+    padding:                      0px 5px 0px 0px;
+    background-color:             transparent;
+    text-color:                   inherit;
+}
+
+entry {
+    enabled:                      true;
+    background-color:             transparent;
+    text-color:                   inherit;
+    cursor:                       text;
+    placeholder:                  "Search";
+    placeholder-color:            inherit;
+}
+
+mode-switcher {
+    enabled:                      true;
+    spacing:                      20px;
+    background-color:             transparent;
+    text-color:                   @fg-col;
+}
+
+button {
+    padding:                      10px;
+    border-radius:                10px;
+    background-color:             @bg-col;
+    text-color:                   inherit;
+    cursor:                       pointer;
+    border:                       0px;
+}
+
+button selected {
+    background-color:             @blue;
+    text-color:                   @fg-col;
+}
+
+listview {
+    enabled:                      true;
+    columns:                      1;
+    lines:                        8;
+    cycle:                        true;
+    dynamic:                      true;
+    scrollbar:                    false;
+    layout:                       vertical;
+    reverse:                      false;
+    fixed-height:                 true;
+    fixed-columns:                true;
+    spacing:                      0px;
+    padding:                      10px;
+    margin:                       0px;
+    background-color:             @bg-col;
+    border:                       0px;
+}
+
+element {
+    enabled:                      true;
+    padding:                      10px;
+    margin:                       5px;
+    cursor:                       pointer;
+    background-color:             @bg-col;
+    border-radius:                10px;
+    border:                       3px;
+}
+
+element normal.normal {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element normal.urgent {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element normal.active {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element selected.normal {
+    background-color:            @blue;
+    text-color:                  @fg-col;
+}
+
+element selected.urgent {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element selected.active {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element alternate.normal {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element alternate.urgent {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element alternate.active {
+    background-color:            inherit;
+    text-color:                  @fg-col;
+}
+
+element-icon {
+    background-color:            transparent;
+    text-color:                  inherit;
+    size:                        32px;
+    cursor:                      inherit;
+}
+
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    cursor:                      inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+
+message {
+    background-color:            transparent;
+    border:                      0px;
+    margin:                      20px 0px 0px 0px;
+    padding:                     0px;
+    spacing:                     0px;
+    border-radius:               10px;
+}
+
+textbox {
+    padding:                     15px;
+    margin:                      0px;
+    border-radius:               0px;
+    background-color:            @bg-col-light;
+    text-color:                  @fg-col;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+
+error-message {
+    padding:                     15px;
+    border-radius:               20px;
+    background-color:            @bg-col;
+    text-color:                  @fg-col2;
+}

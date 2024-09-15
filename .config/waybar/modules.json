@@ -103,6 +103,13 @@
     "tooltip": false,
     "on-click": "exec rofi -show drun"
   },
+  "custom/clipboard": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh",
+    "on-click-right": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh -d",
+    "on-click-middle": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh -c",
+  },
   "custom/notification": {
     "tooltip": false,
     "format": "{icon}",

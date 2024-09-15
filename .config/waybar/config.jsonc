@@ -30,6 +30,7 @@
       "privacy",
       "network",
       "pulseaudio",
+      "custom/clipboard",
       "custom/notification",
       "custom/logout"
     ]
