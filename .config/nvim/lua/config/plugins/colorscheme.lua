@@ -13,10 +13,12 @@ return {
           dap = true,
           dap_ui = true,
           indent_blankline = true,
+          markdown = true,
           mason = true,
           notify = true,
           telescope = true,
           treesitter = true,
+          treesitter_context = true,
           which_key = true,
         },
       }
