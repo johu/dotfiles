@@ -1,3 +1,4 @@
+[general]
 import = [
 	"~/.config/alacritty/themes/catppuccin-mocha.toml"
 ]
@@ -5,8 +6,8 @@ import = [
 [env]
 TERM = "xterm-256color"
 
-[shell]
-program = "/usr/bin/zsh"
+[terminal]
+shell = "/usr/bin/zsh"
 
 [window]
 padding.x = 10
