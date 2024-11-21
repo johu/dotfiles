@@ -37,6 +37,8 @@ export WINEPREFIX="$XDG_DATA_HOME/wineprefixes/default"
 export WGETRC="$XDG_CONFIG_HOME/wgetrc"
 export ICEAUTHORITY="$XDG_CACHE_HOME"/ICEauthority
 export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
+export GOPATH="$XDG_DATA_HOME"/go
+export GOMODCACHE="$XDG_CACHE_HOME"/go/mod
 export MYSQL_HISTFILE="$XDG_DATA_HOME"/mysql_history
 export CUDA_CACHE_PATH="$XDG_CACHE_HOME"/nv
 export AWS_SHARED_CREDENTIALS_FILE="$XDG_CONFIG_HOME"/aws/credentials
