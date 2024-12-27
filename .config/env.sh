@@ -11,7 +11,7 @@ export XDG_STATE_HOME="$HOME/.local/state"
 
 # default programs
 export EDITOR="nvim"
-export TERMINAL="alacritty"
+export TERMINAL="ghostty"
 export BROWSER="firefox"
 
 # dotfile management
