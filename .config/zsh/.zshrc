@@ -16,12 +16,12 @@ fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # plugins
+zinit light Aloxaf/fzf-tab
 zinit ice depth=1;zinit light romkatv/powerlevel10k
 zinit light kazhala/dotbare
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
 zinit light zpm-zsh/colors
 zinit light zpm-zsh/colorize
 
@@ -30,7 +30,7 @@ zinit snippet OMZP::gpg-agent
 zinit snippet OMZP::sudo
 
 # load completions
-autoload -U compinit && compinit
+autoload -Uz compinit && compinit
 
 # to customize prompt, run `p10k configure` or edit p10k.zsh.
 [[ ! -f ~/.config/zsh/themes/p10k.zsh ]] || source ~/.config/zsh/themes/p10k.zsh
@@ -83,6 +83,6 @@ eval $(tmuxifier init -)
 eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 eval $(fzf --zsh)
-eval $(zoxide init --cmd cd zsh)
+eval "$(zoxide init --cmd cd zsh)"
 
 source ~/.config/zsh/plugins/fzf.plugin.zsh
