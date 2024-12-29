@@ -77,6 +77,7 @@ alias ll="ls -l"
 alias la="ls -la"
 alias vim="nvim"
 alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
+alias wget="wget --hsts-file=$XDG_CACHE_HOME/wget-hsts"
 
 # shell integrations
 eval $(tmuxifier init -)
