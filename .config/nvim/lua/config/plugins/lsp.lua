@@ -73,6 +73,7 @@ return {
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
+      local util = require 'lspconfig/util'
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -84,7 +85,6 @@ return {
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         -- clangd = {},
-        -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -113,6 +113,21 @@ return {
         bashls = {
           cmd = { 'bash-language-server', 'start' },
           filetypes = { 'sh', 'zsh' },
+          autostart = false,
+        },
+        gopls = {
+          cmd = { 'gopls' },
+          filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
+          root_dir = util.root_pattern('go.work', 'go.mod', '.git'),
+          settings = {
+            gopls = {
+              completeUnimported = true,
+              usePlaceholders = true,
+              analyses = {
+                unusedparams = true,
+              },
+            },
+          },
         },
         marksman = {},
       }
@@ -141,6 +156,8 @@ return {
         'marksman',
         'markdownlint-cli2',
         'markdown-toc',
+        -- go
+        'gopls',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
