@@ -1,5 +1,7 @@
 auto-update = off
 
+command = /usr/bin/zsh
+
 keybind = super+shift+r=reload_config
 
 shell-integration = zsh
