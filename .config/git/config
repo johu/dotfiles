@@ -1,5 +1,5 @@
 [user]
-	email = johu@gmx.de
+	email = johannes.huber@hmmh.de
 	name = "Johannes Huber"
 	signingkey = 7ED0D3033AAC3C4A3143FDF8457440B7FDF4F788
 [color]
@@ -44,3 +44,8 @@
 	directory = /var/db/repos/gentoo
 [http]
 	postBuffer = 157286400
+[core]
+	autocrlf = input
+	whitespace = trailing-space,space-before-tab
+[apply]
+	whitespace = fix
