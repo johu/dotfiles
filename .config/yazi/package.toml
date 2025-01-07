@@ -1,0 +1,5 @@
+[plugin]
+deps = [{ use = "AnirudhG07/rich-preview", rev = "8be4d27" }]
+
+[flavor]
+deps = [{ use = "yazi-rs/flavors:catppuccin-mocha", rev = "fc8eeaa" }]

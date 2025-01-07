@@ -1,0 +1,19 @@
+[manager]
+ratio = [2, 3, 3]
+linemode = "size"
+
+[preview]
+max_width = 1200
+max_height = 1000
+image_delay = 10
+
+[plugin]
+prepend_previewers = [
+    { name = "*.csv", run = "rich-preview"}, # for csv files
+    { name = "*.md", run = "rich-preview" }, # for markdown (.md) files
+    { name = "*.rst", run = "rich-preview"}, # for restructured text (.rst) files
+    { name = "*.ipynb", run = "rich-preview"}, # for jupyter notebooks (.ipynb)
+    { name = "*.json", run = "rich-preview"}, # for json (.json) files
+    { name = "*.xml", run = "rich-preview"}, # for json (.json) files
+    { name = "*.ebuild", run = "rich-preview"}, # for json (.json) files
+]
