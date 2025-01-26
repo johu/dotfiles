@@ -1,8 +1,8 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of .zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# install oh my posh if it doesn't exist
+BIN_DIR="${XDG_BIN_HOME:-$HOME:/.local/bin}"
+if [[ ! -e "${BIN_DIR}/oh-my-posh" ]]; then
+  mkdir -p "${BIN_DIR}"
+  curl -s https://ohmyposh.dev/install.sh | bash -s -- -d ${BIN_DIR} >/dev/null
 fi
 
 # download plugin manager if it doesn't exist
@@ -17,7 +17,6 @@ source "${ZINIT_HOME}/zinit.zsh"
 
 # plugins
 zinit light Aloxaf/fzf-tab
-zinit ice depth=1;zinit light romkatv/powerlevel10k
 zinit light kazhala/dotbare
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
@@ -32,8 +31,8 @@ zinit snippet OMZP::sudo
 # load completions
 autoload -Uz compinit && compinit
 
-# to customize prompt, run `p10k configure` or edit p10k.zsh.
-[[ ! -f ~/.config/zsh/themes/p10k.zsh ]] || source ~/.config/zsh/themes/p10k.zsh
+# load oh my posh
+eval "$(oh-my-posh -c $XDG_CONFIG_HOME/ohmyposh/config.toml init zsh)"
 
 # keybindings
 bindkey -e
