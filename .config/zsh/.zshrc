@@ -16,6 +16,7 @@ fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # plugins
+zinit light jeffreytse/zsh-vi-mode
 zinit light Aloxaf/fzf-tab
 zinit light kazhala/dotbare
 zinit light zsh-users/zsh-syntax-highlighting
@@ -35,10 +36,7 @@ autoload -Uz compinit && compinit
 eval "$(oh-my-posh -c $XDG_CONFIG_HOME/ohmyposh/config.toml init zsh)"
 
 # keybindings
-bindkey -e
-bindkey '^p' history-search-backward
-bindkey '^n' history-search-forward
-bindkey '^[w' kill-region
+bindkey -v
 
 # history setup
 HISTFILE=$HOME/.config/zsh/.zhistory
