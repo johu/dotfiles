@@ -1,5 +1,9 @@
-[plugin]
-deps = [{ use = "AnirudhG07/rich-preview", rev = "8be4d27" }]
+[[plugin.deps]]
+use = "AnirudhG07/rich-preview"
+rev = "8be4d27"
+hash = "c9a3d0731e7d7340e2c6d6126b1f3aa3"
 
-[flavor]
-deps = [{ use = "yazi-rs/flavors:catppuccin-mocha", rev = "fc8eeaa" }]
+[[flavor.deps]]
+use = "yazi-rs/flavors:catppuccin-mocha"
+rev = "fc8eeaa"
+hash = "407710c2af9621a8351453e637d6c870"
