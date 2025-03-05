@@ -27,6 +27,7 @@
   "group/system": {
     "orientation": "horizontal",
     "modules": [
+      "tray",
       "privacy",
       "network",
       "pulseaudio",
