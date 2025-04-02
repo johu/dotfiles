@@ -7,6 +7,9 @@ local keymap = vim.keymap
 keymap.set('i', 'jk', '<ESC>', { desc = 'Exit instert mode with jk' })
 keymap.set('n', 'x', '"_x') -- delete without saving in buffer
 keymap.set('n', '<ESC>', ':nohlsearch<CR>')
+keymap.set('n', '<leader><leader>x', '<cmd>source %<CR>')
+keymap.set('n', '<leader>x', ':.lua<CR>')
+keymap.set('v', '<leader>x', ':lua<CR>')
 
 -- numbers
 keymap.set('n', '<leader>+', '<C-a>', { desc = 'Increment number' })

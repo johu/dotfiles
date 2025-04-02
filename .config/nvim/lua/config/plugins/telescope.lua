@@ -34,15 +34,30 @@ return {
           },
         },
       },
+      extensions = {
+        fzf = {},
+      },
     }
 
     telescope.load_extension 'fzf'
 
+    local functions = require 'telescope.builtin'
     local keymap = vim.keymap
-    keymap.set('n', '<leader>ff', '<cmd>Telescope find_files<cr>', { desc = 'Fuzzy find files in cwd' })
-    keymap.set('n', '<leader>fr', '<cmd>Telescope oldfiles<cr>', { desc = 'Fuzzy find recent files' })
-    keymap.set('n', '<leader>fs', '<cmd>Telescope live_grep<cr>', { desc = 'Find string in cwd' })
-    keymap.set('n', '<leader>fc', '<cmd>Telescope grep_string<cr>', { desc = 'Find string under cursor in cwd' })
+    keymap.set('n', '<leader>fc', functions.grep_string, { desc = 'Find string under cursor in cwd' })
+    keymap.set('n', '<leader>ff', functions.find_files, { desc = 'Find files in cwd' })
+    keymap.set('n', '<leader>fh', functions.help_tags, { desc = 'Find help' })
+    keymap.set('n', '<leader>fr', functions.oldfiles, { desc = 'Find recent files' })
+    keymap.set('n', '<leader>fs', functions.live_grep, { desc = 'Find string in cwd' })
     keymap.set('n', '<leader>ft', '<cmd>TodoTelescope<cr>', { desc = 'Find todos' })
+    keymap.set('n', '<leader>en', function()
+      functions.find_files {
+        cwd = vim.fn.stdpath 'config',
+      }
+    end, { desc = 'Edit neovim config' })
+    keymap.set('n', '<leader>ep', function()
+      functions.find_files {
+        cwd = vim.fs.joinpath(vim.fn.stdpath 'data', 'lazy'),
+      }
+    end, { desc = 'Edit packages' })
   end,
 }
