@@ -54,6 +54,9 @@ opt.updatetime = 250
 -- displays which-key popup sooner
 opt.timeoutlen = 300
 
+-- rounded borders in floating windows
+-- vim.o.winborder = 'rounded'
+
 -- highlight on yank
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
@@ -63,28 +66,19 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- diagnostics
+vim.diagnostic.config {
+  -- Use the default configuration
+  virtual_lines = true,
+
+  -- Alternatively, customize specific options
+  -- virtual_lines = {
+  --  -- Only show virtual line diagnostics for the current cursor line
+  --  current_line = true,
+  -- },
+}
+
 -- file type detection
 vim.filetype.add {
   pattern = { ['.*/hypr/.*%.conf'] = 'hyprlang' },
 }
-
--- TODO: move to lsp config, if supported at some point
-vim.api.nvim_create_autocmd({ 'BufEnter' }, {
-  pattern = { 'build.sh', '*.subpackage.sh', 'PKGBUILD', '*.install', 'makepkg.conf', '*.ebuild', '*.eclass', 'color.map', 'make.conf' },
-  callback = function()
-    vim.lsp.start {
-      name = 'termux',
-      cmd = { 'termux-language-server' },
-    }
-  end,
-})
-
-local markdown_augroup = vim.api.nvim_create_augroup('Markdown', { clear = true })
-vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead' }, {
-  group = markdown_augroup,
-  pattern = { '*.md' },
-  callback = function()
-    vim.bo.textwidth = 80
-    vim.bo.formatoptions = 'tcqawjp]'
-  end,
-})
