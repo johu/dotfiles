@@ -23,7 +23,7 @@ return {
         },
       }
 
-      vim.cmd.colorscheme 'catppuccin'
+      -- vim.cmd.colorscheme 'catppuccin'
     end,
   },
   {
@@ -32,6 +32,16 @@ return {
     opts = { style = 'moon' },
     config = function()
       -- vim.cmd.colorscheme 'tokyonight'
+    end,
+  },
+  {
+    'zaldih/themery.nvim',
+    lazy = false,
+    config = function()
+      require('themery').setup {
+        themes = { 'catppuccin', 'tokyonight' },
+        livePreview = true,
+      }
     end,
   },
   {
