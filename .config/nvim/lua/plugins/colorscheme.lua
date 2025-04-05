@@ -27,6 +27,14 @@ return {
     end,
   },
   {
+    'folke/tokyonight.nvim',
+    lazy = false,
+    opts = { style = 'moon' },
+    config = function()
+      -- vim.cmd.colorscheme 'tokyonight'
+    end,
+  },
+  {
     'rachartier/tiny-devicons-auto-colors.nvim',
     dependencies = {
       'nvim-tree/nvim-web-devicons',
