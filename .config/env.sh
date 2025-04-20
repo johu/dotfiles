@@ -14,6 +14,7 @@ export XDG_BIN_HOME="$HOME/.local/bin"
 export EDITOR="nvim"
 export TERMINAL="ghostty"
 export BROWSER="firefox"
+export MANPAGER='nvim +Man!'
 
 # dotfile management
 export DOTBARE_DIR="$HOME/.cfg"
