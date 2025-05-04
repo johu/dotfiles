@@ -11,12 +11,7 @@ return {
     'iamcco/markdown-preview.nvim',
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
     ft = { 'markdown' },
-    -- https://github.com/iamcco/markdown-preview.nvim/issues/695
-    -- build = function()
-    -- require('lazy').load { plugins = { 'markdown-preview.nvim' } }
-    -- vim.fn['mkdp#util#install']()
-    -- end,
-    build = 'cd app && npm install',
+    build = ':call mkdp#util#install()',
     keys = {
       {
         '<leader>cp',
