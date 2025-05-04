@@ -26,3 +26,12 @@ keymap.set('n', '<leader>tx', ':tabclose<CR>', { desc = 'Close current tab' })
 keymap.set('n', '<leader>tn', ':tabn<CR>', { desc = 'Go to next tab' })
 keymap.set('n', '<leader>tp', ':tabp<CR>', { desc = 'Go to previous tab' })
 keymap.set('n', '<leader>tf', '<cmd>tabnew %<CR>', { desc = 'Open current buffer in new tab' })
+
+-- remaps for centering
+vim.keymap.set('n', '<C-d>', '<C-d>zz')
+vim.keymap.set('n', '<C-u>', '<C-u>zz')
+vim.keymap.set('n', 'n', 'nzzzv')
+vim.keymap.set('n', 'N', 'Nzzzv')
+
+-- remap for keeping yank content after paste
+vim.keymap.set('x', '<leader>p', [["_dP]])
