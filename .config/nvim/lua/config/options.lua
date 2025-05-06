@@ -57,6 +57,10 @@ opt.timeoutlen = 300
 -- rounded borders in floating windows
 -- vim.o.winborder = 'rounded'
 
+-- spell checking
+opt.spelllang = { 'en_us' }
+opt.spell = true
+
 -- highlight on yank
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
