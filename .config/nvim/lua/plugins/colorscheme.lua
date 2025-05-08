@@ -34,6 +34,7 @@ return {
       -- vim.cmd.colorscheme 'tokyonight'
     end,
   },
+  -- color scheme chooser
   {
     'zaldih/themery.nvim',
     lazy = false,
@@ -44,6 +45,8 @@ return {
       }
     end,
   },
+  -- TODO: adjust color based on selected theme?
+  -- INFO: hard coded theme catppuccin
   {
     'rachartier/tiny-devicons-auto-colors.nvim',
     dependencies = {
