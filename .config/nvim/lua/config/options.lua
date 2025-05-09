@@ -8,19 +8,25 @@ opt.swapfile = false
 -- save undo history
 opt.undofile = true
 
--- line numbers
-opt.relativenumber = true
+-- line numbers & sign column
 opt.number = true
+opt.relativenumber = true
+opt.signcolumn = 'yes'
+
+-- mode handled by status line
+opt.showmode = false
 
 -- mouse support (can be useful for resizing splits for example)
 opt.mouse = 'a'
 
 -- tabs & indentation
 opt.tabstop = 2
-opt.shiftwidth = 2
 opt.softtabstop = 2
+opt.shiftwidth = 2
 opt.expandtab = true
 opt.autoindent = true
+opt.smarttab = true
+opt.smartindent = true
 opt.wrap = false
 opt.breakindent = true
 
@@ -35,7 +41,6 @@ opt.scrolloff = 10
 -- colors
 opt.termguicolors = true
 opt.background = 'dark'
-opt.signcolumn = 'yes'
 
 -- keys
 opt.backspace = 'indent,eol,start'
@@ -46,6 +51,10 @@ opt.clipboard:append 'unnamedplus'
 -- splitting
 opt.splitright = true
 opt.splitbelow = true
+
+-- whitespace characters
+opt.list = true
+opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
 -- decrease update time
 opt.updatetime = 250
