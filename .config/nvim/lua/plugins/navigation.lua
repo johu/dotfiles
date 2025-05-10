@@ -99,17 +99,6 @@ return {
     config = function()
       local telescope = require 'telescope'
       local actions = require 'telescope.actions'
-      local transform_mod = require('telescope.actions.mt').transform_mod
-
-      local trouble = require 'trouble'
-      local trouble_telescope = require 'trouble.sources.telescope'
-
-      -- or create your custom action
-      local custom_actions = transform_mod {
-        open_trouble_qflist = function(prompt_bufnr)
-          trouble.toggle 'quickfix'
-        end,
-      }
 
       telescope.setup {
         defaults = {
@@ -118,8 +107,6 @@ return {
             i = {
               ['<c-k>'] = actions.move_selection_previous, -- move to prev result
               ['<c-j>'] = actions.move_selection_next, -- move to next result
-              ['<c-q>'] = actions.send_selected_to_qflist + custom_actions.open_trouble_qflist,
-              ['<c-t>'] = trouble_telescope.open,
             },
           },
         },
@@ -149,20 +136,5 @@ return {
         }
       end, { desc = 'edit packages' })
     end,
-  },
-  -- todo & co navigation
-  -- TODO: check if this can be dropped, fzf-lua maybe more useful
-  {
-    'folke/trouble.nvim',
-    dependencies = { 'nvim-tree/nvim-web-devicons', 'folke/todo-comments.nvim' },
-    opts = {},
-    keys = {
-      { '<leader>xx', '<cmd>TroubleToggle<CR>', desc = 'Open/close trouble list' },
-      { '<leader>xw', '<cmd>TroubleToggle workspace_diagnostics<CR>', desc = 'Open trouble workspace diagnostics' },
-      { '<leader>xd', '<cmd>TroubleToggle document_diagnostics<CR>', desc = 'Open trouble document diagnostics' },
-      { '<leader>xq', '<cmd>TroubleToggle quickfix<CR>', desc = 'Open trouble quickfix list' },
-      { '<leader>xl', '<cmd>TroubleToggle loclist<CR>', desc = 'Open trouble location list' },
-      { '<leader>xt', '<cmd>TodoTrouble<CR>', desc = 'Open todos in trouble' },
-    },
   },
 }
