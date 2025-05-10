@@ -57,10 +57,26 @@ return {
   -- file explorer
   {
     'stevearc/oil.nvim',
-    config = function()
+    ---@module 'oil'
+    dependencies = { { 'echasnovski/mini.icons', opts = {} } },
+    --@type oil.SetupOpts
+    opts = {
+      view_options = {
+        show_hidden = true,
+      },
+    },
+    lazy = false,
+    keys = function()
       local oil = require 'oil'
-      oil.setup()
-      vim.keymap.set('n', '-', oil.toggle_float, {})
+      oil.setup {}
+      local keys = {
+        {
+          '-',
+          oil.open,
+          { desc = 'Open file explorer' },
+        },
+      }
+      return keys
     end,
   },
   -- fuzzy finder
