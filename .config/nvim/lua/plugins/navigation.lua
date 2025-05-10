@@ -10,6 +10,13 @@ return {
       { '<leader>sm', '<cmd>MaximizerToggle<CR>', desc = 'Maximize/minimize a split' },
     },
   },
+  -- auto project root detection
+  {
+    'ahmedkhalf/project.nvim',
+    main = 'project_nvim',
+    opts = {},
+    priority = 900,
+  },
   -- quick buffer navigation
   {
     'ThePrimeagen/harpoon',
