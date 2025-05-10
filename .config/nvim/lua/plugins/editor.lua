@@ -14,6 +14,11 @@ return {
       }
     end,
   },
+  -- auto indent (based on style in the file if no configuration is found like editorconfig etc)
+  {
+    'nmac427/guess-indent.nvim',
+    opts = {},
+  },
   -- indent line
   {
     'lukas-reineke/indent-blankline.nvim',
