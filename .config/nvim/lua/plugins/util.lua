@@ -7,6 +7,16 @@ return {
       vim.g.startuptime_tries = 10
     end,
   },
+  -- show pressed keys
+  {
+    'nvzone/showkeys',
+    cmd = 'ShowkeysToggle',
+    opts = {
+      timeout = 1,
+      maxkeys = 5,
+    },
+    enabled = false,
+  },
   -- motions game
   {
     'ThePrimeagen/vim-be-good',
