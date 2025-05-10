@@ -12,7 +12,7 @@ return {
   },
   -- auto project root detection
   {
-    'ahmedkhalf/project.nvim',
+    'Spelis/project.nvim',
     main = 'project_nvim',
     opts = {},
     priority = 900,
