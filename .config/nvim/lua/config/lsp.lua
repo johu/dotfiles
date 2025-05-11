@@ -78,13 +78,3 @@ vim.lsp.enable {
   'marksman',
   -- 'termux',
 }
-
-local markdown_augroup = vim.api.nvim_create_augroup('Markdown', { clear = true })
-vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead' }, {
-  group = markdown_augroup,
-  pattern = { '*.md' },
-  callback = function()
-    vim.bo.textwidth = 80
-    vim.bo.formatoptions = 'tcqawjp]'
-  end,
-})
