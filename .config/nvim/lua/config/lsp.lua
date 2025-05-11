@@ -6,16 +6,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
       vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
     end
 
-    local functions = require 'telescope.builtin'
+    local fzf = require 'fzf-lua'
     map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
     map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
-    map('grr', functions.lsp_references, '[G]oto [R]eferences')
-    map('gri', functions.lsp_implementations, '[G]oto [I]mplementation')
-    map('grd', functions.lsp_definitions, '[G]oto [D]efinition')
+    map('grr', fzf.lsp_references, '[G]oto [R]eferences')
+    map('gri', fzf.lsp_implementations, '[G]oto [I]mplementation')
+    map('grd', fzf.lsp_definitions, '[G]oto [D]efinition')
     map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-    map('gO', functions.lsp_document_symbols, 'Open Document Symbols')
-    map('gW', functions.lsp_dynamic_workspace_symbols, 'Open Workspace Symbols')
-    map('grt', functions.lsp_type_definitions, '[G]oto [T]ype Definition')
+    map('gO', fzf.lsp_document_symbols, 'Open Document Symbols')
+    map('gW', fzf.lsp_live_workspace_symbols, 'Open Workspace Symbols')
+    map('grt', fzf.lsp_typedefs, '[G]oto [T]ype Definition')
 
     -- This function resolves a difference between neovim nightly (version 0.11) and stable (version 0.10)
     local function client_supports_method(client, method, bufnr)

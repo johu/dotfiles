@@ -30,18 +30,18 @@ return {
       },
     },
     keys = function()
+      local harpoon = require 'harpoon'
       local keys = {
         {
           '<leader>H',
           function()
-            require('harpoon'):list():add()
+            harpoon:list():add()
           end,
           desc = 'Harpoon File',
         },
         {
           '<leader>h',
           function()
-            local harpoon = require 'harpoon'
             harpoon.ui:toggle_quick_menu(harpoon:list())
           end,
           desc = 'Harpoon Quick Menu',
@@ -53,7 +53,7 @@ return {
         table.insert(keys, {
           '<C-' .. shortcut .. '>',
           function()
-            require('harpoon'):list():select(i)
+            harpoon:list():select(i)
           end,
           desc = 'Harpoon to File ' .. i,
         })
@@ -88,53 +88,123 @@ return {
   },
   -- fuzzy finder
   {
-    'nvim-telescope/telescope.nvim',
-    branch = '0.1.x',
+    'ibhagwan/fzf-lua',
     dependencies = {
-      'nvim-lua/plenary.nvim',
-      { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
-      'nvim-tree/nvim-web-devicons',
+      'echasnovski/mini.icons',
       'folke/todo-comments.nvim',
     },
-    config = function()
-      local telescope = require 'telescope'
-      local actions = require 'telescope.actions'
-
-      telescope.setup {
-        defaults = {
-          path_display = { 'smart' },
-          mappings = {
-            i = {
-              ['<c-k>'] = actions.move_selection_previous, -- move to prev result
-              ['<c-j>'] = actions.move_selection_next, -- move to next result
-            },
-          },
+    opts = {},
+    keys = function()
+      local fzf = require 'fzf-lua'
+      local keys = {
+        {
+          '<leader>ff',
+          function()
+            fzf.files()
+          end,
+          desc = '[F]ind [F]iles',
         },
-        extensions = {
-          fzf = {},
+        {
+          '<leader>fo',
+          function()
+            fzf.oldfiles()
+          end,
+          desc = '[F]ind [O]ld Files',
+        },
+        {
+          '<leader>fs',
+          function()
+            fzf.live_grep()
+          end,
+          desc = '[F]ind [S]tring',
+        },
+        {
+          '<leader>fw',
+          function()
+            fzf.grep_cword()
+          end,
+          desc = '[F]ind current [W]ord',
+        },
+        {
+          '<leader>fW',
+          function()
+            fzf.grep_cWORD()
+          end,
+          desc = '[F]ind current [W]ORD',
+        },
+        {
+          '<leader>fh',
+          function()
+            fzf.helptags()
+          end,
+          desc = '[F]ind [H]elp',
+        },
+        {
+          '<leader>fk',
+          function()
+            fzf.keymaps()
+          end,
+          desc = '[F]ind [K]eymaps',
+        },
+        {
+          '<leader>fb',
+          function()
+            fzf.buffers()
+          end,
+          desc = '[F]ind [B]uffer',
+        },
+        {
+          '<leader>fd',
+          function()
+            fzf.diagnostics_document()
+          end,
+          desc = '[F]ind [D]iagnostics',
+        },
+        {
+          '<leader>fr',
+          function()
+            fzf.resume()
+          end,
+          desc = '[F]ind [R]esume',
+        },
+        {
+          '<leader>ft',
+          '<Cmd>TodoFzfLua<CR>',
+          function()
+            fzf.builtin()
+          end,
+          desc = '[F]ind [T]odo',
+        },
+        {
+          '<leader>fu',
+          function()
+            fzf.builtin()
+          end,
+          desc = '[F]ind B[u]iltin',
+        },
+        {
+          '<leader>/',
+          function()
+            fzf.lgrep_curbuf()
+          end,
+          desc = '[/] Find String in current Buffer',
+        },
+        {
+          '<leader>ec',
+          function()
+            fzf.files { cwd = vim.fn.stdpath 'config' }
+          end,
+          desc = '[E]dit Neovim [C]onfig',
+        },
+        {
+          '<leader>ep',
+          function()
+            fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'config', 'lazy') }
+          end,
+          desc = '[E]dit [P]ackages',
         },
       }
-
-      telescope.load_extension 'fzf'
-
-      local functions = require 'telescope.builtin'
-      local keymap = vim.keymap
-      keymap.set('n', '<leader>fc', functions.grep_string, { desc = 'find string under cursor in cwd' })
-      keymap.set('n', '<leader>ff', functions.find_files, { desc = 'find files in cwd' })
-      keymap.set('n', '<leader>fh', functions.help_tags, { desc = 'find help' })
-      keymap.set('n', '<leader>fr', functions.oldfiles, { desc = 'find recent files' })
-      keymap.set('n', '<leader>fs', functions.live_grep, { desc = 'find string in cwd' })
-      keymap.set('n', '<leader>ft', '<cmd>todotelescope<cr>', { desc = 'find todos' })
-      keymap.set('n', '<leader>en', function()
-        functions.find_files {
-          cwd = vim.fn.stdpath 'config',
-        }
-      end, { desc = 'edit neovim config' })
-      keymap.set('n', '<leader>ep', function()
-        functions.find_files {
-          cwd = vim.fs.joinpath(vim.fn.stdpath 'data', 'lazy'),
-        }
-      end, { desc = 'edit packages' })
+      return keys
     end,
   },
 }
