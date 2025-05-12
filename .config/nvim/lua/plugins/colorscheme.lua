@@ -53,7 +53,7 @@ return {
   {
     'rachartier/tiny-devicons-auto-colors.nvim',
     dependencies = {
-      'nvim-tree/nvim-web-devicons',
+      'echasnovski/mini.icons',
     },
     event = 'VeryLazy',
     config = function()

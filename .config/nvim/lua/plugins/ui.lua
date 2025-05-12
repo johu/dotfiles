@@ -5,10 +5,21 @@ return {
     'stevearc/dressing.nvim',
     event = 'VeryLazy',
   },
+  -- icon theme
+  {
+    'echasnovski/mini.icons',
+    config = function()
+      local icons = require 'mini.icons'
+      icons.setup()
+      icons.mock_nvim_web_devicons()
+    end,
+  },
   -- top bar
   {
     'akinsho/bufferline.nvim',
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    dependencies = {
+      'echasnovski/mini.icons',
+    },
     version = '*',
     opts = {
       options = {
@@ -20,7 +31,7 @@ return {
   {
     'nvim-lualine/lualine.nvim',
     dependencies = {
-      'nvim-tree/nvim-web-devicons',
+      'echasnovski/mini.icons',
     },
     config = function()
       require('lualine').setup {
@@ -90,7 +101,7 @@ return {
   {
     'goolord/alpha-nvim',
     dependencies = {
-      'nvim-tree/nvim-web-devicons',
+      'echasnovski/mini.icons',
     },
     event = 'VimEnter',
     config = function()
