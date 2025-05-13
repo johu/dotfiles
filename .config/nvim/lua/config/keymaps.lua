@@ -5,7 +5,6 @@ vim.g.maplocalleader = ' '
 local keymap = vim.keymap
 local opts = { noremap = true, silent = true }
 
-keymap.set('i', 'jk', '<ESC>', { desc = 'Exit instert mode with jk' })
 keymap.set('n', 'x', '"_x') -- delete without saving in buffer
 keymap.set('n', '<ESC>', ':nohlsearch<CR>')
 keymap.set('n', '<leader><leader>x', '<cmd>source %<CR>')

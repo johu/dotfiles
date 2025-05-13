@@ -1,4 +1,9 @@
 return {
+  -- escape mapping (key combos like 'jk')
+  {
+    'max397574/better-escape.nvim',
+    opts = {},
+  },
   -- automatically add closing character
   {
     'windwp/nvim-autopairs',
