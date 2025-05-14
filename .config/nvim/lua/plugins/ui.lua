@@ -99,38 +99,34 @@ return {
   },
   -- dashboard
   {
-    'goolord/alpha-nvim',
-    dependencies = {
-      'echasnovski/mini.icons',
+    'snacks.nvim',
+    ---@type snacks.Config
+    opts = {
+      dashboard = {
+        preset = {
+          header = [[
+
+          ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗         
+          ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║         
+          ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║         
+          ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║         
+          ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║         
+          ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝         
+
+          ]],
+          ---@type snacks.dashboard.Item[]
+          keys = {
+            { icon = ' ', key = 'f', desc = 'Find File', action = ":lua Snacks.dashboard.pick('files')" },
+            { icon = ' ', key = 'n', desc = 'New File', action = ':ene | startinsert' },
+            { icon = ' ', key = 'g', desc = 'Find Text', action = ":lua Snacks.dashboard.pick('live_grep')" },
+            { icon = ' ', key = 'r', desc = 'Recent Files', action = ":lua Snacks.dashboard.pick('oldfiles')" },
+            { icon = ' ', key = 'c', desc = 'Config', action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
+            { icon = ' ', key = 's', desc = 'Restore Session', section = 'session' },
+            { icon = '󰒲 ', key = 'l', desc = 'Lazy', action = ':Lazy' },
+            { icon = ' ', key = 'q', desc = 'Quit', action = ':qa' },
+          },
+        },
+      },
     },
-    event = 'VimEnter',
-    config = function()
-      local alpha = require 'alpha'
-      local dashboard = require 'alpha.themes.dashboard'
-
-      dashboard.section.header.val = {
-        '                                                     ',
-        '  ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗ ',
-        '  ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║ ',
-        '  ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║ ',
-        '  ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║ ',
-        '  ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║ ',
-        '  ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝ ',
-        '                                                     ',
-      }
-
-      dashboard.section.buttons.val = {
-        dashboard.button('e', '  > New File', '<cmd>ene<CR>'),
-        dashboard.button('SPC ff', '󰱼  > Find File', '<cmd>Telescope find_files<CR>'),
-        dashboard.button('SPC fs', '  > Find Word', '<cmd>Telescope live_grep<CR>'),
-        dashboard.button('SPC wr', '󰁯  > Restore Session For Current Directory', '<cmd>SessionRestore<CR>'),
-        dashboard.button('q', '  > Quit NVIM', '<cmd>qa<CR>'),
-      }
-
-      alpha.setup(dashboard.opts)
-
-      -- disable folding on alpha buffer
-      vim.cmd [[autocmd FileType alpha setlocal nofoldenable]]
-    end,
   },
 }
