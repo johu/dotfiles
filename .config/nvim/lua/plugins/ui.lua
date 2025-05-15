@@ -104,13 +104,6 @@ return {
     opts = {
       dashboard = {
         preset = {
-          header = [[
-███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
-████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
-██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
-██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
-██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
-╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝]],
           ---@type snacks.dashboard.Item[]
           keys = {
             { icon = ' ', key = 'f', desc = 'Find File', action = ":lua Snacks.dashboard.pick('files')" },
@@ -124,11 +117,24 @@ return {
           },
         },
         sections = {
-          { section = 'header' },
-          { icon = ' ', title = 'Keymaps', section = 'keys', indent = 2, padding = 1 },
-          { icon = ' ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 1 },
-          { icon = ' ', title = 'Projects', section = 'projects', indent = 2, padding = 1 },
-          { section = 'startup' },
+          {
+            -- ascii experiment
+            -- {
+            --   pane = 1,
+            --   section = 'terminal',
+            --   cmd = 'ascii-image-converter -C -c --dimensions 40,20 ~/.config/images/neovim-mark.png; sleep .1',
+            --   height = 20,
+            --   padding = 5,
+            -- },
+            {
+              pane = 1,
+              { section = 'header' },
+              { icon = ' ', title = 'Keymaps', section = 'keys', indent = 2, padding = 1 },
+              { icon = ' ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 1 },
+              { icon = ' ', title = 'Projects', section = 'projects', indent = 2, padding = 1 },
+              { section = 'startup' },
+            },
+          },
         },
       },
     },
