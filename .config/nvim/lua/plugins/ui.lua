@@ -1,11 +1,12 @@
 return {
-  -- TODO: deprecated upstream -> replace /w snacks.nvim
   -- general ui improvement
   {
-    'stevearc/dressing.nvim',
-    event = 'VeryLazy',
+    'snacks.nvim',
+    ---@type snacks.Config
+    opts = {
+      input = { enabled = true },
+    },
   },
-  -- icon theme
   {
     'echasnovski/mini.icons',
     config = function()
