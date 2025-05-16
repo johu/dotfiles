@@ -7,6 +7,7 @@ return {
       input = { enabled = true },
     },
   },
+  -- icon theme
   {
     'echasnovski/mini.icons',
     config = function()

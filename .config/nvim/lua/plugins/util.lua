@@ -1,12 +1,4 @@
 return {
-  -- startup time profiler
-  {
-    'dstein64/vim-startuptime',
-    cmd = 'StartupTime',
-    config = function()
-      vim.g.startuptime_tries = 10
-    end,
-  },
   -- show pressed keys
   {
     'nvzone/showkeys',
