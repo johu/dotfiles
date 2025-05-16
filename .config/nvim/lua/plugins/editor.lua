@@ -26,11 +26,19 @@ return {
   },
   -- indent line
   {
-    'lukas-reineke/indent-blankline.nvim',
+    'snacks.nvim',
     event = { 'BufReadPre', 'BufNewFile' },
-    main = 'ibl',
+    ---@type snacks.Config
     opts = {
-      indent = { char = '┊' },
+      ---@class snacks.indent.Config
+      indent = {
+        enabled = true,
+        -- TODO: check why the char is not working
+        char = '┊',
+        animate = {
+          enabled = false,
+        },
+      },
     },
   },
   -- comments
