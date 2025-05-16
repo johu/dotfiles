@@ -21,7 +21,6 @@ return {
       { 'mason-org/mason.nvim', opts = {} },
       'mason-org/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
-      { 'j-hui/fidget.nvim', opts = {} },
     },
     config = function()
       local capabilities = require('blink.cmp').get_lsp_capabilities()
