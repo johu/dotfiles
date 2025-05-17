@@ -55,11 +55,27 @@ return {
   {
     'folke/which-key.nvim',
     event = 'VeryLazy',
-    init = function()
-      vim.o.timeout = true
-      vim.o.timeoutlen = 500
-    end,
-    opts = {},
+    opts_extend = { 'spec' },
+    opts = {
+      spec = {
+        {
+          mode = { 'n', 'v' },
+          { '<leader>f', group = 'find' },
+          { '<leader>q', group = 'quit/session' },
+          { '[', group = 'prev' },
+          { ']', group = 'next' },
+          { 'g', group = 'goto' },
+          {
+            '<leader>b',
+            group = 'buffer',
+            expand = function()
+              return require('which-key.extras').expand.buf()
+            end,
+          },
+          { 'gx', desc = 'Open with system app' },
+        },
+      },
+    },
     keys = {
       {
         '<leader>?',
