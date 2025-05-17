@@ -8,17 +8,30 @@ return {
         flavour = 'mocha',
         transparent_background = true,
         integrations = {
-          alpha = true,
           blink_cmp = true,
           cmp = false,
           dap = true,
           dap_ui = true,
+          dashboard = true,
           fzf = true,
           harpoon = true,
-          indent_blankline = true,
+          indent_blankline = { enabled = true },
+          lsp_trouble = true,
           markdown = true,
           mason = true,
+          mini = true,
+          native_lsp = {
+            enabled = true,
+            underlines = {
+              errors = { 'undercurl' },
+              hints = { 'undercurl' },
+              warnings = { 'undercurl' },
+              information = { 'undercurl' },
+            },
+          },
+          noice = true,
           notify = true,
+          snacks = true,
           telescope = false,
           treesitter = true,
           treesitter_context = true,
@@ -33,9 +46,6 @@ return {
     'folke/tokyonight.nvim',
     lazy = false,
     opts = { style = 'moon' },
-    config = function()
-      -- vim.cmd.colorscheme 'tokyonight'
-    end,
   },
   -- color scheme chooser
   {
