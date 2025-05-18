@@ -1,17 +1,17 @@
 return {
   {
     'saghen/blink.cmp',
+    version = '1.*',
     dependencies = {
       'rafamadriz/friendly-snippets',
-      'folke/lazydev.nvim',
     },
-    version = '1.*',
+    event = 'InsertEnter',
     --- @module 'blink.cmp'
     --- @type blink.cmp.Config
     opts = {
       keymap = {
-        preset = 'default',
-        ['<CR>'] = { 'accept', 'fallback' },
+        preset = 'enter',
+        ['<C-y>'] = { 'select_and_accept' },
         ['<C-j>'] = { 'select_next', 'fallback' },
         ['<C-k>'] = { 'select_prev', 'fallback' },
       },
@@ -21,7 +21,7 @@ return {
       completion = {
         documentation = {
           auto_show = true,
-          auto_show_delay_ms = 500,
+          auto_show_delay_ms = 200,
         },
       },
       cmdline = {
@@ -30,19 +30,31 @@ return {
         },
       },
       sources = {
-        default = { 'lazydev', 'lsp', 'path', 'snippets', 'buffer' },
-        providers = {
-          lazydev = {
-            name = 'LazyDev',
-            module = 'lazydev.integrations.blink',
-            -- make lazydev completions top priority (see `:h blink.cmp`)
-            score_offset = 100,
-          },
-        },
+        default = { 'lsp', 'path', 'snippets', 'buffer' },
       },
       signature = { enabled = true },
       fuzzy = { implementation = 'prefer_rust_with_warning' },
     },
-    opts_extend = { 'sources.default' },
+    opts_extend = {
+      'sources.completion.enabled_providers',
+      'sources.default',
+    },
+  },
+
+  -- lazydev
+  {
+    'saghen/blink.cmp',
+    opts = {
+      sources = {
+        default = { 'lazydev' },
+        providers = {
+          lazydev = {
+            name = 'LazyDev',
+            module = 'lazydev.integrations.blink',
+            score_offset = 100, -- show at a higher priority than lsp
+          },
+        },
+      },
+    },
   },
 }

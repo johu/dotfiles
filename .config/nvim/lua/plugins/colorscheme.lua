@@ -2,49 +2,45 @@ return {
   {
     'catppuccin/nvim',
     name = 'catppuccin',
-    priority = 1000,
-    config = function()
-      require('catppuccin').setup {
-        flavour = 'mocha',
-        transparent_background = true,
-        integrations = {
-          blink_cmp = true,
-          cmp = false,
-          dap = true,
-          dap_ui = true,
-          dashboard = true,
-          fzf = true,
-          harpoon = true,
-          indent_blankline = { enabled = true },
-          lsp_trouble = true,
-          markdown = true,
-          mason = true,
-          mini = true,
-          native_lsp = {
-            enabled = true,
-            underlines = {
-              errors = { 'undercurl' },
-              hints = { 'undercurl' },
-              warnings = { 'undercurl' },
-              information = { 'undercurl' },
-            },
+    lazy = true,
+    otps =  {
+      flavour = 'mocha',
+      transparent_background = true,
+      integrations = {
+        blink_cmp = true,
+        cmp = false,
+        dap = true,
+        dap_ui = true,
+        dashboard = true,
+        fzf = true,
+        harpoon = true,
+        indent_blankline = { enabled = true },
+        lsp_trouble = true,
+        markdown = true,
+        mason = true,
+        mini = true,
+        native_lsp = {
+          enabled = true,
+          underlines = {
+            errors = { 'undercurl' },
+            hints = { 'undercurl' },
+            warnings = { 'undercurl' },
+            information = { 'undercurl' },
           },
-          noice = true,
-          notify = true,
-          snacks = true,
-          telescope = false,
-          treesitter = true,
-          treesitter_context = true,
-          which_key = true,
         },
-      }
-
-      -- vim.cmd.colorscheme 'catppuccin'
-    end,
+        noice = true,
+        notify = true,
+        snacks = true,
+        telescope = false,
+        treesitter = true,
+        treesitter_context = true,
+        which_key = true,
+      },
+    },
   },
   {
     'folke/tokyonight.nvim',
-    lazy = false,
+    lazy = true,
     opts = { style = 'moon' },
   },
   -- color scheme chooser

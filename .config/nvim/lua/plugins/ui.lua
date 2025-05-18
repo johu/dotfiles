@@ -4,7 +4,9 @@ return {
     'snacks.nvim',
     ---@type snacks.Config
     opts = {
+      bigfile = { enabled = true },
       input = { enabled = true },
+      quickfile = { enabled = true },
     },
   },
   -- icon theme
@@ -19,6 +21,7 @@ return {
   -- top bar
   {
     'akinsho/bufferline.nvim',
+    event = 'VeryLazy',
     dependencies = {
       'echasnovski/mini.icons',
     },
@@ -32,6 +35,7 @@ return {
   -- bottom bar
   {
     'nvim-lualine/lualine.nvim',
+    event = 'VeryLazy',
     dependencies = {
       'echasnovski/mini.icons',
     },

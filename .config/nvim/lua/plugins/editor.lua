@@ -1,9 +1,4 @@
 return {
-  -- escape mapping (key combos like 'jk')
-  {
-    'max397574/better-escape.nvim',
-    opts = {},
-  },
   -- automatically add closing character
   {
     'windwp/nvim-autopairs',
@@ -22,6 +17,7 @@ return {
   -- auto indent (based on style in the file if no configuration is found like editorconfig etc)
   {
     'nmac427/guess-indent.nvim',
+    event = { 'BufReadPre', 'BufNewFile' },
     opts = {},
   },
   -- indent line
@@ -49,7 +45,7 @@ return {
   },
   {
     'folke/todo-comments.nvim',
-    event = { 'BufReadPre', 'BufNewFile' },
+    event = 'VeryLazy',
     dependencies = { 'nvim-lua/plenary.nvim' },
     opts = {},
   },
@@ -63,6 +59,7 @@ return {
   -- color codes colored
   {
     'brenoprata10/nvim-highlight-colors',
+    event = 'VeryLazy',
     opts = {},
   },
 }
