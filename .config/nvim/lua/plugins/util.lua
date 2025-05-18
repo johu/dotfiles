@@ -1,4 +1,15 @@
 return {
+  -- neovim configuration file support
+  {
+    'neovim/nvim-lspconfig',
+    dependencies = {
+      {
+        'folke/neoconf.nvim',
+        cmd = 'Neoconf',
+        opts = {},
+      },
+    },
+  },
   -- show pressed keys
   {
     'nvzone/showkeys',
