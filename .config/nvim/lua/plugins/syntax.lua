@@ -1,11 +1,8 @@
 return {
   {
     'nvim-treesitter/nvim-treesitter',
-    event = { 'BufReadPre', 'BufNewFile' },
+    event = { 'BufReadPre', 'BufNewFile', 'VeryLazy' },
     build = ':TSUpdate',
-    dependencies = {
-      'windwp/nvim-ts-autotag',
-    },
     config = function()
       require('nvim-treesitter.configs').setup {
         auto_install = false,
@@ -74,9 +71,7 @@ return {
   },
   {
     'nvim-treesitter/nvim-treesitter-textobjects',
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter',
-    },
+    event = 'VeryLazy',
     init = function()
       local config = require 'nvim-treesitter.configs'
       config.setup {
@@ -111,5 +106,11 @@ return {
         },
       }
     end,
+  },
+  -- Automatically add closing tags for HTML and JSX
+  {
+    'windwp/nvim-ts-autotag',
+    event = { 'BufReadPre', 'BufNewFile' },
+    opts = {},
   },
 }
