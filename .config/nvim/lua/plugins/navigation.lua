@@ -102,70 +102,70 @@ return {
           function()
             fzf.files()
           end,
-          desc = '[F]ind [F]iles',
+          desc = 'Files',
         },
         {
           '<leader>fo',
           function()
             fzf.oldfiles()
           end,
-          desc = '[F]ind [O]ld Files',
+          desc = 'Old Files',
         },
         {
           '<leader>fs',
           function()
             fzf.live_grep()
           end,
-          desc = '[F]ind [S]tring',
+          desc = 'String',
         },
         {
           '<leader>fw',
           function()
             fzf.grep_cword()
           end,
-          desc = '[F]ind current [W]ord',
+          desc = 'current Word',
         },
         {
           '<leader>fW',
           function()
             fzf.grep_cWORD()
           end,
-          desc = '[F]ind current [W]ORD',
+          desc = 'current WORD',
         },
         {
           '<leader>fh',
           function()
             fzf.helptags()
           end,
-          desc = '[F]ind [H]elp',
+          desc = 'Help',
         },
         {
           '<leader>fk',
           function()
             fzf.keymaps()
           end,
-          desc = '[F]ind [K]eymaps',
+          desc = 'Keymaps',
         },
         {
           '<leader>fb',
           function()
             fzf.buffers()
           end,
-          desc = '[F]ind [B]uffer',
+          desc = 'Buffer',
         },
         {
           '<leader>fd',
           function()
             fzf.diagnostics_document()
           end,
-          desc = '[F]ind [D]iagnostics',
+          desc = 'Diagnostics',
         },
         {
           '<leader>fr',
           function()
             fzf.resume()
           end,
-          desc = '[F]ind [R]esume',
+          desc = 'Resume',
         },
         {
           '<leader>ft',
@@ -173,14 +173,14 @@ return {
           function()
             fzf.builtin()
           end,
-          desc = '[F]ind [T]odo',
+          desc = 'Todo',
         },
         {
           '<leader>fu',
           function()
             fzf.builtin()
           end,
-          desc = '[F]ind B[u]iltin',
+          desc = 'Builtin',
         },
         {
           '<leader>/',
@@ -194,14 +194,14 @@ return {
           function()
             fzf.files { cwd = vim.fn.stdpath 'config' }
           end,
-          desc = '[E]dit Neovim [C]onfig',
+          desc = 'Neovim Config',
         },
         {
           '<leader>ep',
           function()
             fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'config', 'lazy') }
           end,
-          desc = '[E]dit [P]ackages',
+          desc = 'Packages',
         },
       }
       return keys

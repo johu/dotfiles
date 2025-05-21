@@ -11,6 +11,9 @@ keymap.set('n', '<leader><leader>x', '<cmd>source %<CR>')
 keymap.set('n', '<leader>x', ':.lua<CR>')
 keymap.set('v', '<leader>x', ':lua<CR>')
 
+-- plugin manager
+keymap.set('n', '<leader>l', '<cmd>Lazy<CR>', { desc = 'Lazy' })
+
 -- numbers
 keymap.set('n', '<leader>+', '<C-a>', { desc = 'Increment number' })
 keymap.set('n', '<leader>-', '<C-x>', { desc = 'Decrement number' })

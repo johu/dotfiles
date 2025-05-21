@@ -65,6 +65,7 @@ return {
       spec = {
         {
           mode = { 'n', 'v' },
+          { '<leader>e', group = 'edit' },
           { '<leader>f', group = 'find' },
           { '<leader>q', group = 'quit/session' },
           { '[', group = 'prev' },
