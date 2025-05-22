@@ -2,10 +2,12 @@ return {
   -- tmux
   {
     'christoomey/vim-tmux-navigator',
+    enabled = false, -- TODO: same shortcuts as harpoon
   },
   -- splits
   {
     'szw/vim-maximizer',
+    event = { 'BufReadPre', 'BufNewFile' },
     keys = {
       { '<leader>sm', '<cmd>MaximizerToggle<CR>', desc = 'Maximize/minimize a split' },
     },
@@ -21,6 +23,7 @@ return {
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
+    event = { 'BufReadPre', 'BufNewFile' },
     opts = {
       menu = {
         width = vim.api.nvim_win_get_width(0) - 4,
@@ -64,6 +67,7 @@ return {
   -- file explorer
   {
     'stevearc/oil.nvim',
+    event = { 'BufReadPre', 'BufNewFile' },
     ---@module 'oil'
     dependencies = { { 'echasnovski/mini.icons', opts = {} } },
     --@type oil.SetupOpts
