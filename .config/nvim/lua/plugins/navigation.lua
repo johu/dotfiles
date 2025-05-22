@@ -33,7 +33,7 @@ return {
         { '<leader>h', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, desc = 'Harpoon Quick Menu', },
       }
 
-      local shortcuts = { 'h', 'j', 'k', 'l' }
+      local shortcuts = { '1', '2', '3', '4' }
       for i, shortcut in ipairs(shortcuts) do
         table.insert(keys, {
           '<A-' .. shortcut .. '>',
