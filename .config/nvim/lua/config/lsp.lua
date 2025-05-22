@@ -54,14 +54,13 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
-local capabilities = require('blink.cmp').get_lsp_capabilities()
+-- local capabilities = require('blink.cmp').get_lsp_capabilities()
 
-vim.lsp.config('*', {
-  capabilities = capabilities,
-  root_markers = { '.git' },
-})
+-- vim.lsp.config('*', {
+--   capabilities = capabilities,
+--   root_markers = { '.git' },
 
 -- enable LSP server, see lsp/ for available server
-vim.lsp.enable {
-  -- 'termux',
-}
+-- vim.lsp.enable {
+-- 'termux',
+-- }
