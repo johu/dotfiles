@@ -4,7 +4,7 @@ keybind = super+shift+r=reload_config
 
 shell-integration = zsh
 
-theme = "catppuccin-mocha"
+theme = "tokyonight_moon"
 
 font-size = 14
 
