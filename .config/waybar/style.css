@@ -1,11 +1,11 @@
-@import "themes/catppuccin-mocha.css";
+@import "themes/tokyonight.css";
 
 * {
   border: none;
   min-height: 0;
   box-shadow: none;
   text-shadow: none;
-  font-family: "MesloLGS Nerd Font Mono";
+  font-family: "JetBrainsMono Nerd Font";
   font-size: 14px;
   font-weight: bold;
 }
@@ -15,7 +15,7 @@ tooltip * {
 }
 
 tooltip.background {
-  background: @base;
+  background: @mantle;
 }
 
 #waybar {
@@ -58,14 +58,14 @@ tooltip.background {
 }
 
 #custom-logo {
-  font-size: 24px;
+  font-size: 16px;
   background: @base;
   padding: 0px 15px 0px 10px;
   border-radius: 16px;
 }
 
 #window {
-  color: @subtext0;
+  color: @subtext1;
   background: @base;
   margin: 7px 15px;
   padding: 0px 15px;
@@ -91,7 +91,7 @@ window#waybar.empty #window {
 #custom-clipboard,
 #custom-notification,
 #custom-logout {
-  font-size: 24px;
+  font-size: 16px;
   padding: 0px 10px;
   border-radius: 16px;
 }
@@ -103,7 +103,7 @@ window#waybar.empty #window {
 }
 
 #pulseaudio {
-  color: @peach;
+  color: @green;
 }
 
 #pulseaudio.muted {
@@ -116,7 +116,7 @@ window#waybar.empty #window {
 }
 
 #custom-clipboard {
-  color: @flamingo;
+  color: @sky;
 }
 
 #custom-notification {
