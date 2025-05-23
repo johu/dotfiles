@@ -1,4 +1,6 @@
 return {
+  -- ui components
+  { 'MunifTanjim/nui.nvim', lazy = true },
   -- general ui improvement
   {
     'snacks.nvim',
@@ -12,10 +14,22 @@ return {
   -- icon theme
   {
     'echasnovski/mini.icons',
-    config = function()
-      local icons = require 'mini.icons'
-      icons.setup()
-      icons.mock_nvim_web_devicons()
+    lazy = true,
+    opts = {
+      file = {
+        ['.keep'] = { glyph = '󰊢', hl = 'MiniIconsGrey' },
+      },
+      filetype = {
+        dotenv = { glyph = '', hl = 'MiniIconsYellow' },
+      },
+    },
+    init = function()
+      package.preload['nvim-web-devicons'] = function()
+        local icons = require 'mini.icons'
+        -- icons.setup()
+        icons.mock_nvim_web_devicons()
+        return package.loaded['nvim-web-devicons']
+      end
     end,
   },
   -- top bar
@@ -36,13 +50,22 @@ return {
   {
     'nvim-lualine/lualine.nvim',
     event = 'VeryLazy',
-    dependencies = {
-      'echasnovski/mini.icons',
-    },
+    init = function()
+      vim.g.lualine_laststatus = vim.o.laststatus
+      if vim.fn.argc(-1) > 0 then
+        -- set an empty statusline till lualine loads
+        vim.o.statusline = ' '
+      else
+        -- hide the statusline on the starter page
+        vim.o.laststatus = 0
+      end
+    end,
     config = function()
       require('lualine').setup {
         options = {
           theme = 'auto',
+          globalstatus = vim.o.laststatus == 3,
+          disabled_filetypes = { statusline = { 'snacks_dashboard' } },
         },
         sections = {
           lualine_a = { 'mode' },
@@ -97,9 +120,6 @@ return {
     'folke/noice.nvim',
     event = 'VeryLazy',
     opts = {},
-    dependencies = {
-      'MunifTanjim/nui.nvim',
-    },
     config = function()
       require('noice').setup {
         lsp = {
