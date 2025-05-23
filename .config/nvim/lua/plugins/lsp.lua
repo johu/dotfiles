@@ -2,6 +2,7 @@ return {
   -- main LSP configuration
   {
     'neovim/nvim-lspconfig',
+    event = 'VeryLazy',
     dependencies = {
       'saghen/blink.cmp',
       { 'mason-org/mason.nvim', opts = {} },
