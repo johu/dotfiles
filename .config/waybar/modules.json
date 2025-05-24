@@ -68,9 +68,9 @@
       "on-scroll": 1,
       "on-click-right": "mode",
       "format": {
-        "months": "<span color='#f5e0dc'><b>{}</b></span>",
-        "weekdays": "<span color='#f9e2af'><b>{}</b></span>",
-        "today": "<span color='#cba5f7'><b>{}</b></span>"
+        "months": "<span color='#cfc9c2'><b>{}</b></span>",
+        "weekdays": "<span color='#e0af68'><b>{}</b></span>",
+        "today": "<span color='#bb9af7'><b>{}</b></span>"
       }
     },
     "actions": {
@@ -99,7 +99,7 @@
     ]
   },
   "custom/logo": {
-    "format": "<span color='#b4befe'></span>",
+    "format": "<span color='#a9b1d6'></span>",
     "tooltip": false,
     "on-click": "exec rofi -show drun"
   },
@@ -108,19 +108,19 @@
     "tooltip": false,
     "on-click": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh",
     "on-click-right": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh -d",
-    "on-click-middle": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh -c",
+    "on-click-middle": "sleep 0.1 && ~/.config/hypr/scripts/clipboard.sh -c"
   },
   "custom/notification": {
     "tooltip": false,
     "format": "{icon}",
     "format-icons": {
-      "notification": "<span foreground='#f38ba8'></span>",
+      "notification": "<span foreground='#f7768e'></span>",
       "none": "",
-      "dnd-notification": "<span foreground='#f38ba8'></span>",
+      "dnd-notification": "<span foreground='#f7768e'></span>",
       "dnd-none": "",
-      "inhibited-notification": "<span foreground='#f38ba8'></span>",
+      "inhibited-notification": "<span foreground='#f7768e'></span>",
       "inhibited-none": "",
-      "dnd-inhibited-notification": "<span foreground='#f38ba8'></span>",
+      "dnd-inhibited-notification": "<span foreground='#f7768e'></span>",
       "dnd-inhibited-none": ""
     },
     "return-type": "json",

@@ -23,8 +23,8 @@ tooltip.background {
 }
 
 #workspaces {
-  color: @crust;
-  background: @base;
+  color: @surface2;
+  background: @surface1;
   padding: 6px 3px;
   border-radius: 16px;
 }
@@ -51,7 +51,7 @@ tooltip.background {
 
 #navigation,
 #system {
-  background: @base;
+  background: @surface1;
   border-radius: 16px;
   margin: 7px 15px;
   padding: 0px 10px;
@@ -59,14 +59,14 @@ tooltip.background {
 
 #custom-logo {
   font-size: 16px;
-  background: @base;
+  background: @surface1;
   padding: 0px 15px 0px 10px;
   border-radius: 16px;
 }
 
 #window {
-  color: @subtext1;
-  background: @base;
+  color: @lavender;
+  background: @surface1;
   margin: 7px 15px;
   padding: 0px 15px;
   border-radius: 16px;
@@ -78,7 +78,7 @@ window#waybar.empty #window {
 
 #clock {
   color: @green;
-  background: @base;
+  background: @surface1;
   margin: 7px 15px;
   padding: 0px 15px;
   border-radius: 16px;
@@ -97,13 +97,13 @@ window#waybar.empty #window {
 }
 
 #network {
-  color: @yellow;
+  color: @sky;
   font-size: 14px;
   padding: 0px 3px 0px 10px;
 }
 
 #pulseaudio {
-  color: @green;
+  color: @maroon;
 }
 
 #pulseaudio.muted {
@@ -116,7 +116,7 @@ window#waybar.empty #window {
 }
 
 #custom-clipboard {
-  color: @sky;
+  color: @green;
 }
 
 #custom-notification {
