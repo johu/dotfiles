@@ -1,0 +1,20 @@
+/**
+ *
+ * Author : Levi Lacoss (fishyfishfish55)
+ * Github : @fishyfishfish55
+ *
+ * Colors
+ **/
+
+* {
+    bg-col: #24283bFF;
+    bg-col-light: #24283bFF;
+    border-color: #24283bFF;
+    selected-colr: #24283bFF;
+    blue: #7AA2F7FF;
+    fg-col: #C0CAF5FF;
+    fg-col2: #C0CAF5FF;
+    grey: #C0CAF5FF;
+    active:         #9ECE6AFF;
+    urgent:         #F7768EFF;
+}

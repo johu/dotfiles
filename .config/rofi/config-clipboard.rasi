@@ -1,6 +1,6 @@
 configuration {
     modi:                       "drun,run";
-    font:                       "MesloLGS Nerd Font 12";
+    font:                       "JetBrainsMono Nerd Font 12";
     show-icons:                 false;
     icon-theme:                 "Papirus-Dark";
     display-drun:               "APPS";
@@ -14,7 +14,7 @@ configuration {
     window-format:              "{w} · {c} · {t}";
 }
 
-@theme "themes/catppuccin-mocha"
+@theme "themes/tokyonight"
 @import "~/.cache/current_wallpaper.rasi"
 
 element-text, element-icon , mode-switcher {
