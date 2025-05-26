@@ -1,9 +1,19 @@
 return {
   {
+    'folke/tokyonight.nvim',
+    lazy = false,
+    opts = { style = 'moon' },
+    config = function()
+      require('tokyonight').setup {}
+      vim.cmd.colorscheme 'tokyonight'
+    end,
+  },
+  {
     'catppuccin/nvim',
+    enabled = false,
     name = 'catppuccin',
     lazy = true,
-    otps =  {
+    otps = {
       flavour = 'mocha',
       transparent_background = true,
       integrations = {
@@ -38,34 +48,15 @@ return {
       },
     },
   },
-  {
-    'folke/tokyonight.nvim',
-    lazy = true,
-    opts = { style = 'moon' },
-  },
   -- color scheme chooser
   {
     'zaldih/themery.nvim',
+    enabled = false,
     lazy = false,
     config = function()
       require('themery').setup {
         themes = { 'catppuccin', 'tokyonight' },
         livePreview = true,
-      }
-    end,
-  },
-  -- TODO: adjust color based on selected theme?
-  -- INFO: hard coded theme catppuccin
-  {
-    'rachartier/tiny-devicons-auto-colors.nvim',
-    dependencies = {
-      'echasnovski/mini.icons',
-    },
-    event = 'VeryLazy',
-    config = function()
-      local theme_colors = require('catppuccin.palettes').get_palette 'macchiato'
-      require('tiny-devicons-auto-colors').setup {
-        colors = theme_colors,
       }
     end,
   },
