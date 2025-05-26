@@ -29,9 +29,6 @@ return {
   -- prevent inefficient motions
   {
     'm4xshen/hardtime.nvim',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-    },
     opts = {},
     enabled = false,
   },

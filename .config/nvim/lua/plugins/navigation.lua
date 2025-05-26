@@ -16,6 +16,7 @@ return {
   {
     'Spelis/project.nvim',
     main = 'project_nvim',
+    event = 'VeryLazy',
     opts = {},
     priority = 900,
   },
@@ -34,21 +35,10 @@ return {
     },
     keys = function()
       local harpoon = require 'harpoon'
+    -- stylua: ignore
       local keys = {
-        {
-          '<leader>H',
-          function()
-            harpoon:list():add()
-          end,
-          desc = 'Harpoon File',
-        },
-        {
-          '<leader>h',
-          function()
-            harpoon.ui:toggle_quick_menu(harpoon:list())
-          end,
-          desc = 'Harpoon Quick Menu',
-        },
+        { '<leader>H', function() harpoon:list():add() end, desc = 'Harpoon File', },
+        { '<leader>h', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, desc = 'Harpoon Quick Menu', },
       }
 
       local shortcuts = { 'h', 'j', 'k', 'l' }
@@ -69,7 +59,6 @@ return {
     'stevearc/oil.nvim',
     event = { 'BufReadPre', 'BufNewFile' },
     ---@module 'oil'
-    dependencies = { { 'echasnovski/mini.icons', opts = {} } },
     --@type oil.SetupOpts
     opts = {
       view_options = {
@@ -93,10 +82,7 @@ return {
   -- fuzzy finder
   {
     'ibhagwan/fzf-lua',
-    dependencies = {
-      'echasnovski/mini.icons',
-      'folke/todo-comments.nvim',
-    },
+    event = 'VeryLazy',
     opts = {},
     keys = function()
       local fzf = require 'fzf-lua'
@@ -172,14 +158,6 @@ return {
           desc = 'Resume',
         },
         {
-          '<leader>ft',
-          '<Cmd>TodoFzfLua<CR>',
-          function()
-            fzf.builtin()
-          end,
-          desc = 'Todo',
-        },
-        {
           '<leader>fu',
           function()
             fzf.builtin()
@@ -210,5 +188,16 @@ return {
       }
       return keys
     end,
+  },
+  -- todo comments fzf integration
+  {
+    'folke/todo-comments.nvim',
+    -- PERF: extra config to properly lazy load todo comments plugin
+    optional = true,
+    -- stylua: ignore
+    keys = {
+      { '<leader>ft', function() require('todo-comments.fzf').todo() end, desc = 'Todo', },
+      { '<leader>fT', function() require('todo-comments.fzf').todo() { keywords = { 'TODO', 'FIX', 'FIXME' } } end, desc = 'Todo/Fix/Fixme', },
+    },
   },
 }
