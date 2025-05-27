@@ -6,10 +6,10 @@ local keymap = vim.keymap
 local opts = { noremap = true, silent = true }
 
 keymap.set('n', 'x', '"_x') -- delete without saving in buffer
-keymap.set('n', '<ESC>', ':nohlsearch<CR>')
+keymap.set('n', '<ESC>', '<cmd>nohlsearch<CR>')
 keymap.set('n', '<leader><leader>x', '<cmd>source %<CR>')
-keymap.set('n', '<leader>x', ':.lua<CR>')
-keymap.set('v', '<leader>x', ':lua<CR>')
+keymap.set('n', '<leader>x', '<cmd>.lua<CR>')
+keymap.set('v', '<leader>x', '<cmd>lua<CR>')
 
 -- plugin manager
 keymap.set('n', '<leader>l', '<cmd>Lazy<CR>', { desc = 'Lazy' })
@@ -22,17 +22,19 @@ keymap.set('n', '<leader>-', '<C-x>', { desc = 'Decrement number' })
 keymap.set('n', '<leader>sv', '<C-w>v', { desc = 'Split window vertically' })
 keymap.set('n', '<leader>sh', '<C-w>s', { desc = 'Split window horizontally' })
 keymap.set('n', '<leader>se', '<C-w>=', { desc = 'Make splits equal size' })
-keymap.set('n', '<leader>sx', ':close<CR>', { desc = 'Close current split' })
+keymap.set('n', '<leader>sx', '<cmd>close<CR>', { desc = 'Close current split' })
 
-keymap.set('n', '<leader>to', ':tabnew<CR>', { desc = 'Open new tab' })
-keymap.set('n', '<leader>tx', ':tabclose<CR>', { desc = 'Close current tab' })
-keymap.set('n', '<leader>tn', ':tabn<CR>', { desc = 'Go to next tab' })
-keymap.set('n', '<leader>tp', ':tabp<CR>', { desc = 'Go to previous tab' })
-keymap.set('n', '<leader>tf', '<cmd>tabnew %<CR>', { desc = 'Open current buffer in new tab' })
+keymap.set('n', '<leader><tab><tab>', '<cmd>tabnew<CR>', { desc = 'New Tab' })
+keymap.set('n', '<leader><tab>d', '<cmd>tabclose<CR>', { desc = 'Close Tab' })
+keymap.set('n', '<leader><tab>f', '<cmd>tabfirst<CR>', { desc = 'First Tab' })
+keymap.set('n', '<leader><tab>j', '<cmd>tabnext<CR>', { desc = 'Next Tab' })
+keymap.set('n', '<leader><tab>k', '<cmd>tabprevious<CR>', { desc = 'Previous Tab' })
+keymap.set('n', '<leader><tab>l', '<cmd>tablast<CR>', { desc = 'Last Tab' })
+keymap.set('n', '<leader><tab>o', '<cmd>tabonly<CR>', { desc = 'Close Other Tabs' })
 
 -- move visual selection
-keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move lines down in visual selection' })
-keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move lines up in visual selection' })
+keymap.set('v', 'J', "<cmd>m '>+1<CR>gv=gv", { desc = 'Move lines down in visual selection' })
+keymap.set('v', 'K', "<cmd>m '<-2<CR>gv=gv", { desc = 'Move lines up in visual selection' })
 
 -- remaps for centering
 keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'Move down in buffer with cursor centered' })
