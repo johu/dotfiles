@@ -7,9 +7,7 @@ local opts = { noremap = true, silent = true }
 
 keymap.set('n', 'x', '"_x') -- delete without saving in buffer
 keymap.set('n', '<ESC>', '<cmd>nohlsearch<CR>')
-keymap.set('n', '<leader><leader>x', '<cmd>source %<CR>')
-keymap.set('n', '<leader>x', '<cmd>.lua<CR>')
-keymap.set('v', '<leader>x', '<cmd>lua<CR>')
+keymap.set('n', '<leader>cx', '<cmd>source %<CR>', { desc = 'Source File' })
 
 -- plugin manager
 keymap.set('n', '<leader>l', '<cmd>Lazy<CR>', { desc = 'Lazy' })
@@ -19,10 +17,10 @@ keymap.set('n', '<leader>+', '<C-a>', { desc = 'Increment number' })
 keymap.set('n', '<leader>-', '<C-x>', { desc = 'Decrement number' })
 
 -- window management
-keymap.set('n', '<leader>sv', '<C-w>v', { desc = 'Split window vertically' })
-keymap.set('n', '<leader>sh', '<C-w>s', { desc = 'Split window horizontally' })
-keymap.set('n', '<leader>se', '<C-w>=', { desc = 'Make splits equal size' })
-keymap.set('n', '<leader>sx', '<cmd>close<CR>', { desc = 'Close current split' })
+keymap.set('n', '<leader>wv', '<C-w>v', { desc = 'Split window vertically' })
+keymap.set('n', '<leader>wh', '<C-w>s', { desc = 'Split window horizontally' })
+keymap.set('n', '<leader>we', '<C-w>=', { desc = 'Make splits equal size' })
+keymap.set('n', '<leader>wx', '<cmd>close<CR>', { desc = 'Close current split' })
 
 keymap.set('n', '<leader><tab><tab>', '<cmd>tabnew<CR>', { desc = 'New Tab' })
 keymap.set('n', '<leader><tab>d', '<cmd>tabclose<CR>', { desc = 'Close Tab' })
@@ -56,3 +54,6 @@ keymap.set('n', '<leader>Y', [["+Y]], opts)
 
 -- leader d delete wont remember as yanked/clipboard when delete pasting
 keymap.set({ 'n', 'v' }, '<leader>d', [["_d]])
+
+-- quit
+keymap.set('n', '<leader>qq', '<cmd>qa<cr>', { desc = 'Quit All' })

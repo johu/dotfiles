@@ -4,14 +4,6 @@ return {
     'christoomey/vim-tmux-navigator',
     enabled = false, -- TODO: same shortcuts as harpoon
   },
-  -- splits
-  {
-    'szw/vim-maximizer',
-    event = { 'BufReadPre', 'BufNewFile' },
-    keys = {
-      { '<leader>sm', '<cmd>MaximizerToggle<CR>', desc = 'Maximize/minimize a split' },
-    },
-  },
   -- auto project root detection
   {
     'Spelis/project.nvim',
