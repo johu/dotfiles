@@ -39,8 +39,8 @@ return {
   },
   -- comments
   {
-    'numToStr/Comment.nvim',
-    event = { 'BufReadPre', 'BufNewFile' },
+    'folke/ts-comments.nvim',
+    event = 'VeryLazy',
     opts = {},
   },
   {
