@@ -13,7 +13,6 @@ return {
       local capabilities = require('blink.cmp').get_lsp_capabilities()
 
       local servers = {
-        gopls = {},
         lua_ls = {
           settings = {
             Lua = {
@@ -24,7 +23,6 @@ return {
             },
           },
         },
-        marksman = {},
       }
 
       local ensure_installed = vim.tbl_keys(servers or {})
@@ -34,9 +32,6 @@ return {
         'shfmt',
         -- lua
         'stylua',
-        -- markdown
-        'markdownlint-cli2',
-        'markdown-toc',
         -- web stack (html,css,js,yaml,json and more)
         'prettier',
       })
@@ -58,4 +53,7 @@ return {
       }
     end,
   },
+  -- pin to 1.0
+  { 'mason-org/mason.nvim', version = '^1.0.0' },
+  { 'mason-org/mason-lspconfig.nvim', version = '^1.0.0' },
 }
