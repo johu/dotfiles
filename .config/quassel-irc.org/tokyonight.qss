@@ -1,24 +1,25 @@
-// This file is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; version 2 of the License.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this file.  If not, see <http://www.gnu.org/licenses/>.
-
-// Copyright (C) Johannes Huber 2024
+/**
+*   _        _                      _       _     _
+*  | |      | |                    (_)     | |   | |
+*  | |_ ___ | | ___   _  ___  _ __  _  __ _| |__ | |_
+*  | __/ _ \| |/ / | | |/ _ \| '_ \| |/ _` | '_ \| __|
+*  | || (_) |   <| |_| | (_) | | | | | (_| | | | | |_
+*   \__\___/|_|\_\\__, |\___/|_| |_|_|\__, |_| |_|\__|
+*                  __/ |               __/ |
+*                 |___/               |___/
+*
+*      Quassel Theme
+*
+* Author: Johannes Huber (johu on Libera.Chat/GitHub)
+*/
 
 // Custom ChatView Colors
-Palette { marker-line: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop:0 #ff757f, stop: 0.1 transparent); }
+Palette { marker-line: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop:0 #ff007c, stop: 0.1 transparent); }
 
 ChatView { background: #222436; }
 
 ChatLine[label="highlight"] {
-  foreground: #1e2030;
+  foreground: #ffffff;
   background: #ff007c;
 }
 
@@ -77,7 +78,7 @@ NickView { background: #222436; }
 
 MultiLineEdit { background: #222436; color: #82aaff; }
 StyledLabel#topicLabel { background: #222436; }
-ChatLine#topic { foreground: #7aa2f7; }
+ChatLine#topic { foreground: #82aaff; }
 
 // Miscellaneous Colors
 QTreeView::item:selected { color: #94e2d5; }
@@ -102,8 +103,8 @@ Palette {
   link-visited: #ffc777;
 
   window: #2f334d;
-  window-text: #bac2de;
-  text: #b4befe;
+  window-text: #9399b2;
+  text: #9399b2;
 
   light: #2f334d;
   midlight: #2f334d;
@@ -112,10 +113,9 @@ Palette {
   button: #2f334d;
   button-text: #a6adc8;
 
-  tooltip-base: #394b70;
+  tooltip-base: #222436;
   tooltip-text: #0db9d7;
 }
 
 StyledLabel#topicLabel { background: #222436; }
 MultiLineEdit { background: #222436; color: #7dcfff; }
-
