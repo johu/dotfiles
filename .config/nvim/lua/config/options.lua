@@ -7,6 +7,7 @@ opt.swapfile = false
 
 -- save undo history
 opt.undofile = true
+opt.undolevels = 10000
 
 -- line numbers & sign column
 opt.number = true
@@ -38,6 +39,9 @@ opt.iskeyword:append '-'
 opt.inccommand = 'split'
 opt.scrolloff = 10
 
+-- completion
+opt.completeopt = 'menu,menuone,noselect'
+
 -- colors
 opt.termguicolors = true
 opt.background = 'dark'
@@ -46,7 +50,12 @@ opt.background = 'dark'
 opt.backspace = 'indent,eol,start'
 
 -- clipboard
-opt.clipboard:append 'unnamedplus'
+-- only set clipboard if not in ssh, to make sure the OSC 52
+-- integration works automatically.
+opt.clipboard = vim.env.SSH_TTY and '' or 'unnamedplus'
+
+-- session
+opt.sessionoptions = { 'buffers', 'curdir', 'tabpages', 'winsize', 'help', 'globals', 'skiprtp', 'folds' }
 
 -- splitting
 opt.splitright = true
@@ -56,8 +65,18 @@ opt.splitbelow = true
 opt.list = true
 opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
+-- fill characters
+opt.fillchars = {
+  foldopen = '',
+  foldclose = '',
+  fold = ' ',
+  foldsep = ' ',
+  diff = '╱',
+  eob = ' ',
+}
+
 -- decrease update time
-opt.updatetime = 250
+opt.updatetime = 200
 
 -- decrease mapped sequence wait time
 -- displays which-key popup sooner
