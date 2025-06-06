@@ -65,6 +65,7 @@ zstyle ':fzf-tab:*' switch-group '<' '>'
 # aliases
 alias zsh-reload="source ~/.config/zsh/.zshrc"
 alias zsh-edit="nvim ~/.config/zsh/.zshrc"
+alias sudo='sudo '
 alias config='dotbare'
 alias cfg='config'
 alias diff="colordiff"
