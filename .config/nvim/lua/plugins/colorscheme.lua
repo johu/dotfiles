@@ -23,6 +23,7 @@ return {
         dap_ui = true,
         dashboard = true,
         fzf = true,
+        grug_far = true,
         harpoon = true,
         indent_blankline = { enabled = true },
         lsp_trouble = true,
