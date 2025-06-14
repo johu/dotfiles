@@ -76,107 +76,24 @@ return {
     'ibhagwan/fzf-lua',
     event = 'VeryLazy',
     opts = {},
+    -- stylua: ignore
     keys = function()
       local fzf = require 'fzf-lua'
       local keys = {
-        {
-          '<leader>ff',
-          function()
-            fzf.files()
-          end,
-          desc = 'Files',
-        },
-        {
-          '<leader>fo',
-          function()
-            fzf.oldfiles()
-          end,
-          desc = 'Old Files',
-        },
-        {
-          '<leader>fs',
-          function()
-            fzf.live_grep()
-          end,
-          desc = 'String',
-        },
-        {
-          '<leader>fw',
-          function()
-            fzf.grep_cword()
-          end,
-          desc = 'current Word',
-        },
-        {
-          '<leader>fW',
-          function()
-            fzf.grep_cWORD()
-          end,
-          desc = 'current WORD',
-        },
-        {
-          '<leader>fh',
-          function()
-            fzf.helptags()
-          end,
-          desc = 'Help',
-        },
-        {
-          '<leader>fk',
-          function()
-            fzf.keymaps()
-          end,
-          desc = 'Keymaps',
-        },
-        {
-          '<leader>fb',
-          function()
-            fzf.buffers()
-          end,
-          desc = 'Buffer',
-        },
-        {
-          '<leader>fd',
-          function()
-            fzf.diagnostics_document()
-          end,
-          desc = 'Diagnostics',
-        },
-        {
-          '<leader>fr',
-          function()
-            fzf.resume()
-          end,
-          desc = 'Resume',
-        },
-        {
-          '<leader>fu',
-          function()
-            fzf.builtin()
-          end,
-          desc = 'Builtin',
-        },
-        {
-          '<leader>/',
-          function()
-            fzf.lgrep_curbuf()
-          end,
-          desc = '[/] Find String in current Buffer',
-        },
-        {
-          '<leader>ec',
-          function()
-            fzf.files { cwd = vim.fn.stdpath 'config' }
-          end,
-          desc = 'Neovim Config',
-        },
-        {
-          '<leader>ep',
-          function()
-            fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'config', 'lazy') }
-          end,
-          desc = 'Packages',
-        },
+        { '<leader>ff', function() fzf.files() end, desc = 'Files', },
+        { '<leader>fo', function() fzf.oldfiles() end, desc = 'Old Files', },
+        { '<leader>fs', function() fzf.live_grep() end, desc = 'String', },
+        { '<leader>fw', function() fzf.grep_cword() end, desc = 'Current Word', },
+        { '<leader>fW', function() fzf.grep_cWORD() end, desc = 'Current WORD', },
+        { '<leader>fh', function() fzf.helptags() end, desc = 'Help', },
+        { '<leader>fk', function() fzf.keymaps() end, desc = 'Keymaps', },
+        { '<leader>fb', function() fzf.buffers() end, desc = 'Buffer', },
+        { '<leader>fd', function() fzf.diagnostics_document() end, desc = 'Diagnostics', },
+        { '<leader>fr', function() fzf.resume() end, desc = 'Resume', },
+        { '<leader>fu', function() fzf.resume() end, desc = 'Builtin', },
+        { '<leader>/', function() fzf.lgrep_curbuf() end, desc = '[/] Find String in current Buffer', },
+        { '<leader>ec', function() fzf.files { cwd = vim.fn.stdpath 'config' } end, desc = 'Neovim Config', },
+        { '<leader>ep', function() fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'config', 'lazy') } end, desc = 'Packages', },
       }
       return keys
     end,
