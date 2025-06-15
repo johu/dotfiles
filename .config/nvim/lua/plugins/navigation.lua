@@ -80,20 +80,24 @@ return {
     keys = function()
       local fzf = require 'fzf-lua'
       local keys = {
-        { '<leader>ff', function() fzf.files() end, desc = 'Files', },
-        { '<leader>fo', function() fzf.oldfiles() end, desc = 'Old Files', },
-        { '<leader>fs', function() fzf.live_grep() end, desc = 'String', },
-        { '<leader>fw', function() fzf.grep_cword() end, desc = 'Current Word', },
-        { '<leader>fW', function() fzf.grep_cWORD() end, desc = 'Current WORD', },
-        { '<leader>fh', function() fzf.helptags() end, desc = 'Help', },
-        { '<leader>fk', function() fzf.keymaps() end, desc = 'Keymaps', },
+        -- find
         { '<leader>fb', function() fzf.buffers() end, desc = 'Buffer', },
-        { '<leader>fd', function() fzf.diagnostics_document() end, desc = 'Diagnostics', },
-        { '<leader>fr', function() fzf.resume() end, desc = 'Resume', },
-        { '<leader>fu', function() fzf.resume() end, desc = 'Builtin', },
-        { '<leader>/', function() fzf.lgrep_curbuf() end, desc = '[/] Find String in current Buffer', },
+        { '<leader>ff', function() fzf.files() end, desc = 'Files', },
+        { '<leader>fk', function() fzf.keymaps() end, desc = 'Keymaps', },
+        { '<leader>fh', function() fzf.helptags() end, desc = 'Help', },
+        { '<leader>fr', function() fzf.oldfiles() end, desc = 'Recent', },
+        { '<leader>fu', function() fzf.builtin() end, desc = 'Builtin', },
+        -- search
+        { '<leader>sg', function() fzf.live_grep() end, desc = 'Grep', },
+        { '<leader>sw', function() fzf.grep_cword() end, desc = 'Current Word', },
+        { '<leader>sW', function() fzf.grep_cWORD() end, desc = 'Current WORD', },
+        { '<leader>sd', function() fzf.diagnostics_document() end, desc = 'Diagnostics', },
+        { '<leader>sR', function() fzf.resume() end, desc = 'Resume', },
+        -- edit
         { '<leader>ec', function() fzf.files { cwd = vim.fn.stdpath 'config' } end, desc = 'Neovim Config', },
         { '<leader>ep', function() fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'config', 'lazy') } end, desc = 'Packages', },
+        -- misc
+        { '<leader>/', function() fzf.lgrep_curbuf() end, desc = '[/] Find String in current Buffer', },
       }
       return keys
     end,
@@ -105,8 +109,8 @@ return {
     optional = true,
     -- stylua: ignore
     keys = {
-      { '<leader>ft', function() require('todo-comments.fzf').todo() end, desc = 'Todo', },
-      { '<leader>fT', function() require('todo-comments.fzf').todo() { keywords = { 'TODO', 'FIX', 'FIXME' } } end, desc = 'Todo/Fix/Fixme', },
+      { '<leader>st', function() require('todo-comments.fzf').todo() end, desc = 'Todo', },
+      { '<leader>sT', function() require('todo-comments.fzf').todo() { keywords = { 'TODO', 'FIX', 'FIXME' } } end, desc = 'Todo/Fix/Fixme', },
     },
   },
 }
