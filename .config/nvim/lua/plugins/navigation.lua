@@ -36,7 +36,7 @@ return {
       local shortcuts = { 'h', 'j', 'k', 'l' }
       for i, shortcut in ipairs(shortcuts) do
         table.insert(keys, {
-          '<C-' .. shortcut .. '>',
+          '<A-' .. shortcut .. '>',
           function()
             harpoon:list():select(i)
           end,
