@@ -1,12 +1,12 @@
 [[plugin.deps]]
 use = "AnirudhG07/rich-preview"
-rev = "8be4d27"
-hash = "c9a3d0731e7d7340e2c6d6126b1f3aa3"
+rev = "843c3fa"
+hash = "b4040931f0d2f9670ddb4923e55cd881"
 
 [[flavor.deps]]
 use = "yazi-rs/flavors:catppuccin-mocha"
-rev = "fc8eeaa"
-hash = "407710c2af9621a8351453e637d6c870"
+rev = "d04a298"
+hash = "288a0dedd5d13b28605cf82c05326dcd"
 
 [[flavor.deps]]
 use = "BennyOe/tokyo-night"
