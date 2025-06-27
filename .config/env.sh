@@ -35,6 +35,7 @@ export ZDOTDIR="$HOME/.config/zsh"
 export GNUPGHOME="$HOME/.config/gnupg"
 export PASSWORD_STORE_DIR="$HOME/.local/share/password-store"
 export GTK2_RC_FILES="$HOME/.config/gtk-2.0/gtkrc-2.0"
+export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/config"
 export WINEPREFIX="$XDG_DATA_HOME/wineprefixes/default"
 export WGETRC="$XDG_CONFIG_HOME/wgetrc"
 export ICEAUTHORITY="$XDG_CACHE_HOME"/ICEauthority
