@@ -1,9 +1,9 @@
 return {
-  main_monitor = 'DP-3',
-  second_monitor = 'DP-1',
+  main_monitor = 'eDP-1',
+  -- second_monitor = 'DP-1',
   mod = 'SUPER',
-  terminal = 'ghostty',
-  browser = 'zen',
+  terminal = 'kitty',
+  browser = 'zen-browser',
   file_manager = 'nautilus',
   active_border_color = 'rgba(74c7ecee)',
   inactive_border_color = 'rgba(45475aee)',

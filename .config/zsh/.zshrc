@@ -35,7 +35,7 @@ zinit snippet OMZP::sudo
 autoload -Uz compinit && compinit
 
 # load oh my posh
-eval "$(oh-my-posh -c $XDG_CONFIG_HOME/ohmyposh/config.toml init zsh)"
+eval "$(oh-my-posh init zsh --config $XDG_CONFIG_HOME/ohmyposh/config.toml)"
 
 # keybindings
 bindkey -v
@@ -106,6 +106,6 @@ eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 eval $(fzf --zsh)
 eval "$(zoxide init --cmd cd zsh)"
-source <(jj util completion zsh)
+# source <(jj util completion zsh)
 
 source ~/.config/zsh/plugins/fzf.plugin.zsh
