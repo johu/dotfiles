@@ -12,7 +12,7 @@ export XDG_BIN_HOME="$HOME/.local/bin"
 
 # default programs
 export EDITOR="nvim"
-export TERMINAL="ghostty"
+export TERMINAL="alacritty"
 export BROWSER="firefox"
 export MANPAGER='nvim +Man!'
 
