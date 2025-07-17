@@ -5,10 +5,10 @@ hash = "b4040931f0d2f9670ddb4923e55cd881"
 
 [[flavor.deps]]
 use = "yazi-rs/flavors:catppuccin-mocha"
-rev = "d04a298"
+rev = "d3fd3a5"
 hash = "288a0dedd5d13b28605cf82c05326dcd"
 
 [[flavor.deps]]
 use = "BennyOe/tokyo-night"
-rev = "b3950bf"
-hash = "319ce574cdb2865baf4323db90456504"
+rev = "5f56364"
+hash = "c0bf69ad2c44005892d586e9693993c6"
