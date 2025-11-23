@@ -24,6 +24,8 @@ zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light zpm-zsh/colors
 zinit light zpm-zsh/colorize
+zinit ice lucid wait'0'
+zinit light joshskidmore/zsh-fzf-history-search
 
 # snippets
 zinit snippet OMZP::gpg-agent
