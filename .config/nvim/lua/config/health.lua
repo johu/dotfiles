@@ -10,7 +10,7 @@ local check_version = function()
   end
 
   local v1 = { vim.version().major, vim.version().minor, vim.version().patch }
-  local v2 = { 0, 11, 0 }
+  local v2 = { 0, 11, 2 }
   if vim.version.ge(v1, v2) then
     ok(('Neovim version is: %s (>=%s is required)'):format(fmt_ver(v1), fmt_ver(v2)))
   else
