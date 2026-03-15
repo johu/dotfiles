@@ -1,5 +1,5 @@
 # install oh my posh if it doesn't exist
-BIN_DIR="${XDG_BIN_HOME:-$HOME:/.local/bin}"
+BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
 if [[ ! -e "${BIN_DIR}/oh-my-posh" ]]; then
   mkdir -p "${BIN_DIR}"
   curl -s https://ohmyposh.dev/install.sh | bash -s -- -d ${BIN_DIR} >/dev/null
