@@ -21,7 +21,7 @@ export DOTBARE_DIR="$HOME/.cfg"
 export DOTBARE_TREE="$HOME"
 
 # flatpak
-export XDG_DATA_DIRS="$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:$XDG_DATA_HOME/flatpak/exports/share"
+export XDG_DATA_DIRS="$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share"
 
 # java
 export JAVA_HOME=/opt/openjdk-bin-11
