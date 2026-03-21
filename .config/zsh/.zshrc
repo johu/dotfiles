@@ -88,5 +88,6 @@ eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 eval $(fzf --zsh)
 eval "$(zoxide init --cmd cd zsh)"
+source <(jj util completion zsh)
 
 source ~/.config/zsh/plugins/fzf.plugin.zsh
