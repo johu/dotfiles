@@ -6,15 +6,17 @@ return {
     dependencies = {
       'saghen/blink.cmp',
       { 'mason-org/mason.nvim', opts = {} },
-      'mason-org/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
     },
     config = function()
       local capabilities = require('blink.cmp').get_lsp_capabilities()
 
       local servers = {
-        gopls = {},
+        gopls = {
+          mason = 'gopls',
+        },
         lua_ls = {
+          mason = 'lua-language-server',
           settings = {
             Lua = {
               completion = {
@@ -24,10 +26,14 @@ return {
             },
           },
         },
-        marksman = {},
+        marksman = {
+          mason = 'marksman',
+        },
       }
 
-      local ensure_installed = vim.tbl_keys(servers or {})
+      local ensure_installed = vim.tbl_map(function(server)
+        return server.mason
+      end, vim.tbl_values(servers))
       vim.list_extend(ensure_installed, {
         -- bash
         'shellcheck',
@@ -42,20 +48,18 @@ return {
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-      require('mason-lspconfig').setup {
-        ensure_installed = {},
-        automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
-      }
+      vim.lsp.config('*', {
+        capabilities = capabilities,
+        root_markers = { '.git' },
+      })
+
+      for server_name, server in pairs(servers) do
+        local config = vim.deepcopy(server)
+        config.mason = nil
+        vim.lsp.config(server_name, config)
+      end
+
+      vim.lsp.enable(vim.tbl_keys(servers))
     end,
   },
 }

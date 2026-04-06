@@ -103,7 +103,7 @@ return {
         { '<leader>gs', function() fzf.git_status() end, desc = 'Status', },
         -- edit
         { '<leader>ec', function() fzf.files { cwd = vim.fn.stdpath 'config' } end, desc = 'Neovim Config', },
-        { '<leader>ep', function() fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'config', 'lazy') } end, desc = 'Packages', },
+        { '<leader>ep', function() fzf.files { cwd = vim.fs.joinpath(vim.fn.stdpath 'data', 'site', 'pack', 'core', 'opt') } end, desc = 'Packages', },
         -- misc
         { '<leader>/', function() fzf.live_grep() end, desc = '[/] Grep', },
         { '<leader>,', function() fzf.buffers { sort_mru = true, sort_lastused = true } end, desc = 'Switch Buffer', },

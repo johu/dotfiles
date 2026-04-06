@@ -1,3 +1,25 @@
+local function dashboard_startup_section()
+  local started = vim.g.config_start_time or vim.uv.hrtime()
+  local elapsed_ms = (vim.uv.hrtime() - started) / 1e6
+  local stats = { loaded = 0, count = 0 }
+
+  local ok, plugins = pcall(vim.pack.get, nil, { info = false })
+  if ok then
+    stats.loaded = #plugins
+    stats.count = #plugins
+  end
+
+  return {
+    align = 'center',
+    text = {
+      { '⚡ Neovim loaded ', hl = 'footer' },
+      { ('%d/%d'):format(stats.loaded, stats.count), hl = 'special' },
+      { ' plugins in ', hl = 'footer' },
+      { ('%.2fms'):format(elapsed_ms), hl = 'special' },
+    },
+  }
+end
+
 return {
   -- ui components
   { 'MunifTanjim/nui.nvim', lazy = true },
@@ -196,7 +218,7 @@ return {
             { icon = ' ', key = 'r', desc = 'Recent Files', action = ":lua Snacks.dashboard.pick('oldfiles')" },
             { icon = ' ', key = 'c', desc = 'Config', action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
             { icon = ' ', key = 's', desc = 'Restore Session', section = 'session' },
-            { icon = '󰒲 ', key = 'l', desc = 'Lazy', action = ':Lazy' },
+            { icon = '󰏔 ', key = 'p', desc = 'Plugins', action = ':PackUpdate' },
             { icon = ' ', key = 'q', desc = 'Quit', action = ':qa' },
           },
         },
@@ -216,7 +238,7 @@ return {
               { icon = ' ', title = 'Keymaps', section = 'keys', indent = 2, padding = 1 },
               { icon = ' ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 1 },
               { icon = ' ', title = 'Projects', section = 'projects', indent = 2, padding = 1 },
-              { section = 'startup' },
+              dashboard_startup_section,
             },
           },
         },

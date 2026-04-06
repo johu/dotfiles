@@ -12,16 +12,6 @@ return {
     'nvim-treesitter/nvim-treesitter',
     event = { 'BufReadPre', 'BufNewFile', 'VeryLazy' },
     build = ':TSUpdate',
-    lazy = vim.fn.argc(-1) == 0, -- load treesitter early when opening a file from the cmdline
-    init = function(plugin)
-      -- PERF: add nvim-treesitter queries to the rtp and it's custom query predicates early
-      -- This is needed because a bunch of plugins no longer `require("nvim-treesitter")`, which
-      -- no longer trigger the **nvim-treesitter** module to be loaded in time.
-      -- Luckily, the only things that those plugins need are the custom queries, which we make available
-      -- during startup.
-      require('lazy.core.loader').add_to_rtp(plugin)
-      require 'nvim-treesitter.query_predicates'
-    end,
     cmd = { 'TSUpdateSync', 'TSUpdate', 'TSInstall' },
     keys = {
       { '<Enter>', desc = 'Increment Selection' },
@@ -94,7 +84,7 @@ return {
       },
     },
     config = function(_, opts)
-      require('nvim-treesitter.configs').setup(opts)
+      require('nvim-treesitter').setup(opts)
     end,
   },
   {
@@ -102,38 +92,36 @@ return {
     event = 'VeryLazy',
     enable = true,
     config = function()
-      local config = require 'nvim-treesitter.configs'
-      config.setup {
-        textobjects = {
-          select = {
-            enable = true,
-            lookahead = true,
-            keymaps = {
-              ['af'] = '@function.outer',
-              ['if'] = '@function.inner',
-              ['ac'] = '@class.outer',
-              ['ao'] = '@comment.outer',
-              ['ic'] = { query = '@class.inner', desc = 'Select inner part of a class region' },
-              ['as'] = { query = '@local.scope', query_group = 'locals', desc = 'Select language scope' },
-            },
-            selection_modes = {
-              ['@parameter.outer'] = 'v', -- charwise
-              ['@function.outer'] = 'V', -- linewise
-              ['@class.outer'] = '<c-v>', -- blockwise
-            },
-            include_surrounding_whitespace = true,
+      local textobjects = require 'nvim-treesitter-textobjects'
+      local select = require 'nvim-treesitter-textobjects.select'
+      local swap = require 'nvim-treesitter-textobjects.swap'
+
+      textobjects.setup {
+        select = {
+          lookahead = true,
+          selection_modes = {
+            ['@parameter.outer'] = 'v',
+            ['@function.outer'] = 'V',
+            ['@class.outer'] = '<c-v>',
           },
-          swap = {
-            enable = true,
-            swap_next = {
-              ['<leader>a'] = { query = '@parameter.inner', desc = 'Swap with next parameter' },
-            },
-            swap_previous = {
-              ['<leader>A'] = { '@parameter.inner', desc = 'Swap with previous parameter' },
-            },
-          },
+          include_surrounding_whitespace = true,
         },
       }
+
+      local map = function(mode, lhs, query, query_group, callback, desc)
+        vim.keymap.set(mode, lhs, function()
+          callback(query, query_group)
+        end, { desc = desc })
+      end
+
+      map({ 'x', 'o' }, 'af', '@function.outer', 'textobjects', select.select_textobject, 'Select outer function')
+      map({ 'x', 'o' }, 'if', '@function.inner', 'textobjects', select.select_textobject, 'Select inner function')
+      map({ 'x', 'o' }, 'ac', '@class.outer', 'textobjects', select.select_textobject, 'Select outer class')
+      map({ 'x', 'o' }, 'ic', '@class.inner', 'textobjects', select.select_textobject, 'Select inner class')
+      map({ 'x', 'o' }, 'ao', '@comment.outer', 'textobjects', select.select_textobject, 'Select comment')
+      map({ 'x', 'o' }, 'as', '@local.scope', 'locals', select.select_textobject, 'Select language scope')
+      map('n', '<leader>a', '@parameter.inner', 'textobjects', swap.swap_next, 'Swap with next parameter')
+      map('n', '<leader>A', '@parameter.inner', 'textobjects', swap.swap_previous, 'Swap with previous parameter')
     end,
   },
   -- Automatically add closing tags for HTML and JSX
