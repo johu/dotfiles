@@ -1,29 +1,13 @@
-return {
-  -- markdown
-  {
-    'MeanderingProgrammer/render-markdown.nvim',
-    event = 'VeryLazy',
-    opts = {},
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter',
-      'echasnovski/mini.icons',
-    },
-  },
-  {
-    'iamcco/markdown-preview.nvim',
-    cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
-    ft = { 'markdown' },
-    build = ':call mkdp#util#install()',
-    keys = {
-      {
-        '<leader>cp',
-        ft = 'markdown',
-        '<cmd>MarkdownPreviewToggle<cr>',
-        desc = 'Markdown Preview',
-      },
-    },
-    config = function()
-      vim.cmd [[do FileType]]
-    end,
-  },
-}
+require('render-markdown').setup {}
+vim.cmd [[do FileType]]
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('config-markdown-preview-map', { clear = true }),
+  pattern = 'markdown',
+  callback = function(event)
+    vim.keymap.set('n', '<leader>cp', '<cmd>MarkdownPreviewToggle<cr>', {
+      buffer = event.buf,
+      desc = 'Markdown Preview',
+    })
+  end,
+})

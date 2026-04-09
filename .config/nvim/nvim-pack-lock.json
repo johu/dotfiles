@@ -27,7 +27,7 @@
       "src": "https://github.com/ibhagwan/fzf-lua.git"
     },
     "grug-far.nvim": {
-      "rev": "dc4684e163971bb1f5bfb93fbd4bb3e892bf9b15",
+      "rev": "b08a9f8d0602fdf075262e8e1b6dc776b3966003",
       "src": "https://github.com/MagicDuck/grug-far.nvim.git"
     },
     "guess-indent.nvim": {
