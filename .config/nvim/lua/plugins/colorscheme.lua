@@ -49,16 +49,4 @@ return {
       },
     },
   },
-  -- color scheme chooser
-  {
-    'zaldih/themery.nvim',
-    enabled = false,
-    lazy = false,
-    config = function()
-      require('themery').setup {
-        themes = { 'catppuccin', 'tokyonight' },
-        livePreview = true,
-      }
-    end,
-  },
 }
