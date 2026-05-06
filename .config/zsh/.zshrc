@@ -65,6 +65,24 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --color=always $real
 zstyle ':fzf-tab:*' switch-group '<' '>'
 # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
+# bootstrap neovim config
+NVIM_REPO_URL="git@github.com:johu/nvim.git"
+NVIM_REPO_DIR="$HOME/src/nvim"
+NVIM_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
+
+if [[ ! -d "${NVIM_REPO_DIR}/.git" ]]; then
+  if [[ -e "${NVIM_REPO_DIR}" ]]; then
+    print -u2 "Skipping Neovim bootstrap: ${NVIM_REPO_DIR} exists and is not a Git checkout."
+  else
+    mkdir -p "${NVIM_REPO_DIR:h}"
+    git clone "${NVIM_REPO_URL}" "${NVIM_REPO_DIR}"
+  fi
+fi
+
+if [[ -d "${NVIM_REPO_DIR}/.git" ]] && [[ "$(readlink "${NVIM_CONFIG_DIR}" 2>/dev/null)" != "${NVIM_REPO_DIR}" ]]; then
+  ln -sfn "${NVIM_REPO_DIR}" "${NVIM_CONFIG_DIR}"
+fi
+
 # aliases
 alias zsh-reload="source ~/.config/zsh/.zshrc"
 alias zsh-edit="nvim ~/.config/zsh/.zshrc"
