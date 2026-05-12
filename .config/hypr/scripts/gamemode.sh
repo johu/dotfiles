@@ -1,18 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-if [ -f ~/.cache/gamemode ] ;then
-  hyprctl reload
-  rm ~/.cache/gamemode
-  notify-send "Gamemode deactivated" "Animations and blur enabled"
+STATE="$HOME/.cache/gamemode"
+
+if [[ -f "$STATE" ]]; then
+    hyprctl reload
+    rm -f "$STATE"
+    hyprctl notify 1 10000 "rgb(ff757f)" "Gamemode OFF"
 else
-  hyprctl --batch "\
-    keyword animations:enabled 0;\
-    keyword decoration:shadow:enabled 0;\
-    keyword decoration:blur:enabled 0;\
-    keyword general:gaps_in 0;\
-    keyword general:gaps_out 0;\
-    keyword general:border_size 1;\
-    keyword decoration:rounding 0"
-  touch ~/.cache/gamemode
-  notify-send "Gamemode activated" "Animations and blur disabled"
+    hyprctl keyword general:gaps_in 0
+    hyprctl keyword general:gaps_out 0
+    hyprctl keyword decoration:rounding 0
+    hyprctl dispatch 'hl.config { general = { gaps_in = 0, gaps_out = 0, border_size = 1 }, decoration = { rounding = 0, shadow = { enabled = false }, blur = { enabled = false } }, animations = { enabled = false } }'
+    touch "$STATE"
+
+    hyprctl notify 1 10000 "rgb(c3e88d)" "Gamemode ON"
 fi
