@@ -1,24 +1,26 @@
+# general
 auto-update = off
 quit-after-last-window-closed = true
 quit-after-last-window-closed-delay = 5m
-
-keybind = super+shift+r=reload_config
-
 shell-integration = zsh
+shell-integration-features = ssh-env
 
+# styling
 theme = "TokyoNight Moon"
-
 font-size = 14
-
 background-opacity = 0.9
-
-window-padding-x = 10
-window-padding-y = 10
-window-decoration = false
-
-gtk-titlebar = false
-
-resize-overlay = never
-
 cursor-style = block
 cursor-style-blink = true
+
+# window
+window-padding-x = 10
+window-padding-y = 10
+window-decoration = none
+resize-overlay = never
+
+# binds
+keybind = super+shift+r=reload_config
+
+# fix general slowness on hyprland
+# https://github.com/ghostty-org/ghostty/discussions/3224
+async-backend = epoll
