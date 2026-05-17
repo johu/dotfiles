@@ -6,6 +6,9 @@ hl.config {
     kb_options = '',
     kb_rules = '',
 
+    repeat_rate = 25,
+    repeat_delay = 300,
+
     numlock_by_default = true,
 
     follow_mouse = 1,
