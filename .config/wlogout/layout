@@ -12,13 +12,13 @@
 }
 {
     "label" : "logout",
-    "action" : "sleep 1; hyprctl dispatch exit",
+    "action" : "hyprshutdown",
     "text" : "Logout",
     "keybind" : "e"
 }
 {
     "label" : "shutdown",
-    "action" : "systemctl poweroff",
+    "action" : "hyprshutdown -t 'Shutting down...' --post-cmd 'shutdown -P 0'",
     "text" : "Shutdown",
     "keybind" : "s"
 }
@@ -30,7 +30,7 @@
 }
 {
     "label" : "reboot",
-    "action" : "systemctl reboot",
+    "action" : "hyprshutdown -t 'Restarting...' --post-cmd 'reboot'",
     "text" : "Reboot",
     "keybind" : "r"
 }
