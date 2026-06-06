@@ -5,7 +5,7 @@
   min-height: 0;
   box-shadow: none;
   text-shadow: none;
-  font-family: "JetBrainsMono Nerd Font";
+  font-family: "JetBrainsMono Nerd Font Propo";
   font-size: 14px;
   font-weight: bold;
 }
@@ -53,7 +53,7 @@ tooltip.background {
 #system {
   background: @surface1;
   border-radius: 16px;
-  margin: 7px 15px;
+  margin: 7px 15px 3px 15px;
   padding: 0px 10px;
 }
 
@@ -67,7 +67,7 @@ tooltip.background {
 #window {
   color: @lavender;
   background: @surface1;
-  margin: 7px 15px;
+  margin: 7px 15px 3px 15px;
   padding: 0px 15px;
   border-radius: 16px;
 }
@@ -79,7 +79,7 @@ window#waybar.empty #window {
 #clock {
   color: @green;
   background: @surface1;
-  margin: 7px 15px;
+  margin: 7px 15px 3px 15px;
   padding: 0px 15px;
   border-radius: 16px;
 }
