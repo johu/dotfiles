@@ -46,7 +46,12 @@ final_space = true
     style = 'plain'
 
     [blocks.segments.properties]
-      branch_icon = ''
+      #  Powerline branch icon
+      # 󰘬 Git icon
+      #  Nerd Font Git branch icon
+      #  Git branch icon
+      # branch_icon = ''
+      branch_icon = ' '
       cache_duration = 'none'
       commit_icon = '@'
       fetch_status = true
