@@ -66,3 +66,14 @@ hl.bind(mod .. ' + mouse_up', hl.dsp.focus { workspace = 'e-1' })
 -- Move/resize windows with mod + LMB/RMB and dragging
 hl.bind(mod .. ' + mouse:272', hl.dsp.window.drag(), { mouse = true })
 hl.bind(mod .. ' + mouse:273', hl.dsp.window.resize(), { mouse = true })
+
+-- Minimize windows using special workspaces
+hl.bind(mod .. ' + x', function()
+  if hl.get_workspace 'special:minimized' then
+    hl.dispatch(hl.dsp.window.move { workspace = hl.get_active_workspace(), window = 'tag:minimized' })
+    hl.dispatch(hl.dsp.window.clear_tags { window = 'tag:minimized' })
+  else
+    hl.dispatch(hl.dsp.window.tag { tag = 'minimized', window = hl.get_active_window() })
+    hl.dispatch(hl.dsp.window.move { workspace = 'special:minimized', follow = false })
+  end
+end)
