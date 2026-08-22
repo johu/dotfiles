@@ -3,9 +3,10 @@ local second = require('globals').second_monitor
 
 hl.monitor {
   output = main,
-  mode = '2560x1440@144',
+  mode = '2560x1440@143.97',
   position = '0x0',
   scale = '1',
+  vrr = 2,
 }
 
 hl.monitor {
