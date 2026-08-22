@@ -12,7 +12,6 @@ hl.bind(mod .. ' + SPACE', hl.dsp.exec_cmd 'rofi -show drun -replace -i', { desc
 -- bind = $mainMod, P, pseudo, # dwindle
 hl.bind(mod .. ' + T', hl.dsp.layout 'togglesplit') -- dwindle only
 hl.bind(mod .. ' + F1', hl.dsp.exec_cmd '~/.config/hypr/scripts/keybinds.sh', { desc = 'Show keybinds' })
-hl.bind('CTRL + ALT + G', hl.dsp.exec_cmd '~/.config/hypr/scripts/gamemode.sh', { desc = 'Gamemode' })
 hl.bind('CTRL + ALT + L', hl.dsp.exec_cmd 'hyprlock', { desc = 'Lock screen' })
 hl.bind('PRINT', hl.dsp.exec_cmd 'hyprshot -m window', { desc = 'Screenshot' })
 hl.bind(mod .. ' + PRINT', hl.dsp.exec_cmd 'hyprshot -m window', { desc = 'Screenshot window' })
@@ -77,3 +76,38 @@ hl.bind(mod .. ' + x', function()
     hl.dispatch(hl.dsp.window.move { workspace = 'special:minimized', follow = false })
   end
 end)
+
+-- Game mode
+local game_mode = false
+
+local function toggle_game_mode()
+  if game_mode then
+    game_mode = false
+    hl.notification.create { text = 'Gamemode disabled', timeout = 2000, color = 'rgba(f7768eee)' }
+    hl.exec_cmd 'hyprctl reload'
+    return
+  end
+
+  game_mode = true
+  hl.notification.create { text = 'Gamemode enabled', timeout = 2000, color = 'rgba(9ece6aee)' }
+
+  hl.config {
+    general = {
+      gaps_in = 0,
+      gaps_out = 0,
+      border_size = 1,
+    },
+
+    decoration = {
+      rounding = 0,
+      shadow = { enabled = false },
+      blur = { enabled = false },
+    },
+
+    animations = {
+      enabled = false,
+    },
+  }
+end
+
+hl.bind('SUPER + F2', toggle_game_mode, { desc = 'Gamemode' })
