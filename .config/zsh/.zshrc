@@ -101,7 +101,6 @@ alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 alias wget="wget --hsts-file=$XDG_CACHE_HOME/wget-hsts"
 
 # shell integrations
-eval $(tmuxifier init -)
 eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 eval $(fzf --zsh)
