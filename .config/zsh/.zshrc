@@ -1,15 +1,18 @@
+# keep PATH unique after all env/profile mutations
+typeset -U path PATH
+
 # install oh my posh if it doesn't exist
 BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
-if [[ ! -e "${BIN_DIR}/oh-my-posh" ]]; then
+if [[ ! -x "${BIN_DIR}/oh-my-posh" ]]; then
   mkdir -p "${BIN_DIR}"
-  curl -s https://ohmyposh.dev/install.sh | bash -s -- -d ${BIN_DIR} >/dev/null
+  curl -fsSL https://ohmyposh.dev/install.sh | bash -s -- -d "${BIN_DIR}" >/dev/null
 fi
 
 # download plugin manager if it doesn't exist
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [ ! -d "$ZINIT_HOME" ]; then
-  mkdir -p "$(dirname $ZINIT_HOME)"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [[ ! -d "${ZINIT_HOME}" ]]; then
+  mkdir -p "${ZINIT_HOME:h}"
+  git clone https://github.com/zdharma-continuum/zinit.git "${ZINIT_HOME}"
 fi
 
 # init plugin manager
@@ -35,13 +38,13 @@ zinit snippet OMZP::sudo
 autoload -Uz compinit && compinit
 
 # load oh my posh
-eval "$(oh-my-posh -c $XDG_CONFIG_HOME/ohmyposh/config.toml init zsh)"
+eval "$(oh-my-posh -c "${XDG_CONFIG_HOME:-$HOME/.config}/ohmyposh/config.toml" init zsh)"
 
 # keybindings
 bindkey -v
 
 # history setup
-HISTFILE=$HOME/.config/zsh/.zhistory
+HISTFILE="${ZDOTDIR:-$HOME/.config/zsh}/.zhistory"
 HISTSIZE=5000
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
@@ -101,9 +104,12 @@ alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 alias wget="wget --hsts-file=$XDG_CACHE_HOME/wget-hsts"
 
 # shell integrations
-eval $(thefuck --alias)
-eval $(thefuck --alias fk)
-eval $(fzf --zsh)
+eval "$(thefuck --alias)"
+eval "$(thefuck --alias fk)"
+eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
 
-source ~/.config/zsh/plugins/fzf.plugin.zsh
+source "${ZDOTDIR:-$HOME/.config/zsh}/plugins/fzf.plugin.zsh"
+
+# Pi
+path=("$HOME/.local/share/npm/bin" $path)
