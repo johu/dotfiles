@@ -34,6 +34,15 @@ zinit light joshskidmore/zsh-fzf-history-search
 zinit snippet OMZP::gpg-agent
 zinit snippet OMZP::sudo
 
+# mise completion must be in fpath before compinit runs.
+MISE_COMPLETIONS_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/completions"
+MISE_COMPLETION_FILE="${MISE_COMPLETIONS_DIR}/_mise"
+mkdir -p "${MISE_COMPLETIONS_DIR}"
+if [[ ! -s "${MISE_COMPLETION_FILE}" || "${commands[mise]}" -nt "${MISE_COMPLETION_FILE}" ]]; then
+  command mise completion zsh >| "${MISE_COMPLETION_FILE}"
+fi
+fpath=("${MISE_COMPLETIONS_DIR}" $fpath)
+
 # load completions
 autoload -Uz compinit && compinit
 
@@ -108,6 +117,7 @@ eval "$(thefuck --alias)"
 eval "$(thefuck --alias fk)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
+eval "$(mise activate zsh)"
 
 source "${ZDOTDIR:-$HOME/.config/zsh}/plugins/fzf.plugin.zsh"
 
