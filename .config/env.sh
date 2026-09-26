@@ -44,6 +44,7 @@ export GOPATH="$XDG_DATA_HOME"/go
 export GOMODCACHE="$XDG_CACHE_HOME"/go/mod
 export CARGO_HOME="$XDG_DATA_HOME"/cargo
 export GRADLE_USER_HOME="$XDG_DATA_HOME"/gradle
+export RUSH_GLOBAL_FOLDER="$XDG_DATA_HOME"/rush
 export MYSQL_HISTFILE="$XDG_DATA_HOME"/mysql_history
 export CUDA_CACHE_PATH="$XDG_CACHE_HOME"/nv
 export AWS_SHARED_CREDENTIALS_FILE="$XDG_CONFIG_HOME"/aws/credentials
