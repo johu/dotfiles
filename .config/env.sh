@@ -47,6 +47,7 @@ export GRADLE_USER_HOME="$XDG_DATA_HOME"/gradle
 export RUSH_GLOBAL_FOLDER="$XDG_DATA_HOME"/rush
 export OLLAMA_MODELS="$XDG_DATA_HOME"/ollama/models
 export DISTCC_DIR="$XDG_CACHE_HOME"/distcc
+export CODEX_HOME="$XDG_DATA_HOME"/codex
 export MYSQL_HISTFILE="$XDG_DATA_HOME"/mysql_history
 export CUDA_CACHE_PATH="$XDG_CACHE_HOME"/nv
 export AWS_SHARED_CREDENTIALS_FILE="$XDG_CONFIG_HOME"/aws/credentials
