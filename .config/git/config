@@ -34,6 +34,7 @@
 	autoStash = true
 [diff]
 	renames = true
+	colorMoved = zebra
 [commit]
 	gpgsign = 0
 [merge]
@@ -45,3 +46,9 @@
 	directory = /var/db/repos/gentoo
 [http]
 	postBuffer = 524288000
+[init]
+	defaultBranch = main
+[fetch]
+	prune = true
+[core]
+	autocrlf = input
