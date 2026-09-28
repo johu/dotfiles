@@ -47,6 +47,7 @@ export GRADLE_USER_HOME="$XDG_DATA_HOME"/gradle
 export RUSH_GLOBAL_FOLDER="$XDG_DATA_HOME"/rush
 export OLLAMA_MODELS="$XDG_DATA_HOME"/ollama/models
 export DISTCC_DIR="$XDG_CACHE_HOME"/distcc
+export PI_CODING_AGENT_DIR="$XDG_DATA_HOME"/pi/agent
 export CLAUDE_CONFIG_DIR="$XDG_CONFIG_HOME"/claude
 export CODEX_HOME="$XDG_DATA_HOME"/codex
 export COPILOT_HOME="$XDG_DATA_HOME"/copilot
