@@ -113,11 +113,11 @@ alias nvidia-settings="nvidia-settings --config=~/.config/nvidia/settings"
 alias wget="wget --hsts-file=$XDG_CACHE_HOME/wget-hsts"
 
 # shell integrations
+eval "$(mise activate zsh)"
 eval "$(thefuck --alias)"
 eval "$(thefuck --alias fk)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
-eval "$(mise activate zsh)"
 
 source "${ZDOTDIR:-$HOME/.config/zsh}/plugins/fzf.plugin.zsh"
 
