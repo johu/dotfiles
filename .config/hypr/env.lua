@@ -30,7 +30,9 @@ hl.env('HYPRSHOT_DIR', 'pics/screenshots')
 
 hl.env(
   'XDG_DATA_DIRS',
-  '/usr/local/share:/usr/share:/etc/eselect/wine/share:/usr/share/gdm:/var/lib/flatpak/exports/share:~/.local/share/flatpak/exports/share'
+  '/usr/local/share:/usr/share:/etc/eselect/wine/share:/usr/share/gdm:/var/lib/flatpak/exports/share:'
+    .. os.getenv('HOME')
+    .. '/.local/share/flatpak/exports/share'
 )
 
 hl.config {
