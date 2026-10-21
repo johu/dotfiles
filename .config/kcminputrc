@@ -4,10 +4,12 @@ NumLock=0
 [Libinput][1133][49970][Logitech Gaming Mouse G502]
 PointerAcceleration=0.000000
 PointerAccelerationProfile=1
+ScrollFactor=0.5
 
 [Libinput][13853][256][Finalmouse UltralightX dongle Mouse]
 PointerAcceleration=0.000000
 PointerAccelerationProfile=1
+ScrollFactor=0.5
 
 [Mouse]
 cursorTheme=Bibata-Modern-Ice
