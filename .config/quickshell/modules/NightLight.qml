@@ -13,6 +13,7 @@ Text {
     // stale click state once a scheduled transition has passed.
     property bool active: false
     property bool present: false
+    property bool gameModeActive: false
     property string pendingCommand: ""
     property var profiles: []
     // Epoch-minute deadline of the next scheduled transition after the
@@ -62,6 +63,13 @@ Text {
     }
 
     function resync() {
+        if (gameModeActive) {
+            if (active) {
+                active = false;
+                sendCommand("identity");
+            }
+            return;
+        }
         const now = new Date();
         const nowEpoch = Math.floor(now.getTime() / 60000);
         if (overrideUntil >= 0 && nowEpoch < overrideUntil)
@@ -75,6 +83,30 @@ Text {
         running: true
         repeat: true
         onTriggered: root.resync()
+    }
+
+    // Game mode (SUPER + F2, see hypr/keybinds.lua) touches/removes this
+    // file; night light must never run while it's gaming, so poll for it
+    // rather than relying on any push notification hyprsunset can't give us.
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        onTriggered: gameModeCheck.running = true
+    }
+
+    Process {
+        id: gameModeCheck
+        command: ["sh", "-c", "test -f ~/.cache/gamemode && echo 1 || echo 0"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const nowActive = this.text.trim() === "1";
+                if (nowActive === root.gameModeActive)
+                    return;
+                root.gameModeActive = nowActive;
+                root.resync();
+            }
+        }
     }
 
     Socket {
@@ -133,6 +165,8 @@ Text {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         onClicked: {
+            if (root.gameModeActive)
+                return;
             root.active = !root.active;
             root.overrideUntil = root.nextTransitionEpochAfter(new Date());
             root.sendCommand(root.active ? "temperature 4500" : "identity");
