@@ -80,12 +80,8 @@ end)
 -- Game mode
 local game_mode = false
 
-local function toggle_game_mode()
+local function enable_game_mode()
   if game_mode then
-    game_mode = false
-    hl.exec_cmd 'rm -f ~/.cache/gamemode'
-    hl.notification.create { text = 'Gamemode disabled', timeout = 2000, color = 'rgba(f7768eee)' }
-    hl.exec_cmd 'hyprctl reload'
     return
   end
 
@@ -112,4 +108,51 @@ local function toggle_game_mode()
   }
 end
 
+local function disable_game_mode()
+  if not game_mode then
+    return
+  end
+
+  game_mode = false
+  hl.exec_cmd 'rm -f ~/.cache/gamemode'
+  hl.notification.create { text = 'Gamemode disabled', timeout = 2000, color = 'rgba(f7768eee)' }
+  hl.exec_cmd 'hyprctl reload'
+end
+
+local function toggle_game_mode()
+  if game_mode then
+    disable_game_mode()
+  else
+    enable_game_mode()
+  end
+end
+
 hl.bind('SUPER + F2', toggle_game_mode, { desc = 'Gamemode' })
+
+-- Automatically enable game mode while a Steam game is running, and
+-- disable it again once the last one closes. steam_app_<appid> is the
+-- class Steam assigns to a game's window.
+local function is_steam_game(class)
+  return class ~= nil and class:match '^steam_app_%d+$' ~= nil
+end
+
+local function any_steam_game_running()
+  for _, w in ipairs(hl.get_windows()) do
+    if is_steam_game(w.class) then
+      return true
+    end
+  end
+  return false
+end
+
+hl.on('window.open', function(w)
+  if is_steam_game(w.class) then
+    enable_game_mode()
+  end
+end)
+
+hl.on('window.destroy', function(w)
+  if is_steam_game(w.class) and not any_steam_game_running() then
+    disable_game_mode()
+  end
+end)
