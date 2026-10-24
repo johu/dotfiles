@@ -121,6 +121,7 @@ PanelWindow {
             NetworkIndicator {}
             Bluetooth {}
             Battery {}
+            NightLight {}
             Volume {}
             Clipboard {}
             Notifications {}
