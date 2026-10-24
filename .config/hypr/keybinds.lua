@@ -8,7 +8,7 @@ hl.bind(mod .. ' + Q', hl.dsp.exec_cmd 'wlogout')
 hl.bind(mod .. ' + E', hl.dsp.exec_cmd(file_manager))
 hl.bind(mod .. ' + Y', hl.dsp.window.float { action = 'toggle' }, { desc = 'Toggle window floating/tiling' })
 hl.bind(mod .. ' + F', hl.dsp.window.fullscreen { mode = 'fullscreen' }, { desc = 'Fullscreen' })
-hl.bind(mod .. ' + SPACE', hl.dsp.exec_cmd 'rofi -show drun -replace -i', { desc = 'Application launcher' })
+hl.bind(mod .. ' + SPACE', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call launcher toggle', { desc = 'Application launcher' })
 -- bind = $mainMod, P, pseudo, # dwindle
 hl.bind(mod .. ' + T', hl.dsp.layout 'togglesplit') -- dwindle only
 hl.bind(mod .. ' + F1', hl.dsp.exec_cmd '~/.config/hypr/scripts/keybinds.sh', { desc = 'Show keybinds' })
