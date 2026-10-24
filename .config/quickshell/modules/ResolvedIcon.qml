@@ -22,11 +22,15 @@ Item {
     implicitWidth: root.size
     implicitHeight: root.size
 
+    // Only the explicit-path case (icon names qualified with a
+    // hicolor/<size>/status/ theme path, e.g. quassel) needs this
+    // workaround - Quickshell's provider fails to walk that layout.
+    // Plain icon names with no explicit path resolve fine through the
+    // native image://icon/ provider (QIcon::fromTheme), which correctly
+    // follows theme inheritance/symlinks that our own `find` would miss.
     Process {
-        running: root.iconName.length > 0
-        command: root.explicitPath
-            ? ["find", root.explicitPath, "-iname", root.iconName + ".*"]
-            : ["find", "/usr/share/icons/Papirus-Dark", "/usr/share/icons/hicolor", "/usr/share/pixmaps", "-iname", root.iconName + ".*"]
+        running: root.explicitPath.length > 0
+        command: ["find", root.explicitPath, "-iname", root.iconName + ".*"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const match = this.text.split("\n").find(line => line.length > 0);
@@ -38,7 +42,7 @@ Item {
     IconImage {
         anchors.centerIn: parent
         implicitSize: root.size
-        source: root.resolvedIconPath ? "file://" + root.resolvedIconPath : ""
-        visible: root.resolvedIconPath.length > 0
+        source: root.resolvedIconPath ? "file://" + root.resolvedIconPath : (root.explicitPath.length === 0 ? root.iconSource : "")
+        visible: source.toString().length > 0
     }
 }
