@@ -18,7 +18,10 @@ Item {
     // reports right after startup.
     property bool osdReady: false
 
-    implicitWidth: Math.max(28, label.implicitWidth + 12)
+    // Fixed, not content-driven: the muted glyph differs in length and
+    // font size from the volume-level glyphs, which pulsed the bar's
+    // width on scroll when sized from label.implicitWidth.
+    implicitWidth: 28
     implicitHeight: 28
 
     Timer {

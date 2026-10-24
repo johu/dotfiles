@@ -60,12 +60,15 @@ PanelWindow {
     }
 
     Pill {
-        // Matches waybar's #system group: "padding: 0px 10px" (our default
-        // horizontalPadding of 15 was wider than waybar's).
+        // waybar's #system margin is asymmetric (7px top/3px bottom, not
+        // centered); padding is bumped past waybar's raw 10px since our
+        // glyphs sit closer to this pill's stadium-radius end caps.
+        anchors.top: parent.top
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.topMargin: 7
         anchors.rightMargin: 15
-        horizontalPadding: 10
+        height: 32
+        horizontalPadding: 14
         spacing: 14
 
         Tray {}

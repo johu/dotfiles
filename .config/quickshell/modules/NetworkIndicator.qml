@@ -17,7 +17,7 @@ Text {
             // waybar's ethernet icon (nf-fa-ethernet, U+F6FF) isn't in this
             // font's installed charset (verified via fc-query) - nf-fa-plug
             // is a reasonable stand-in for "wired connection".
-            return " ";
+            return "";
         return "Not connected";
     }
 
