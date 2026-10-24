@@ -74,6 +74,7 @@ PanelWindow {
         Tray {}
         Privacy {}
         NetworkIndicator {}
+        Battery {}
         Volume {}
         Clipboard {}
         Notifications {}
