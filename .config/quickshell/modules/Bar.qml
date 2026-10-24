@@ -122,6 +122,7 @@ PanelWindow {
             Bluetooth {}
             Battery {}
             NightLight {}
+            Brightness {}
             Volume {}
             Clipboard {}
             Notifications {}

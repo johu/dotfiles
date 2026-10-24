@@ -30,12 +30,24 @@ Item {
         onTriggered: root.osdReady = true
     }
 
-    onVolumeChanged: if (root.osdReady)
-        osd.show(root, root.volume, root.muted)
-    onMutedChanged: if (root.osdReady)
-        osd.show(root, root.volume, root.muted)
+    // nf-fa-volume_mute isn't in this font's charset; volume-off reads as
+    // "silent" too.
+    function icon() {
+        if (root.muted)
+            return "\uf026";
+        if (root.volume > 0.66)
+            return "\uf028";
+        if (root.volume > 0.0)
+            return "\uf027";
+        return "\uf026";
+    }
 
-    VolumeOsd {
+    onVolumeChanged: if (root.osdReady)
+        osd.show(root, root.volume, root.icon(), Theme.maroon, root.muted)
+    onMutedChanged: if (root.osdReady)
+        osd.show(root, root.volume, root.icon(), Theme.maroon, root.muted)
+
+    Osd {
         id: osd
     }
 
@@ -43,17 +55,7 @@ Item {
         id: label
         anchors.centerIn: parent
 
-        text: {
-            // nf-fa-volume_mute isn't in this font's charset; volume-off
-            // reads as "silent" too.
-            if (root.muted)
-                return "\uf026 ";
-            if (root.volume > 0.66)
-                return "\uf028";
-            if (root.volume > 0.0)
-                return "\uf027";
-            return "\uf026";
-        }
+        text: root.muted ? root.icon() + " " : root.icon()
 
         color: Theme.maroon
         font.family: Theme.fontFamily

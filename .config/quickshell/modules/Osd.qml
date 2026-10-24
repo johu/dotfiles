@@ -5,12 +5,16 @@ import Quickshell
 PopupWindow {
     id: root
 
-    property real volume: 0
+    property real value: 0
     property bool muted: false
+    property string icon: ""
+    property string accentColor: Theme.maroon
 
-    function show(anchorItem, newVolume, newMuted) {
-        volume = newVolume;
-        muted = newMuted;
+    function show(anchorItem, newValue, newIcon, newColor, newMuted) {
+        value = newValue;
+        icon = newIcon;
+        accentColor = newColor ?? Theme.maroon;
+        muted = newMuted ?? false;
         const win = anchorItem.QsWindow;
         const pos = win.mapFromItem(anchorItem, anchorItem.width / 2, anchorItem.height);
         anchor.window = win.window;
@@ -43,16 +47,8 @@ PopupWindow {
             spacing: 8
 
             Text {
-                text: {
-                    if (root.muted)
-                        return "\uf026";
-                    if (root.volume > 0.66)
-                        return "\uf028";
-                    if (root.volume > 0.0)
-                        return "\uf027";
-                    return "\uf026";
-                }
-                color: Theme.maroon
+                text: root.icon
+                color: root.accentColor
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.iconFontSize
                 font.bold: true
@@ -69,13 +65,13 @@ PopupWindow {
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     radius: 3
-                    width: parent.width * (root.muted ? 0 : root.volume)
-                    color: Theme.maroon
+                    width: parent.width * (root.muted ? 0 : root.value)
+                    color: root.accentColor
                 }
             }
 
             Text {
-                text: Math.round(root.volume * 100) + "%"
+                text: Math.round(root.value * 100) + "%"
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
