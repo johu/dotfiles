@@ -83,12 +83,14 @@ local game_mode = false
 local function toggle_game_mode()
   if game_mode then
     game_mode = false
+    hl.exec_cmd 'rm -f ~/.cache/gamemode'
     hl.notification.create { text = 'Gamemode disabled', timeout = 2000, color = 'rgba(f7768eee)' }
     hl.exec_cmd 'hyprctl reload'
     return
   end
 
   game_mode = true
+  hl.exec_cmd 'touch ~/.cache/gamemode'
   hl.notification.create { text = 'Gamemode enabled', timeout = 2000, color = 'rgba(9ece6aee)' }
 
   hl.config {
