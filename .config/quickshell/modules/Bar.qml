@@ -70,6 +70,7 @@ PanelWindow {
         NetworkIndicator {}
         Volume {}
         Clipboard {}
+        Notifications {}
         Logout {}
     }
 }
