@@ -21,9 +21,13 @@ hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'hyprshot -m region', { desc = 'Screensho
 hl.bind(mod .. ' + V', hl.dsp.exec_cmd '~/.config/hypr/scripts/clipboard.sh', { desc = 'Clipboard' })
 hl.bind(mod .. ' + B', hl.dsp.exec_cmd 'killall -SIGUSR1 waybar', { desc = 'Toggle waybar' })
 
+-- D2R run counter
+hl.bind(mod .. ' + F9', hl.dsp.exec_cmd '~/.config/hypr/scripts/d2runs.sh inc', { desc = 'D2R: log run' })
+hl.bind(mod .. ' + SHIFT + F9', hl.dsp.exec_cmd '~/.config/hypr/scripts/d2runs.sh dec', { desc = 'D2R: undo run' })
+
 -- # media keys
-hl.bind('XF86MonBrightnessUp', hl.dsp.exec_cmd 'brightnessctl -q s +10%', { desc = 'Brightness up' })
-hl.bind('XF86MonBrightnessDown', hl.dsp.exec_cmd 'brightnessctl -q s 10%-', { desc = 'Brightness down' })
+hl.bind('XF86MonBrightnessUp', hl.dsp.exec_cmd '~/.config/hypr/scripts/brightness.sh up', { desc = 'Brightness up' })
+hl.bind('XF86MonBrightnessDown', hl.dsp.exec_cmd '~/.config/hypr/scripts/brightness.sh down', { desc = 'Brightness down' })
 hl.bind('XF86AudioRaiseVolume', hl.dsp.exec_cmd 'pactl set-sink-volume @DEFAULT_SINK@ +5%', { desc = 'Raise volume' })
 hl.bind('XF86AudioLowerVolume', hl.dsp.exec_cmd 'pactl set-sink-volume @DEFAULT_SINK@ -5%', { desc = 'Lower volume' })
 hl.bind('XF86AudioMute', hl.dsp.exec_cmd 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle', { desc = 'Mute' })
@@ -76,6 +80,9 @@ hl.bind(mod .. ' + x', function()
     hl.dispatch(hl.dsp.window.move { workspace = 'special:minimized', follow = false })
   end
 end)
+
+-- Global keybinds
+hl.bind('SUPER + F10', hl.dsp.pass { window = 'class:^(discord)$' })
 
 -- Game mode
 local game_mode = false
