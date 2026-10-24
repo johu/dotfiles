@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 
 Item {
     id: root
@@ -19,11 +18,10 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: launcher.running = true
+        onClicked: launcher.toggle()
     }
 
-    Process {
+    Launcher {
         id: launcher
-        command: ["rofi", "-show", "drun"]
     }
 }
