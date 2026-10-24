@@ -9,6 +9,16 @@ Text {
 
     text: alt.includes("dnd") ? "\uf1f7" : "\uf0a2"
 
+    property bool initialized: false
+
+    onAltChanged: {
+        if (!initialized) {
+            initialized = true;
+            return;
+        }
+        ToastManager.show(alt.includes("dnd") ? "DND on" : "DND off", alt.includes("dnd") ? "\uf1f7" : "\uf0a2");
+    }
+
     color: alt.includes("notification") ? Theme.red : Theme.blue
     font.family: Theme.fontFamily
     font.pixelSize: Theme.iconFontSize
