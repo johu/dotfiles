@@ -69,5 +69,6 @@ PanelWindow {
         Privacy {}
         NetworkIndicator {}
         Volume {}
+        Clipboard {}
     }
 }
