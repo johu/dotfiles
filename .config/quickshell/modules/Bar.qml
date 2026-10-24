@@ -60,9 +60,12 @@ PanelWindow {
     }
 
     Pill {
+        // Matches waybar's #system group: "padding: 0px 10px" (our default
+        // horizontalPadding of 15 was wider than waybar's).
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.rightMargin: 15
+        horizontalPadding: 10
         spacing: 14
 
         Tray {}
