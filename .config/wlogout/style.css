@@ -1,4 +1,5 @@
-@import "../waybar/themes/tokyonight.css";
+@define-color text #c8d3f5;
+@define-color blue #82aaff;
 
 * {
   font-family: "JetBrainsMono Nerd Font", FontAwesome;
