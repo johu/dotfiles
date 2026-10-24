@@ -74,6 +74,7 @@ PanelWindow {
         Tray {}
         Privacy {}
         NetworkIndicator {}
+        Bluetooth {}
         Battery {}
         Volume {}
         Clipboard {}
