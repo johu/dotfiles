@@ -70,5 +70,6 @@ PanelWindow {
         NetworkIndicator {}
         Volume {}
         Clipboard {}
+        Logout {}
     }
 }
