@@ -31,7 +31,7 @@ ColumnLayout {
             anchors.verticalCenter: parent.verticalCenter
             anchors.leftMargin: 12
             anchors.rightMargin: 12
-            spacing: 8
+            spacing: 14
 
             Text {
                 text: "\uf2db"

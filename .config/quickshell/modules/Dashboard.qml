@@ -37,13 +37,27 @@ PanelWindow {
         right: true
     }
 
+    // A layer-shell surface anchored to all four edges still gets inset by
+    // other surfaces' exclusive zones by default - the bar's own
+    // `exclusiveZone: implicitHeight` (Bar.qml) pushed this window's local
+    // y=0 down to the real bar's bottom edge, so `card`'s `topMargin:
+    // Theme.barHeight + 8` below was adding the bar height a *second* time
+    // on top of that implicit inset (confirmed via pixel-measuring a
+    // screenshot: the card rendered at y~90, not the intended y~50).
+    // exclusionMode: Ignore opts this window out of that inset so it
+    // truly spans the full screen from y=0, matching what the topMargin
+    // math already assumes.
+    exclusionMode: ExclusionMode.Ignore
+
     function open() {
         root.visible = true;
     }
 
     // Reset on every reopen so expanded detail rows don't stay stuck open.
-    onVisibleChanged: if (!root.visible)
+    onVisibleChanged: if (!root.visible) {
+        audioRow.expanded = false;
         sysRow.expanded = false;
+    }
 
     // Hyprland.focusedWorkspace is reassigned to a *new* object on every
     // workspace switch (not the same object with its id mutated), so a
@@ -137,6 +151,11 @@ PanelWindow {
         visible: false
     }
 
+    AudioMixer {
+        id: audioLogic
+        visible: false
+    }
+
     NetworkPanel {
         id: netPanel
     }
@@ -173,6 +192,19 @@ PanelWindow {
         color: Theme.surface1
         width: 324
         height: layout.implicitHeight + 24
+        // AudioMixerRow/SystemResourcesRow reserve their detail card's
+        // full height the instant `expanded` flips (only opacity fades in
+        // afterward, per their own comments - see SystemResourcesRow.qml's
+        // "Reserves layout space" note) and rely on *this* Rectangle's own
+        // height Behavior below to visually "reveal" that already-laid-out
+        // content as it grows. Without clip: true, the content isn't
+        // actually masked - it just overflows past the still-small
+        // boundary immediately, colliding with whatever row sits below it
+        // (confirmed: AudioMixerRow, not being the last row, looked like it
+        // "snapped" instead of animating, while SystemResourcesRow - last,
+        // so its overflow just extended past the bottom edge unnoticed -
+        // looked fine).
+        clip: true
 
         Behavior on height {
             NumberAnimation {
@@ -338,15 +370,31 @@ PanelWindow {
                 }
             }
 
-            SystemResourcesRow {
-                id: sysRow
+            // Tighter spacing than the outer layout's 12px - these two
+            // rows read as one "monitoring" group, unlike the looser
+            // spacing between unrelated sections above (toggles, sliders,
+            // media, power buttons).
+            ColumnLayout {
                 Layout.fillWidth: true
-                cpuPercent: sysLogic.cpuPercent
-                ramPercent: sysLogic.ramPercent
-                tempCelsius: sysLogic.tempCelsius
-                diskUsed: sysLogic.diskUsed
-                diskTotal: sysLogic.diskTotal
-                diskPercent: sysLogic.diskPercent
+                spacing: 6
+
+                AudioMixerRow {
+                    id: audioRow
+                    Layout.fillWidth: true
+                    streams: audioLogic.streams
+                    summaryText: audioLogic.summaryText
+                }
+
+                SystemResourcesRow {
+                    id: sysRow
+                    Layout.fillWidth: true
+                    cpuPercent: sysLogic.cpuPercent
+                    ramPercent: sysLogic.ramPercent
+                    tempCelsius: sysLogic.tempCelsius
+                    diskUsed: sysLogic.diskUsed
+                    diskTotal: sysLogic.diskTotal
+                    diskPercent: sysLogic.diskPercent
+                }
             }
         }
     }
