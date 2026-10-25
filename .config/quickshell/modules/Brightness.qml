@@ -100,7 +100,7 @@ Item {
                 let current = NaN;
                 if (root.backend === "brightnessctl") {
                     const fields = this.text.trim().split(",");
-                    current = parseInt(fields[4], 10);
+                    current = parseInt(fields[3], 10);
                 } else {
                     const parts = this.text.trim().split(/\s+/);
                     current = parseInt(parts[3], 10);

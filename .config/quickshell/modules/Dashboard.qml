@@ -83,50 +83,6 @@ PopupWindow {
         return "\uf026";
     }
 
-    // Brightness has no cross-instance singleton today (see Brightness.qml)
-    // so this popup polls/sets it independently, same as every other bar
-    // module that polls its own external source of truth.
-    property real brightness: 1.0
-
-    function setBrightness(value) {
-        root.brightness = Math.max(0, Math.min(1, value));
-        applyTimer.restart();
-    }
-
-    Timer {
-        id: applyTimer
-        interval: 250
-        onTriggered: {
-            setProcess.command = ["ddcutil", "setvcp", "10", String(Math.round(root.brightness * 100))];
-            setProcess.running = true;
-        }
-    }
-
-    Process {
-        id: setProcess
-    }
-
-    Process {
-        id: brightnessPoll
-        command: ["ddcutil", "getvcp", "10", "--brief"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = this.text.trim().split(/\s+/);
-                const current = parseInt(parts[3], 10);
-                if (!isNaN(current))
-                    root.brightness = Math.max(0, Math.min(1, current / 100));
-            }
-        }
-    }
-
-    Timer {
-        interval: 15000
-        running: root.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: brightnessPoll.running = true
-    }
-
     // Fixed size, independent of content — reactive resizing on this
     // compositor visibly "shakes" the popup (footgun #11).
     implicitWidth: 324
@@ -158,6 +114,11 @@ PopupWindow {
 
     IdleInhibit {
         id: idleLogic
+        visible: false
+    }
+
+    Brightness {
+        id: brightLogic
         visible: false
     }
 
@@ -272,8 +233,8 @@ PopupWindow {
                 Layout.fillWidth: true
                 icon: "\uf042"
                 accentColor: Theme.teal
-                value: root.brightness
-                onMoved: v => root.setBrightness(v)
+                value: brightLogic.brightness
+                onMoved: v => brightLogic.setLocal(v)
             }
 
             Loader {
