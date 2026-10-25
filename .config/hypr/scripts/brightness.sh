@@ -13,7 +13,7 @@ backlight_device=$(ls /sys/class/backlight 2>/dev/null | head -n1)
 
 if [[ -n "$backlight_device" ]]; then
     backend="brightnessctl"
-    current=$(brightnessctl -m -d "$backlight_device" | awk -F, '{gsub("%", "", $5); print $5}')
+    current=$(brightnessctl -m -d "$backlight_device" | awk -F, '{gsub("%", "", $4); print $4}')
 else
     backend="ddcutil"
     current=$(ddcutil getvcp 10 --brief 2>/dev/null | awk '{print $4}')
