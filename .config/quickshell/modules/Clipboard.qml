@@ -5,7 +5,7 @@ Text {
     id: root
 
     text: "\uf0ea"
-    color: Theme.green
+    color: Theme.subtext1
     font.family: Theme.fontFamily
     font.pixelSize: Theme.iconFontSize
     font.bold: true

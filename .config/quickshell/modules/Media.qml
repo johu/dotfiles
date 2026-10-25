@@ -1,10 +1,15 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell.Services.Mpris
 
 Item {
     id: root
 
     property string lastActivePlayerId: ""
+    // Wraps to up to two lines instead of eliding to one - used in the
+    // dashboard, which has the vertical room; the bar pill keeps the
+    // original fixed-width single-line + ellipsis behavior.
+    property bool wrap: false
 
     readonly property var players: Mpris.players.values
     // When multiple players are simultaneously playing, prefer whichever
@@ -72,7 +77,13 @@ Item {
             root.titleUnconfirmed = false;
             return;
         }
-        if (root.currentPosition < root._lastPosition - 3 && root.currentUrl === root._lastUrl)
+        // Only trust this heuristic for players that actually report a
+        // url (browsers) - Spotify and most native players never populate
+        // xesam:url, so currentUrl stays "" permanently and every normal
+        // track change (position resets to ~0) would otherwise look like
+        // the Firefox/Zen stale-title bug and get stuck unconfirmed
+        // forever, since the only reset path is the url changing.
+        if (root.currentUrl !== "" && root.currentPosition < root._lastPosition - 3 && root.currentUrl === root._lastUrl)
             root.titleUnconfirmed = true;
         root._lastPosition = root.currentPosition;
     }
@@ -91,8 +102,11 @@ Item {
         return root.player.trackArtist || root.player.identity;
     }
 
-    implicitWidth: icon.implicitWidth + row.spacing + metrics.width
-    implicitHeight: Theme.moduleHeight
+    // Only meaningful in the non-wrap (bar) case - in wrap mode, width
+    // comes top-down from the enclosing Layout (Layout.fillWidth) and
+    // height is derived bottom-up from the wrapped label instead.
+    implicitWidth: root.wrap ? 0 : icon.implicitWidth + contentRow.spacing + metrics.width
+    implicitHeight: contentRow.implicitHeight
 
     TextMetrics {
         id: metrics
@@ -100,14 +114,14 @@ Item {
         text: root.displayText
     }
 
-    Row {
-        id: row
+    RowLayout {
+        id: contentRow
         anchors.fill: parent
         spacing: 8
 
         Text {
             id: icon
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: root.wrap ? Qt.AlignTop : Qt.AlignVCenter
             // nf-fa-pause / nf-fa-play
             text: root.player && root.player.isPlaying ? "\uf04c" : "\uf04b"
             color: Theme.green
@@ -118,15 +132,16 @@ Item {
 
         Text {
             id: label
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - icon.implicitWidth - row.spacing
+            Layout.fillWidth: true
             text: root.displayText
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
             font.bold: true
+            wrapMode: root.wrap ? Text.WordWrap : Text.NoWrap
+            maximumLineCount: root.wrap ? 2 : 1
             elide: Text.ElideRight
-            verticalAlignment: Text.AlignVCenter
+            verticalAlignment: root.wrap ? Text.AlignTop : Text.AlignVCenter
         }
     }
 

@@ -118,16 +118,32 @@ PanelWindow {
 
             Tray {}
             Privacy {}
-            NetworkIndicator {}
-            Bluetooth {}
             Battery {}
-            NightLight {}
-            IdleInhibit {}
-            Brightness {}
-            Volume {}
+            // Hidden unless a device is actually connected (not just
+            // powered-on) - the dashboard's BT toggle covers the
+            // powered-but-idle case. Overriding `visible:` directly on a
+            // Bluetooth {} instance silently loses to its own internal
+            // `visible: present` binding (confirmed empirically - not just
+            // a theory), and even wrapping it in a plain Item with
+            // implicitWidth/implicitHeight collapsed to 0 + clip: true
+            // didn't hide it either. A Loader that only constructs the
+            // real pill once connected (same pattern already used for the
+            // Media pill above) sidesteps the whole problem.
+            Bluetooth {
+                id: btProbe
+                visible: false
+            }
+
+            Loader {
+                active: btProbe.present && btProbe.connectedCount > 0
+                visible: active
+                Layout.preferredWidth: item ? item.implicitWidth : 0
+                Layout.preferredHeight: item ? item.implicitHeight : 0
+
+                sourceComponent: Bluetooth {}
+            }
             Clipboard {}
-            Notifications {}
-            Logout {}
+            Settings {}
         }
     }
 }
