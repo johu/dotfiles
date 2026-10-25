@@ -43,7 +43,7 @@ ColumnLayout {
                 spacing: 2
 
                 Text {
-                    text: "Audio mixer"
+                    text: "Sound"
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize

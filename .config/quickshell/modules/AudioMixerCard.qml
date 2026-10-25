@@ -11,7 +11,13 @@ Rectangle {
 
     radius: Theme.radius
     color: Theme.surface2
-    implicitWidth: rows.implicitWidth + 24
+    // Layout.fillWidth (set by the caller, AudioMixerRow.qml) is what's
+    // supposed to stretch this to the full card width - but with few or
+    // no streams playing, rows.implicitWidth is small, and relying on
+    // fillWidth alone to override it was observed coming out narrower
+    // than WeatherCard/SystemResourcesCard's own equivalents. Floor it at
+    // the parent column's width directly instead of trusting that.
+    implicitWidth: Math.max(rows.implicitWidth + 24, root.parent ? root.parent.width : 0)
     implicitHeight: rows.implicitHeight + 20
 
     ColumnLayout {

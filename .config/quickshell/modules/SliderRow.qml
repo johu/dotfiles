@@ -7,10 +7,16 @@ RowLayout {
     property string icon: ""
     property color accentColor: Theme.teal
     property real value: 0
+    // Optional - rows with no mute concept (brightness) just leave this
+    // false and the icon click is a no-op for them (no handler bound).
+    property bool muted: false
+    property bool mutable: false
 
     signal moved(real value)
+    signal iconClicked
 
     spacing: 10
+    opacity: root.muted ? 0.5 : 1
 
     Text {
         text: root.icon
@@ -20,6 +26,13 @@ RowLayout {
         font.bold: true
         Layout.preferredWidth: 20
         horizontalAlignment: Text.AlignHCenter
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.mutable
+            cursorShape: root.mutable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: root.iconClicked()
+        }
     }
 
     Rectangle {

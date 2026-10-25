@@ -305,13 +305,22 @@ PanelWindow {
                 icon: root.volumeIcon()
                 accentColor: Theme.blue
                 value: root.sink?.audio?.volume ?? 0
+                muted: root.sink?.audio?.muted ?? false
+                mutable: true
                 onMoved: v => {
                     if (root.sink?.audio) {
                         root.sink.audio.volume = v;
-                        if (v > 0)
-                            root.sink.audio.muted = false;
+                        // Dragging all the way down is how a mute gesture
+                        // reads to a user - without this, 0% and muted
+                        // were two different states that looked identical
+                        // (icon already drew the same glyph for both) but
+                        // behaved differently for anything else reading
+                        // PwAudio.muted (media keys, other mixers).
+                        root.sink.audio.muted = v === 0;
                     }
                 }
+                onIconClicked: if (root.sink?.audio)
+                    root.sink.audio.muted = !root.sink.audio.muted
             }
 
             SliderRow {
