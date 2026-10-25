@@ -20,4 +20,4 @@ hl.window_rule {
 require 'apps'
 
 -- Apply default opacity after apps have had a chance to opt out
-hl.window_rule { match = { tag = 'default-opacity' }, opacity = '0.97 0.9' }
+hl.window_rule { match = { tag = 'default-opacity' }, opacity = '1 1' }
