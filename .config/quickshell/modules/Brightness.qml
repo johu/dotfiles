@@ -4,21 +4,24 @@ import Quickshell.Io
 Item {
     id: root
 
-    // Single-monitor setup (see shell.qml): a desktop with an external DP
-    // monitor and no laptop backlight. Hyprland's sdrbrightness looked like
-    // a fit but is an SDR-under-HDR reference-luminance knob only — it has
-    // no visible effect on a plain `cm = srgb` desktop (readback changes,
-    // pixels never do). Real hardware brightness goes over DDC/CI via
-    // ddcutil (VCP feature 0x10, 0-100 scale).
+    // Backend is detected at runtime rather than hardcoded: laptops with
+    // a real backlight device use brightnessctl (direct kernel sysfs
+    // write, fast, no debounce needed); this desktop's external DP
+    // monitor has no backlight device, so it falls back to DDC/CI via
+    // ddcutil (VCP feature 0x10, 0-100 scale). See
+    // docs/ideas/brightness-laptop-backend.md.
     //
-    // Each ddcutil call takes ~700ms (I2C retry overhead), too slow to run
-    // once per wheel tick, so scroll adjustments are debounced: the local
-    // value and OSD update immediately for responsiveness, and the actual
-    // `setvcp` call only fires once scrolling settles.
+    // ddcutil calls take ~700ms each (I2C retry overhead), too slow to
+    // run once per wheel tick, so scroll adjustments are debounced: the
+    // local value and OSD update immediately for responsiveness, and the
+    // actual hardware write only fires once scrolling settles.
+    // brightnessctl needs no such debounce.
     property real brightness: 1.0
     property bool dimmed: false
     property real priorBrightness: 1.0
     property bool osdReady: false
+    property string backend: ""
+    property string backlightDevice: ""
 
     implicitWidth: 28
     implicitHeight: 28
@@ -29,11 +32,32 @@ Item {
         onTriggered: root.osdReady = true
     }
 
+    Component.onCompleted: detect.running = true
+
+    Process {
+        id: detect
+        command: ["sh", "-c", "ls /sys/class/backlight 2>/dev/null | head -n1"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const device = this.text.trim();
+                if (device) {
+                    root.backend = "brightnessctl";
+                    root.backlightDevice = device;
+                } else {
+                    root.backend = "ddcutil";
+                }
+                poll.running = true;
+                pollTimer.running = true;
+            }
+        }
+    }
+
     function setLocal(value) {
         const clamped = Math.max(0.0, Math.min(1.0, value));
         root.brightness = clamped;
         if (root.osdReady)
             osd.show(root, root.brightness, "\uf042", Theme.teal);
+        applyTimer.interval = root.backend === "brightnessctl" ? 0 : 250;
         applyTimer.restart();
     }
 
@@ -41,7 +65,11 @@ Item {
         id: applyTimer
         interval: 250
         onTriggered: {
-            setProcess.command = ["ddcutil", "setvcp", "10", String(Math.round(root.brightness * 100))];
+            const percent = String(Math.round(root.brightness * 100));
+            if (root.backend === "brightnessctl")
+                setProcess.command = ["brightnessctl", "-d", root.backlightDevice, "set", percent + "%"];
+            else
+                setProcess.command = ["ddcutil", "setvcp", "10", percent];
             setProcess.running = true;
         }
     }
@@ -50,14 +78,15 @@ Item {
         id: setProcess
     }
 
-    // No Quickshell IPC in this Quickshell version (0.3.1) to push a
-    // change notification when the XF86MonBrightness keys or the
-    // monitor's own OSD adjust brightness outside this pill. A slow,
-    // infrequent poll (ddcutil itself is ~700ms/call) keeps this pill
-    // from drifting out of sync with those, without hammering I2C.
+    // No Quickshell IPC in this Quickshell version to push a change
+    // notification when the XF86MonBrightness keys or the monitor's own
+    // OSD adjust brightness outside this pill, so this pill polls to stay
+    // in sync. ddcutil is slow (~700ms/call), so it polls rarely;
+    // brightnessctl is a cheap sysfs read, so it can poll more often.
     Timer {
-        interval: 15000
-        running: true
+        id: pollTimer
+        interval: root.backend === "brightnessctl" ? 3000 : 15000
+        running: false
         repeat: true
         triggeredOnStart: true
         onTriggered: poll.running = true
@@ -65,11 +94,17 @@ Item {
 
     Process {
         id: poll
-        command: ["ddcutil", "getvcp", "10", "--brief"]
+        command: root.backend === "brightnessctl" ? ["brightnessctl", "-m", "-d", root.backlightDevice] : ["ddcutil", "getvcp", "10", "--brief"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const parts = this.text.trim().split(/\s+/);
-                const current = parseInt(parts[3], 10);
+                let current = NaN;
+                if (root.backend === "brightnessctl") {
+                    const fields = this.text.trim().split(",");
+                    current = parseInt(fields[4], 10);
+                } else {
+                    const parts = this.text.trim().split(/\s+/);
+                    current = parseInt(parts[3], 10);
+                }
                 if (!isNaN(current))
                     root.brightness = Math.max(0.0, Math.min(1.0, current / 100));
             }
