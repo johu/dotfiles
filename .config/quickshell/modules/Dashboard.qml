@@ -66,10 +66,15 @@ PanelWindow {
     }
 
     // Reset on every reopen so expanded detail rows don't stay stuck open.
+    // netPanel is a separate PopupWindow only ever closed by re-clicking
+    // the WiFi tile - without this, any dashboard-close path other than
+    // that tile (outside click, workspace switch, power buttons) leaves
+    // it stranded open with no remaining way to dismiss it.
     onVisibleChanged: if (!root.visible) {
         weatherRow.expanded = false;
         audioRow.expanded = false;
         sysRow.expanded = false;
+        netPanel.visible = false;
     }
 
     // Hyprland.focusedWorkspace is reassigned to a *new* object on every
