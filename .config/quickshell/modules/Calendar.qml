@@ -203,15 +203,9 @@ PopupWindow {
         anchors.left: calendarCard.right
 
         readonly property var dayEvents: CalendarEvents.eventsOn(root.selectedDate)
-        readonly property bool hasEvents: dayEvents.length > 0
 
-        implicitWidth: hasEvents ? detailsCard.implicitWidth + 8 : 0
+        implicitWidth: detailsCard.implicitWidth + 8
         implicitHeight: calendarCard.implicitHeight
-        clip: true
-
-        Behavior on implicitWidth {
-            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
-        }
 
         Rectangle {
             id: detailsCard
@@ -221,16 +215,45 @@ PopupWindow {
             implicitHeight: calendarCard.implicitHeight
             radius: Theme.radius
             color: Theme.surface1
-            opacity: detailsWrapper.hasEvents ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation { duration: 150 }
-            }
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 12
-                spacing: 8
+                spacing: 10
+
+                // Pinned above the selected-date section so it stays visible
+                // regardless of which day is picked - weather doesn't belong
+                // to a specific day the way the event list does.
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Image {
+                        source: "file://" + WeatherData.imageForCode(WeatherData.currentCode, WeatherData.currentIsDay)
+                        width: 18
+                        height: 18
+                        sourceSize.width: 18
+                        sourceSize.height: 18
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        fillMode: Image.PreserveAspectFit
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.surface2
+                }
 
                 Text {
                     Layout.fillWidth: true
@@ -267,6 +290,16 @@ PopupWindow {
                             elide: Text.ElideRight
                         }
                     }
+                }
+
+                Text {
+                    visible: detailsWrapper.dayEvents.length === 0
+                    Layout.fillWidth: true
+                    text: "No events"
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 2
+                    font.italic: true
                 }
 
                 Item { Layout.fillHeight: true }

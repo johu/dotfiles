@@ -53,8 +53,21 @@ PanelWindow {
         root.visible = true;
     }
 
+    IpcHandler {
+        target: "dashboard"
+
+        function open(): void {
+            root.open();
+        }
+
+        function close(): void {
+            root.visible = false;
+        }
+    }
+
     // Reset on every reopen so expanded detail rows don't stay stuck open.
     onVisibleChanged: if (!root.visible) {
+        weatherRow.expanded = false;
         audioRow.expanded = false;
         sysRow.expanded = false;
     }
@@ -377,6 +390,11 @@ PanelWindow {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 6
+
+                WeatherRow {
+                    id: weatherRow
+                    Layout.fillWidth: true
+                }
 
                 AudioMixerRow {
                     id: audioRow
