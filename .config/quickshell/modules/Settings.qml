@@ -19,7 +19,7 @@ Text {
             if (dashboard.visible)
                 dashboard.visible = false;
             else
-                dashboard.open(root);
+                dashboard.open();
         }
     }
 

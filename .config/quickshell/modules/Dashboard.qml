@@ -6,42 +6,44 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 
-// Quick-settings dashboard, design variant C (compact popup; the "More"
-// expand section from the design doc is deferred until a first card
-// feature — weather/system-resources/audio-mixer — actually exists, to
-// avoid building empty scaffolding). Rows are thin wrappers around
-// already-existing per-feature modules rather than new state.
-PopupWindow {
+// Quick-settings dashboard, design variant C (compact popup). Rows are
+// thin wrappers around already-existing per-feature modules rather than
+// new state. system-resources.md (SystemResourcesRow) departs from the
+// design doc's deferred-"More"-divider sketch slightly: its CPU/RAM
+// summary is always visible, and clicking it expands in place to the
+// detailed card instead of sitting behind a separate generic toggle.
+//
+// Built on a full-screen transparent PanelWindow (same pattern as
+// Launcher.qml) rather than a PopupWindow. A PopupWindow is an xdg-popup,
+// whose live resize goes through a positioner recalculation that visibly
+// glitches on this compositor (footgun #11 below) - a PanelWindow is a
+// wlr-layer-shell surface with a size the client controls directly, so
+// the `card` Rectangle inside can freely grow/shrink (toggle grid rows,
+// the media row, future weather/audio-mixer cards, this file's own
+// SystemResourcesRow expand) with a real `Behavior on height` and no
+// resize-related flicker, confirmed against caelestia/shell's dashboard
+// (`references/shell/modules/dashboard/Content.qml`), which does the
+// same `Behavior on implicitHeight` for the same reason.
+PanelWindow {
     id: root
 
-    anchor.adjustment: PopupAdjustment.Slide
-
-    function open(item) {
-        const win = item.QsWindow;
-        const pos = win.mapFromItem(item, item.width / 2, 0);
-        root.anchor.window = win.window;
-        root.anchor.rect.x = pos.x - card.implicitWidth / 2;
-        root.anchor.rect.y = Theme.barHeight + 8;
-        root.visible = true;
-        focusGrab.active = true;
-    }
-
-    // grabFocus auto-dismisses popups far too eagerly on Hyprland; toggle
-    // visibility via the trigger glyph's own click handler instead. Outside-
-    // click dismissal is handled separately below via HyprlandFocusGrab's
-    // cleared() signal (same imperative active-toggling pattern as
-    // ClipboardPicker.qml - binding active directly to root.visible does
-    // not reliably activate the grab).
-    grabFocus: false
+    visible: false
     color: "transparent"
 
-    HyprlandFocusGrab {
-        id: focusGrab
-        windows: [root]
-        onCleared: root.visible = false
+    anchors {
+        top: true
+        bottom: true
+        left: true
+        right: true
     }
 
-    onVisibleChanged: if (!root.visible) focusGrab.active = false;
+    function open() {
+        root.visible = true;
+    }
+
+    // Reset on every reopen so expanded detail rows don't stay stuck open.
+    onVisibleChanged: if (!root.visible)
+        sysRow.expanded = false;
 
     // Hyprland.focusedWorkspace is reassigned to a *new* object on every
     // workspace switch (not the same object with its id mutated), so a
@@ -96,11 +98,6 @@ PopupWindow {
         return "\uf026";
     }
 
-    // Fixed size, independent of content — reactive resizing on this
-    // compositor visibly "shakes" the popup (footgun #11).
-    implicitWidth: 324
-    implicitHeight: layout.implicitHeight + 24
-
     // Logic-only instances (visible: false) backing the toggle tiles below
     // - sourced for their public state/functions, not their own bar-sized
     // text glyph, which the tiles replace with a uniform icon+label tile
@@ -135,6 +132,11 @@ PopupWindow {
         visible: false
     }
 
+    SystemResources {
+        id: sysLogic
+        visible: false
+    }
+
     NetworkPanel {
         id: netPanel
     }
@@ -154,11 +156,36 @@ PopupWindow {
         command: ["swaync-client", "-t", "-sw"]
     }
 
+    // Covers the whole screen - click anywhere outside the card to dismiss
+    // (same dismiss pattern as Launcher.qml's own full-screen MouseArea).
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.visible = false
+    }
+
     Rectangle {
         id: card
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: Theme.barHeight + 8
+        anchors.rightMargin: 15
         radius: Theme.radius
         color: Theme.surface1
+        width: 324
+        height: layout.implicitHeight + 24
+
+        Behavior on height {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        // Consumes clicks on the card itself so they don't fall through to
+        // the full-screen dismiss MouseArea behind it.
+        MouseArea {
+            anchors.fill: parent
+        }
 
         ColumnLayout {
             id: layout
@@ -309,6 +336,17 @@ PopupWindow {
                     command: ["sh", "-c", "hyprshutdown -t 'Restarting...' --post-cmd 'reboot'"]
                     onActivated: root.visible = false
                 }
+            }
+
+            SystemResourcesRow {
+                id: sysRow
+                Layout.fillWidth: true
+                cpuPercent: sysLogic.cpuPercent
+                ramPercent: sysLogic.ramPercent
+                tempCelsius: sysLogic.tempCelsius
+                diskUsed: sysLogic.diskUsed
+                diskTotal: sysLogic.diskTotal
+                diskPercent: sysLogic.diskPercent
             }
         }
     }
