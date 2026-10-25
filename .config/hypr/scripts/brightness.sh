@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# Single external DP monitor (ASUS VG27A), no laptop backlight device —
-# brightnessctl has nothing to control, and Hyprland's sdrbrightness is an
-# SDR-under-HDR reference-luminance knob with no visible effect on a plain
-# `cm = srgb` desktop (confirmed: readback changes, pixels never do). Real
-# hardware brightness is set over DDC/CI via ddcutil (VCP feature 0x10),
-# which this monitor supports without needing the NVIDIA RMUseSwI2c
-# registry tweak.
+# Picks a backend at runtime: brightnessctl (kernel /sys/class/backlight
+# sysfs) when a backlight device exists (laptop panel), else ddcutil
+# (DDC/CI) for an external monitor with no backlight device. See
+# docs/ideas/brightness-laptop-backend.md.
 set -euo pipefail
 
 STEP="10"
 MIN="0"
 MAX="100"
 
-current=$(ddcutil getvcp 10 --brief 2>/dev/null | awk '{print $4}')
+backlight_device=$(ls /sys/class/backlight 2>/dev/null | head -n1)
+
+if [[ -n "$backlight_device" ]]; then
+    backend="brightnessctl"
+    current=$(brightnessctl -m -d "$backlight_device" | awk -F, '{gsub("%", "", $5); print $5}')
+else
+    backend="ddcutil"
+    current=$(ddcutil getvcp 10 --brief 2>/dev/null | awk '{print $4}')
+fi
 
 case "${1:?usage: brightness.sh up|down}" in
     up)
@@ -29,4 +34,8 @@ case "${1:?usage: brightness.sh up|down}" in
         ;;
 esac
 
-ddcutil setvcp 10 "$next" > /dev/null
+if [[ "$backend" == "brightnessctl" ]]; then
+    brightnessctl -d "$backlight_device" set "${next}%" > /dev/null
+else
+    ddcutil setvcp 10 "$next" > /dev/null
+fi
