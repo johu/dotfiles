@@ -23,12 +23,25 @@ PopupWindow {
         root.anchor.rect.x = pos.x - card.implicitWidth / 2;
         root.anchor.rect.y = Theme.barHeight + 8;
         root.visible = true;
+        focusGrab.active = true;
     }
 
     // grabFocus auto-dismisses popups far too eagerly on Hyprland; toggle
-    // visibility via the trigger glyph's own click handler instead.
+    // visibility via the trigger glyph's own click handler instead. Outside-
+    // click dismissal is handled separately below via HyprlandFocusGrab's
+    // cleared() signal (same imperative active-toggling pattern as
+    // ClipboardPicker.qml - binding active directly to root.visible does
+    // not reliably activate the grab).
     grabFocus: false
     color: "transparent"
+
+    HyprlandFocusGrab {
+        id: focusGrab
+        windows: [root]
+        onCleared: root.visible = false
+    }
+
+    onVisibleChanged: if (!root.visible) focusGrab.active = false;
 
     // Hyprland.focusedWorkspace is reassigned to a *new* object on every
     // workspace switch (not the same object with its id mutated), so a
