@@ -145,6 +145,11 @@ PanelWindow {
 
     function open() {
         root.query = "";
+        // searchInput.text isn't bound back to root.query (onTextChanged is
+        // one-way, input -> query), so it must be cleared separately or a
+        // query typed before an Escape-close lingers visibly on reopen
+        // while filtering silently shows no results.
+        searchInput.text = "";
         root.selectedIndex = 0;
         root.visible = true;
     }
