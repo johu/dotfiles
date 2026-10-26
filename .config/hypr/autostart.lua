@@ -6,7 +6,6 @@ hl.on('hyprland.start', function()
   hl.exec_cmd 'systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP'
   hl.exec_cmd 'systemctl --user start hyprpolkitagent'
   hl.exec_cmd '~/.config/hypr/scripts/xdg-desktop-portal.sh'
-  hl.exec_cmd 'swaync'
   hl.exec_cmd 'nm-applet'
   hl.exec_cmd 'hyprpaper'
   hl.exec_cmd 'hypridle'
