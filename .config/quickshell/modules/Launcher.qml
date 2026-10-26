@@ -226,6 +226,60 @@ PanelWindow {
         onClicked: root.close()
     }
 
+    // Launcher.qml is pinned to a single screen (root.screen), so only
+    // that monitor ever gets a blurred backdrop above — the rest of the
+    // desktop stays untouched and visibly unblurred on other monitors.
+    // Give every other screen its own blur-only (no pill/results) window
+    // with the same screencopy+MultiEffect fake-blur, so the whole desktop
+    // reads as dimmed while the launcher is open.
+    Variants {
+        model: Quickshell.screens.filter(s => s !== root.screen)
+
+        PanelWindow {
+            id: backdrop
+
+            required property var modelData
+
+            screen: modelData
+            visible: root.visible
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+
+            Item {
+                anchors.fill: parent
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    autoPaddingEnabled: false
+                    blurEnabled: true
+                    blur: 1
+                    blurMax: 64
+                    blurMultiplier: 1
+                }
+
+                Loader {
+                    anchors.fill: parent
+                    active: backdrop.visible
+                    sourceComponent: ScreencopyView {
+                        captureSource: backdrop.screen
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+        }
+    }
+
     Rectangle {
         id: pill
 
