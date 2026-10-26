@@ -6,7 +6,7 @@ PanelWindow {
 
     color: "transparent"
     exclusiveZone: 0
-    implicitWidth: 280
+    implicitWidth: column.implicitWidth + 16
     implicitHeight: column.implicitHeight + 16
 
     anchors {
@@ -20,6 +20,14 @@ PanelWindow {
         anchors.right: parent.right
         anchors.margins: 8
         spacing: 8
+
+        Repeater {
+            model: Notifications.popups
+
+            NotificationCard {
+                notif: modelData
+            }
+        }
 
         Repeater {
             model: ToastManager.queue

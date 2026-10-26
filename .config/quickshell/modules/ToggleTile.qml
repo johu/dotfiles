@@ -28,7 +28,15 @@ Rectangle {
         spacing: 2
 
         Text {
+            // Fixed width + centered text instead of letting the glyph's
+            // own implicitWidth drive the ColumnLayout's width - icons
+            // that swap glyphs on state change (DND bell/bell-slash,
+            // night-light sun/moon, WiFi signal strength) have different
+            // natural widths per glyph, which resized the column and
+            // re-centered the label underneath it on every toggle.
             Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: Theme.iconFontSize + 4
+            horizontalAlignment: Text.AlignHCenter
             text: root.icon
             color: root.active ? root.accentColor : Theme.subtext1
             font.family: Theme.fontFamily

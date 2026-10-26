@@ -143,6 +143,7 @@ PanelWindow {
                 sourceComponent: Bluetooth {}
             }
             Clipboard {}
+            NotificationsGlyph {}
             Settings {}
         }
     }

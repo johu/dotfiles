@@ -144,11 +144,6 @@ PanelWindow {
         visible: false
     }
 
-    Notifications {
-        id: dndLogic
-        visible: false
-    }
-
     NightLight {
         id: nightLogic
         visible: false
@@ -181,16 +176,6 @@ PanelWindow {
     Process {
         id: btManager
         command: ["blueman-manager"]
-    }
-
-    Process {
-        id: dndToggle
-        command: ["swaync-client", "-d", "-sw"]
-    }
-
-    Process {
-        id: swayncPanel
-        command: ["swaync-client", "-t", "-sw"]
     }
 
     // Covers the whole screen - click anywhere outside the card to dismiss
@@ -273,15 +258,11 @@ PanelWindow {
                     onClicked: btManager.running = true
                 }
                 ToggleTile {
-                    icon: dndLogic.alt.includes("dnd") ? "\uf1f7" : "\uf0a2"
+                    icon: Notifications.dnd ? "\uf1f7" : "\uf0a2"
                     label: "DND"
                     accentColor: Theme.red
-                    active: dndLogic.alt.includes("dnd")
-                    onClicked: dndToggle.running = true
-                    onRightClicked: {
-                        swayncPanel.running = true;
-                        root.visible = false;
-                    }
+                    active: Notifications.dnd
+                    onClicked: Notifications.setDndSilently(!Notifications.dnd)
                 }
                 ToggleTile {
                     icon: nightLogic.active ? "\uf186" : "\uf185"
