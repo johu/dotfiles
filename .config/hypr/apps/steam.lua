@@ -11,6 +11,7 @@ hl.window_rule { match = { class = 'steam' }, idle_inhibit = 'fullscreen' }
 -- XWayland game can lose keyboard focus after another XWayland window
 -- (Steam) shares its workspace; separating them avoids triggering it.
 hl.window_rule { match = { class = 'steam_app_.*' }, workspace = '5' }
+hl.window_rule { match = { class = 'steam', title = 'Steam' }, workspace = '6' }
 
 -- Allow tearing for Hunt: Showdown specifically (general.allow_tearing is
 -- just the master switch; this is what actually triggers it). Only takes
