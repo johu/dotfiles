@@ -7,8 +7,8 @@ Rectangle {
 
     property var notif
 
-    implicitWidth: 320
-    implicitHeight: column.implicitHeight + 16
+    implicitWidth: 380
+    implicitHeight: content.implicitHeight + 16
     radius: Theme.radius
     color: Theme.surface1
 
@@ -32,107 +32,142 @@ Rectangle {
         anchors.margins: 8
     }
 
-    ColumnLayout {
-        id: column
+    RowLayout {
+        id: content
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 20
+        // leftMargin (gap before the icon's gutter) and spacing (gap
+        // after it, before the text column) are kept equal so the icon
+        // sits visually centered between the card border and the text -
+        // leftMargin only needs to clear the accent-color bar's right
+        // edge (anchors.margins: 8 + width: 3 = 11px).
+        anchors.leftMargin: 14
         anchors.rightMargin: 12
-        spacing: 6
+        spacing: 14
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
+        Item {
+            // Fixed-width gutter wider than the icon itself, so the icon
+            // sits centered between the card's left border and the text
+            // column instead of hugging flush against the margin. Always
+            // reserved (not just when an icon is present) - lets the
+            // title/body line up at the same left edge across every card.
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: 42
+            Layout.preferredHeight: 36
 
             ResolvedIcon {
-                visible: root.notif.appIcon.length > 0
-                iconSource: "image://icon/" + root.notif.appIcon
-                size: 16
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: root.notif.appName
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 2
-                elide: Text.ElideRight
-            }
-
-            Text {
-                text: "\uf00d"
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.iconFontSize - 2
-
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -6
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Notifications.dismissPopup(root.notif.key)
-                }
+                anchors.centerIn: parent
+                iconSource: root.notif.iconSource
+                size: 36
             }
         }
 
-        Text {
-            Layout.fillWidth: true
-            text: root.notif.summary
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            font.bold: true
-            wrapMode: Text.Wrap
-        }
-
-        Text {
-            visible: root.notif.body.length > 0
-            Layout.fillWidth: true
-            text: root.notif.body
-            textFormat: Text.PlainText
-            color: Theme.subtext1
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 1
-            wrapMode: Text.Wrap
-            maximumLineCount: 4
-            elide: Text.ElideRight
-        }
-
-        Image {
-            visible: root.notif.image.length > 0
-            source: root.notif.image
-            Layout.preferredWidth: 64
-            Layout.preferredHeight: 64
-            fillMode: Image.PreserveAspectCrop
-        }
-
-        RowLayout {
-            visible: root.notif.actions.length > 0
+        ColumnLayout {
             Layout.fillWidth: true
             spacing: 6
 
-            Repeater {
-                model: root.notif.actions
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
-                Rectangle {
-                    radius: Theme.radius / 2
-                    color: Theme.surface2
-                    implicitWidth: actionText.implicitWidth + 16
-                    implicitHeight: actionText.implicitHeight + 8
+                Text {
+                    id: titleText
+                    Layout.fillWidth: true
+                    text: root.notif.summary
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    font.bold: true
+                    wrapMode: Text.Wrap
+                }
 
-                    Text {
-                        id: actionText
-                        anchors.centerIn: parent
-                        text: modelData.text
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize - 2
-                    }
+                FontMetrics {
+                    id: titleMetrics
+                    font: titleText.font
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: Math.max(0, (titleMetrics.height - implicitHeight) / 2)
+                    text: "\uf1f8"
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.iconFontSize - 2
 
                     MouseArea {
                         anchors.fill: parent
+                        anchors.margins: -6
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Notifications.invokeAction(root.notif.key, modelData.identifier)
+                        onClicked: Notifications.dismissPopup(root.notif.key)
+                    }
+                }
+            }
+
+            Text {
+                id: bodyText
+                visible: root.notif.body.length > 0
+                Layout.fillWidth: true
+                text: root.notif.richBody
+                textFormat: Text.StyledText
+                linkColor: Theme.blue
+                color: Theme.subtext1
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize - 1
+                wrapMode: Text.Wrap
+                onLinkActivated: link => Qt.openUrlExternally(link)
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: bodyText.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }
+            }
+
+            Rectangle {
+                visible: root.notif.previewImage.length > 0
+                Layout.fillWidth: true
+                Layout.preferredHeight: 140
+                radius: Theme.radius / 2
+                color: "transparent"
+                clip: true
+
+                Image {
+                    anchors.fill: parent
+                    source: root.notif.previewImage
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectFit
+                }
+            }
+
+            RowLayout {
+                visible: root.notif.actions.length > 0
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: root.notif.actions
+
+                    Rectangle {
+                        radius: Theme.radius / 2
+                        color: Theme.surface2
+                        implicitWidth: actionText.implicitWidth + 16
+                        implicitHeight: actionText.implicitHeight + 8
+
+                        Text {
+                            id: actionText
+                            anchors.centerIn: parent
+                            text: modelData.text
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize - 2
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Notifications.invokeAction(root.notif.key, modelData.identifier)
+                        }
                     }
                 }
             }

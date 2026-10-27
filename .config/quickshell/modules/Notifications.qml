@@ -70,6 +70,111 @@ Singleton {
         return notif.urgency === NotificationUrgency.Low ? 5000 : 8000;
     }
 
+    function escapeHtml(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    // A spec-compliant app (bodyMarkupSupported) sends its body pre-escaped,
+    // using only a small set of real tags (we allow b/i/u, same whitelist
+    // swaync uses) - e.g. Discord already escapes literal '<'/'&' in
+    // message text, hyprshot wraps its path in <i>. Escaping the body
+    // again on our end would double-escape those and show literal
+    // "&lt;"/"&amp;" text. So: if the only angle brackets left after
+    // stripping our whitelisted tags are none, and every '&' starts a
+    // real entity, trust the body as already-safe markup. Otherwise an
+    // app sent raw unescaped text (a bare '<'/'&' that would break
+    // Text.StyledText parsing) and we fall back to escaping everything,
+    // then restoring just the whitelist - same defensive two-path
+    // strategy swaync's set_body() uses (try raw parse, escape+whitelist
+    // on failure), just decided up front since QML gives no parse-error
+    // signal to catch.
+    function looksLikeSafeMarkup(body) {
+        const stripped = body.replace(/<\/?(?:b|i|u)>/gi, "");
+        if (/</.test(stripped))
+            return false;
+        if (/&(?!amp;|lt;|gt;|quot;|#39;|apos;|#\d+;|#x[0-9a-f]+;)/i.test(stripped))
+            return false;
+        return true;
+    }
+
+    // Bare URLs get wrapped in an <a href> so the StyledText body in
+    // NotificationCard/NotificationHistory can render and open them.
+    function linkify(body) {
+        if (!body)
+            return "";
+        let safe = body;
+        if (!root.looksLikeSafeMarkup(body)) {
+            safe = root.escapeHtml(body).replace(/&lt;(\/?(?:b|i|u))&gt;/gi, "<$1>");
+        }
+        return safe.replace(/(https?:\/\/[^\s<>"']+)/gi, match => `<a href="${match}">${match}</a>`);
+    }
+
+    readonly property string homeDir: Quickshell.env("HOME")
+
+    function isImagePath(path) {
+        return /\.(png|jpe?g|gif|webp|bmp)$/i.test(path || "");
+    }
+
+    // hyprshot (and anything else using notify-send -i <path>) passes a
+    // path relative to $HOME, not the shell's cwd - QPixmap(path), which
+    // Quickshell's image providers fall back to, resolves relative paths
+    // against the process's own cwd and silently fails to load it.
+    function resolveImagePath(path) {
+        return path.startsWith("/") ? path : root.homeDir + "/" + path;
+    }
+
+    // notify-send -i accepts an arbitrary file path, not just a themed icon
+    // name - hyprshot uses it to pass the screenshot it just took. Treat an
+    // appIcon that looks like a path to an image file as a preview image
+    // rather than just a small status icon. Quickshell itself also mirrors
+    // a path-like appIcon into `image` as "image://icon/<path>" - that
+    // carries the same unresolved-relative-path problem, so unwrap it too.
+    // Only ever resolves to a file:// path, never a provider URL
+    // (image://qsimage/..., image://icon/<theme-name>) - those back onto
+    // the live Notification object's own pixel buffer/theme lookup and
+    // silently fail to decode once the notification closes and only this
+    // persisted snapshot remains, leaving a blank reserved-height gap
+    // where the preview Rectangle sits. A real screenshot on disk doesn't
+    // have that problem, so only file-path-looking sources get the big
+    // preview; everything else still gets the small header icon via
+    // ResolvedIcon.
+    function previewImageFor(notif) {
+        if (root.isImagePath(notif.appIcon))
+            return "file://" + root.resolveImagePath(notif.appIcon);
+        const wrapped = (notif.image || "").match(/^image:\/\/icon\/(.+)$/);
+        if (wrapped && root.isImagePath(wrapped[1]))
+            return "file://" + root.resolveImagePath(wrapped[1]);
+        return "";
+    }
+
+    // The small header/list icon. appIcon (the real app_icon D-Bus
+    // parameter) is the normal case - Discord sets it to "discord", etc.
+    // But notify-send's own -i/--icon flag populates the "icon" hint
+    // instead (landing in `image`, not `appIcon`) - hyprshot and this
+    // Firefox download example both go through that path, so without this
+    // fallback they'd show no icon at all. A themed-icon-name `image` is
+    // safe to keep indefinitely (icon-theme lookups don't go stale), but
+    // skip image://qsimage/... - like previewImageFor, that's the live
+    // notification's own embedded pixel buffer and won't resolve once the
+    // notification closes into history.
+    function iconSourceFor(notif) {
+        if (notif.appIcon)
+            return "image://icon/" + notif.appIcon;
+        if (!notif.image || notif.image.startsWith("image://qsimage/"))
+            return "";
+        // A path-like `image` value (e.g. hyprshot's screenshot path, via
+        // notify-send -i) is already shown as the big preview image via
+        // previewImageFor() - showing it again as a tiny icon just renders
+        // Quickshell's checkerboard "missing icon" placeholder, since
+        // image://icon/ never reports a load failure for an unresolved
+        // relative path (it only works for real file:// URIs or themed
+        // icon names). Skip the icon entirely in that case.
+        const wrapped = notif.image.match(/^image:\/\/icon\/(.+)$/);
+        if (wrapped && root.isImagePath(wrapped[1]))
+            return "";
+        return notif.image;
+    }
+
     function snapshot(notif, key) {
         return {
             key: key,
@@ -77,8 +182,11 @@ Singleton {
             appIcon: notif.appIcon || "",
             summary: notif.summary || "",
             body: notif.body || "",
+            richBody: root.linkify(notif.body || ""),
             urgency: notif.urgency,
             image: notif.image || "",
+            iconSource: root.iconSourceFor(notif),
+            previewImage: root.previewImageFor(notif),
             resident: notif.resident,
             time: Date.now(),
             actions: (notif.actions || []).map(a => ({
@@ -198,8 +306,11 @@ Singleton {
                     appIcon: e.appIcon,
                     summary: e.summary,
                     body: e.body,
+                    richBody: e.richBody,
                     urgency: e.urgency,
                     image: e.image,
+                    iconSource: e.iconSource,
+                    previewImage: e.previewImage,
                     time: e.time,
                     actions: e.actions
                 }));
@@ -208,6 +319,9 @@ Singleton {
     function restoreFromAdapter() {
         root.dnd = adapter.dnd;
         root.notifications = (adapter.history || []).map(h => Object.assign({}, h, {
+                    richBody: root.linkify(h.body || ""),
+                    iconSource: root.iconSourceFor(h),
+                    previewImage: root.previewImageFor(h),
                     popup: false,
                     queued: false,
                     closed: true,

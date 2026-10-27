@@ -10,8 +10,8 @@ PopupWindow {
     grabFocus: false
     color: "transparent"
 
-    implicitWidth: 340
-    implicitHeight: 420
+    implicitWidth: 400
+    implicitHeight: 440
 
     function open(item) {
         const win = item.QsWindow;
@@ -86,73 +86,120 @@ PopupWindow {
                     // the scrollbar track - without this the scrollbar sat
                     // flush against (overlapping) the card's right edge.
                     width: ListView.view.width - list.rightMargin
-                    height: entryColumn.implicitHeight + 20
+                    height: entryRow.implicitHeight + 20
                     radius: Theme.radius / 2
                     color: Theme.surface1
 
-                    ColumnLayout {
-                        id: entryColumn
+                    RowLayout {
+                        id: entryRow
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 10
-                        spacing: 2
+                        // Delegates are the same fill color as the card
+                        // itself (no visible border between them), so the
+                        // outer ColumnLayout's own 12px margin (shared
+                        // with the title/Clear-all rows) reads as part of
+                        // the same visible gap before the icon - stacking
+                        // a full 10px margin here on top of that made the
+                        // card-edge-to-icon gap roughly double the
+                        // icon-to-text gap. Drop the left margin to 0 here
+                        // so the visible padding ends up close to even.
+                        anchors.topMargin: 10
+                        anchors.rightMargin: 10
+                        anchors.bottomMargin: 10
+                        anchors.leftMargin: 0
+                        spacing: 8
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 6
+                        Item {
+                            // Fixed-width gutter wider than the icon - see
+                            // NotificationCard.qml for why.
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.preferredWidth: 34
+                            Layout.preferredHeight: 28
 
                             ResolvedIcon {
-                                visible: modelData.appIcon.length > 0
-                                iconSource: "image://icon/" + modelData.appIcon
-                                size: 14
+                                anchors.centerIn: parent
+                                iconSource: modelData.iconSource
+                                size: 28
                             }
+                        }
 
-                            Text {
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            RowLayout {
                                 Layout.fillWidth: true
-                                text: modelData.appName
-                                color: Theme.subtext1
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSize - 2
-                                elide: Text.ElideRight
+                                spacing: 6
+
+                                Text {
+                                    id: titleText
+                                    Layout.fillWidth: true
+                                    text: modelData.summary
+                                    color: Theme.text
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSize - 1
+                                    font.bold: true
+                                    wrapMode: Text.Wrap
+                                }
+
+                                FontMetrics {
+                                    id: titleMetrics
+                                    font: titleText.font
+                                }
+
+                                Text {
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.topMargin: Math.max(0, (titleMetrics.height - implicitHeight) / 2)
+                                    text: "\uf1f8"
+                                    color: Theme.subtext1
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSize - 2
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: Notifications.removeHistory(modelData.key)
+                                    }
+                                }
                             }
 
                             Text {
-                                text: "\uf00d"
+                                id: bodyText
+                                visible: modelData.body.length > 0
+                                Layout.fillWidth: true
+                                text: modelData.richBody
+                                textFormat: Text.StyledText
+                                linkColor: Theme.blue
                                 color: Theme.subtext1
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontSize - 2
+                                wrapMode: Text.Wrap
+                                onLinkActivated: link => Qt.openUrlExternally(link)
 
                                 MouseArea {
                                     anchors.fill: parent
-                                    anchors.margins: -6
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: Notifications.removeHistory(modelData.key)
+                                    acceptedButtons: Qt.NoButton
+                                    cursorShape: bodyText.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 }
                             }
-                        }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: modelData.summary
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 1
-                            font.bold: true
-                            elide: Text.ElideRight
-                        }
+                            Rectangle {
+                                visible: modelData.previewImage.length > 0
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 110
+                                radius: Theme.radius / 2
+                                color: "transparent"
+                                clip: true
 
-                        Text {
-                            visible: modelData.body.length > 0
-                            Layout.fillWidth: true
-                            text: modelData.body
-                            textFormat: Text.PlainText
-                            color: Theme.subtext1
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 2
-                            wrapMode: Text.Wrap
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
+                                Image {
+                                    anchors.fill: parent
+                                    source: modelData.previewImage
+                                    asynchronous: true
+                                    fillMode: Image.PreserveAspectFit
+                                }
+                            }
                         }
                     }
                 }
@@ -167,13 +214,36 @@ PopupWindow {
                 font.pixelSize: Theme.fontSize - 1
             }
 
-            Text {
+            Item {
+                // A plain Item (not layout-managed) wraps the row + click
+                // target, so the MouseArea's anchors.fill is safe - giving
+                // anchors to a RowLayout's own direct child conflicts with
+                // the layout positioning it (Qt warns "Detected anchors
+                // on an item that is managed by a layout").
                 visible: Notifications.history.length > 0
                 Layout.alignment: Qt.AlignHCenter
-                text: "Clear all"
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 2
+                implicitWidth: clearRow.implicitWidth
+                implicitHeight: clearRow.implicitHeight
+
+                RowLayout {
+                    id: clearRow
+                    anchors.centerIn: parent
+                    spacing: 4
+
+                    Text {
+                        text: "\uf1f8"
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 3
+                    }
+
+                    Text {
+                        text: "Clear all"
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                    }
+                }
 
                 MouseArea {
                     anchors.fill: parent
