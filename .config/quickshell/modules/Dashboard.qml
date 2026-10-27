@@ -242,6 +242,7 @@ PanelWindow {
                     label: netLogic.activeWifiNetwork ? "WiFi" : (netLogic.wiredDevice?.connected ? "LAN" : "WiFi")
                     accentColor: Theme.sky
                     active: !!netLogic.activeWifiNetwork || !!netLogic.wiredDevice?.connected
+                    enabled: netLogic.present
                     onClicked: {
                         if (netPanel.visible)
                             netPanel.visible = false;
@@ -265,10 +266,12 @@ PanelWindow {
                     onClicked: Notifications.setDndSilently(!Notifications.dnd)
                 }
                 ToggleTile {
-                    icon: nightLogic.active ? "\uf186" : "\uf185"
+                    icon: "\uf186"
+                    iconSource: nightLogic.active ? "" : "file:///home/johu/.config/quickshell/assets/icons/sun.svg"
                     label: "Night"
                     accentColor: Theme.yellow
                     active: nightLogic.active
+                    enabled: nightLogic.present
                     onClicked: {
                         if (nightLogic.gameModeActive)
                             return;

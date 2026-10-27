@@ -27,6 +27,17 @@ Text {
         sock.connected = true;
     }
 
+    // `present` otherwise only updates as a side effect of a connection
+    // attempt (startup or a click), and the socket is disconnected right
+    // after each send rather than held open - so it never notices
+    // hyprsunset going away or coming back on its own. Pinging the socket
+    // with no pendingCommand (connect, let onConnectionStateChanged mark
+    // `present` true and disconnect without writing anything) keeps
+    // `present` live without re-sending gamma/temperature each poll.
+    function checkPresence() {
+        sock.connected = true;
+    }
+
     function minutesOfDay(date) {
         return date.getHours() * 60 + date.getMinutes();
     }
@@ -109,15 +120,24 @@ Text {
         }
     }
 
+    Timer {
+        interval: 15000
+        running: true
+        repeat: true
+        onTriggered: root.checkPresence()
+    }
+
     Socket {
         id: sock
         path: root.socketPath
         onConnectionStateChanged: {
-            if (connected && root.pendingCommand.length > 0) {
+            if (connected) {
                 root.present = true;
-                write(root.pendingCommand + "\n");
-                flush();
-                pendingCommand = "";
+                if (root.pendingCommand.length > 0) {
+                    write(root.pendingCommand + "\n");
+                    flush();
+                    pendingCommand = "";
+                }
                 connected = false;
             }
         }

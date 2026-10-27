@@ -115,9 +115,9 @@ PopupWindow {
                         color: {
                             if (modelData.connected)
                                 return Theme.sky;
-                            if (modelData.signalStrength > 60)
+                            if (modelData.signalStrength > 0.6)
                                 return Theme.subtext1;
-                            if (modelData.signalStrength > 30)
+                            if (modelData.signalStrength > 0.3)
                                 return Theme.surface2;
                             return Theme.crust;
                         }
@@ -145,7 +145,7 @@ PopupWindow {
                     }
 
                     Text {
-                        text: Math.round(modelData.signalStrength) + "%"
+                        text: Math.round(modelData.signalStrength * 100) + "%"
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize

@@ -17,14 +17,20 @@ Text {
     // bar pill, which actually render as tiered signal bars.
     readonly property var wifiStrengthIcons: ["\u{f092f}", "\u{f091f}", "\u{f0922}", "\u{f0925}", "\u{f0928}"]
 
+    // signalStrength is a 0.0-1.0 fraction (see quickshell's
+    // src/network/wifi.hpp), not a percentage - callers that want a
+    // percent value must scale it themselves.
     function wifiIcon(strength) {
-        const index = Math.max(0, Math.min(4, Math.ceil(strength / 20) - 1));
+        const percent = strength * 100;
+        const index = Math.max(0, Math.min(4, Math.ceil(percent / 20) - 1));
         return wifiStrengthIcons[index];
     }
 
+    readonly property bool present: !!wifiDevice || !!wiredDevice
+
     text: {
         if (activeWifiNetwork)
-            return `${wifiIcon(activeWifiNetwork.signalStrength)} ${Math.round(activeWifiNetwork.signalStrength)}%`;
+            return `${wifiIcon(activeWifiNetwork.signalStrength)} ${Math.round(activeWifiNetwork.signalStrength * 100)}%`;
         if (wiredDevice && wiredDevice.connected)
             // nf-fa-plug (U+F1E6) reads as a power plug, not a LAN
             // connection. This is the MDI "ethernet" glyph (an RJ45 port
