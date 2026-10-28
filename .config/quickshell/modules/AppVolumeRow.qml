@@ -124,7 +124,9 @@ RowLayout {
             // card's own left margin.
             anchors.left: iconArea.left
             radius: 6
-            color: Theme.surface2
+            // Lighter than the mixer card (Theme.surface2) it sits on top
+            // of, so the popover reads as elevated instead of blending in.
+            color: Qt.lighter(Theme.surface2, 1.4)
             implicitWidth: tooltipText.implicitWidth + 16
             implicitHeight: tooltipText.implicitHeight + 8
 

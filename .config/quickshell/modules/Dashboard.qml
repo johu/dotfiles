@@ -405,11 +405,15 @@ PanelWindow {
                     id: sysRow
                     Layout.fillWidth: true
                     cpuPercent: sysLogic.cpuPercent
+                    cpuModel: sysLogic.cpuModel
+                    cpuCores: sysLogic.cpuCores
                     ramPercent: sysLogic.ramPercent
+                    ramUsedStr: sysLogic.ramUsedStr
+                    ramTotalStr: sysLogic.ramTotalStr
+                    ramFreeStr: sysLogic.ramFreeStr
                     tempCelsius: sysLogic.tempCelsius
-                    diskUsed: sysLogic.diskUsed
-                    diskTotal: sysLogic.diskTotal
-                    diskPercent: sysLogic.diskPercent
+                    rootDiskPercent: sysLogic.rootDiskPercent
+                    disks: sysLogic.disks
                 }
             }
         }

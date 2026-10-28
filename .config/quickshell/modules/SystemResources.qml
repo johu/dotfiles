@@ -8,14 +8,53 @@ Item {
     id: root
 
     property real cpuPercent: 0
+    property string cpuModel: ""
+    property int cpuCores: 0
+
     property real ramPercent: 0
+    property string ramUsedStr: ""
+    property string ramTotalStr: ""
+    property string ramFreeStr: ""
+
     property int tempCelsius: -1
-    property string diskUsed: ""
-    property string diskTotal: ""
-    property real diskPercent: 0
+
+    // Root filesystem's percent, kept separately for SystemResourcesRow.qml's
+    // one-line summary (which can't show every disk) - everything else about
+    // disks lives in the `disks` model below.
+    property real rootDiskPercent: 0
+
+    // One ListModel entry per local disk ({mount, used, total, percent}).
+    // Updated in place (set/append/remove) rather than reassigned wholesale
+    // each poll - a fresh array/object literal gets a new identity every
+    // tick, which makes a Repeater destroy and recreate every delegate and
+    // flicker continuously while visible (see ResourceRow.qml's own note
+    // on the same footgun for the old single-disk row).
+    property alias disks: disksModel
+    ListModel {
+        id: disksModel
+    }
 
     property var prevIdle: -1
     property var prevTotal: -1
+
+    function formatGiB(kb) {
+        return (kb / 1048576).toFixed(1) + " GiB";
+    }
+
+    Process {
+        id: cpuInfoPoll
+        command: ["sh", "-c", "grep -m1 'model name' /proc/cpuinfo; nproc"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = this.text.trim().split("\n");
+                if (lines.length >= 2) {
+                    root.cpuModel = lines[0].split(":")[1]?.trim() ?? "";
+                    root.cpuCores = parseInt(lines[1], 10) || 0;
+                }
+            }
+        }
+    }
+    Component.onCompleted: cpuInfoPoll.running = true
 
     Process {
         id: cpuPoll
@@ -53,8 +92,12 @@ Item {
                     else if (key === "MemAvailable")
                         available = kb;
                 }
-                if (total > 0)
+                if (total > 0) {
                     root.ramPercent = Math.max(0, Math.min(100, 100 * (1 - available / total)));
+                    root.ramUsedStr = root.formatGiB(total - available);
+                    root.ramTotalStr = root.formatGiB(total);
+                    root.ramFreeStr = root.formatGiB(available);
+                }
             }
         }
     }
@@ -72,14 +115,50 @@ Item {
 
     Process {
         id: diskPoll
-        command: ["sh", "-c", "df -h --output=used,size,pcent / | tail -n1"]
+        // Local block-device mounts only - tmpfs/devtmpfs/efivarfs (RAM-backed)
+        // and network filesystems (nfs/nfs4) aren't "disks" in the sense the
+        // dashboard cares about.
+        command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x efivarfs -x nfs -x nfs4 -x overlay -x squashfs --output=target,used,size,pcent | tail -n +2"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const fields = this.text.trim().split(/\s+/);
-                if (fields.length === 3) {
-                    root.diskUsed = fields[0];
-                    root.diskTotal = fields[1];
-                    root.diskPercent = parseInt(fields[2], 10) || 0;
+                const seen = new Set();
+                for (const line of this.text.trim().split("\n")) {
+                    const fields = line.trim().split(/\s+/);
+                    if (fields.length !== 4)
+                        continue;
+                    const [mount, used, total, pcent] = fields;
+                    const percent = parseInt(pcent, 10) || 0;
+                    seen.add(mount);
+
+                    if (mount === "/")
+                        root.rootDiskPercent = percent;
+
+                    let idx = -1;
+                    for (let i = 0; i < disksModel.count; i++) {
+                        if (disksModel.get(i).mount === mount) {
+                            idx = i;
+                            break;
+                        }
+                    }
+                    if (idx >= 0)
+                        disksModel.set(idx, {
+                            mount,
+                            used,
+                            total,
+                            percent
+                        });
+                    else
+                        disksModel.append({
+                            mount,
+                            used,
+                            total,
+                            percent
+                        });
+                }
+
+                for (let i = disksModel.count - 1; i >= 0; i--) {
+                    if (!seen.has(disksModel.get(i).mount))
+                        disksModel.remove(i);
                 }
             }
         }

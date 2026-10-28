@@ -8,11 +8,15 @@ ColumnLayout {
     id: root
 
     property real cpuPercent: 0
+    property string cpuModel: ""
+    property int cpuCores: 0
     property real ramPercent: 0
+    property string ramUsedStr: ""
+    property string ramTotalStr: ""
+    property string ramFreeStr: ""
     property int tempCelsius: -1
-    property string diskUsed: ""
-    property string diskTotal: ""
-    property real diskPercent: 0
+    property real rootDiskPercent: 0
+    property var disks: null
     property bool expanded: false
 
     spacing: 6
@@ -33,12 +37,15 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 14
 
-            Text {
-                text: "\uf2db"
-                color: Theme.blue
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.iconFontSize
-                font.bold: true
+            Image {
+                // Distinct from the detail card's CPU glyph - this
+                // summarizes CPU+RAM+Disk together, not just CPU.
+                source: "file:///home/johu/.config/quickshell/assets/icons/system.svg"
+                width: 18
+                height: 18
+                sourceSize.width: 18
+                sourceSize.height: 18
+                fillMode: Image.PreserveAspectFit
             }
 
             ColumnLayout {
@@ -53,7 +60,7 @@ ColumnLayout {
                 }
 
                 Text {
-                    text: "CPU " + Math.round(root.cpuPercent) + "% \u00b7 RAM " + Math.round(root.ramPercent) + "% \u00b7 Disk " + Math.round(root.diskPercent) + "%"
+                    text: "CPU " + Math.round(root.cpuPercent) + "% \u00b7 RAM " + Math.round(root.ramPercent) + "% \u00b7 Disk " + Math.round(root.rootDiskPercent) + "%"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize - 2
@@ -126,10 +133,13 @@ ColumnLayout {
         visible: root.reserved
         opacity: 0
         cpuPercent: root.cpuPercent
+        cpuModel: root.cpuModel
+        cpuCores: root.cpuCores
         ramPercent: root.ramPercent
+        ramUsedStr: root.ramUsedStr
+        ramTotalStr: root.ramTotalStr
+        ramFreeStr: root.ramFreeStr
         tempCelsius: root.tempCelsius
-        diskUsed: root.diskUsed
-        diskTotal: root.diskTotal
-        diskPercent: root.diskPercent
+        disks: root.disks
     }
 }
