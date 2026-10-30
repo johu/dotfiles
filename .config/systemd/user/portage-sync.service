@@ -1,0 +1,6 @@
+[Unit]
+Description=Sync the Gentoo portage tree and eix cache, output in herdr's emerge tab
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/scripts/portage-sync.sh

@@ -1,0 +1,7 @@
+[Unit]
+Description=Periodic eix-sync while a Hyprland session is active
+
+[Timer]
+OnActiveSec=30
+OnUnitActiveSec=4h
+Unit=portage-sync.service

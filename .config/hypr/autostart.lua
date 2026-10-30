@@ -5,6 +5,7 @@ hl.on('hyprland.start', function()
   hl.exec_cmd 'dbus-update-activation-environment --systemd --all'
   hl.exec_cmd 'systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP'
   hl.exec_cmd 'systemctl --user start hyprpolkitagent'
+  hl.exec_cmd 'systemctl --user start portage-sync.timer'
   hl.exec_cmd '~/.config/hypr/scripts/xdg-desktop-portal.sh'
   hl.exec_cmd 'nm-applet'
   hl.exec_cmd 'hyprpaper'
