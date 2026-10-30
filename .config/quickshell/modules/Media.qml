@@ -1,15 +1,15 @@
 import QtQuick
-import QtQuick.Layouts
+import Quickshell.Io
 import Quickshell.Services.Mpris
 
+// Bar pill: a live cava-style audio visualizer, replacing the old
+// icon+"Artist - Title" text pill entirely (see docs/ideas/media-player-popup.md).
+// Left-click: play/pause. Scroll: prev/next. Hover: MediaHoverPopup (cover
+// art + title/artist + playback progress, read-only).
 Item {
     id: root
 
     property string lastActivePlayerId: ""
-    // Wraps to up to two lines instead of eliding to one - used in the
-    // dashboard, which has the vertical room; the bar pill keeps the
-    // original fixed-width single-line + ellipsis behavior.
-    property bool wrap: false
 
     readonly property var players: Mpris.players.values
     // When multiple players are simultaneously playing, prefer whichever
@@ -25,8 +25,8 @@ Item {
     // MprisPlayer applies as-is, wiping the cached trackTitle until the
     // next real update (often not until the next track change). Keep our
     // own last-known-good title per player so that blank blip doesn't drop
-    // the title from the pill; it only updates again once a genuinely new
-    // non-empty title arrives, or the player itself changes.
+    // the title shown in MediaHoverPopup/MediaExpandCard; it only updates again
+    // once a genuinely new non-empty title arrives, or the player changes.
     property string _lastGoodTitle: ""
     property string _lastGoodTitleKey: ""
 
@@ -89,65 +89,96 @@ Item {
     }
 
     readonly property bool titleKnown: root.player && !root.titleUnconfirmed && root.effectiveTitle
-    readonly property string displayText: {
-        if (!root.player)
-            return "";
-        if (root.titleKnown)
-            return root.player.trackArtist ? `${root.player.trackArtist} - ${root.effectiveTitle}` : root.effectiveTitle;
-        // Title is stale/unknown (see the Firefox/Zen note above). The
-        // artist field (the YouTube channel, for browser players) tends to
-        // stay accurate even when the title doesn't, so prefer it over the
-        // player's generic identity; only fall back to identity when we
-        // have nothing better to show.
-        return root.player.trackArtist || root.player.identity;
+    readonly property string displayTitle: root.titleKnown ? root.effectiveTitle : ""
+    readonly property string displayArtist: root.player ? (root.titleKnown ? root.player.trackArtist : "") : ""
+    // Fallback identity (player name) for when the title itself is
+    // unconfirmed/stale - same heuristic the old text pill used.
+    readonly property string displayFallback: root.player ? (root.player.trackArtist || root.player.identity) : ""
+
+    readonly property int barCount: 26
+    readonly property real barWidth: 3
+    readonly property real barSpacing: 3
+    readonly property real barMaxHeight: 20
+
+    implicitWidth: barCount * barWidth + (barCount - 1) * barSpacing
+    implicitHeight: Theme.moduleHeight
+
+    ListModel {
+        id: barModel
+        Component.onCompleted: {
+            for (let i = 0; i < root.barCount; i++)
+                append({ v: 0 });
+        }
     }
 
-    // Only meaningful in the non-wrap (bar) case - in wrap mode, width
-    // comes top-down from the enclosing Layout (Layout.fillWidth) and
-    // height is derived bottom-up from the wrapped label instead.
-    implicitWidth: root.wrap ? 0 : icon.implicitWidth + contentRow.spacing + metrics.width
-    implicitHeight: contentRow.implicitHeight
-
-    TextMetrics {
-        id: metrics
-        font: label.font
-        text: root.displayText
+    // Only spawned while a player is actually active - otherwise it keeps
+    // a PipeWire capture stream open and burns CPU on FFT work for a bar
+    // element nobody can see (hidden by the Loader in Bar.qml).
+    Process {
+        id: cava
+        running: root.player !== null
+        command: ["cava", "-p", "/home/johu/.config/quickshell/assets/cava.conf"]
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                const parts = data.split(";").filter(s => s.length > 0);
+                if (parts.length === 0)
+                    return;
+                for (let i = 0; i < barModel.count && i < parts.length; i++)
+                    barModel.setProperty(i, "v", Number(parts[i]));
+            }
+        }
     }
 
-    RowLayout {
-        id: contentRow
-        anchors.fill: parent
-        spacing: 8
+    // Bars settle back to 0 rather than freezing mid-animation once cava
+    // stops (player went away) - otherwise the last frame's heights stick
+    // around on a pill that's about to be destroyed by the Loader.
+    onPlayerChanged: if (!root.player) {
+        for (let i = 0; i < barModel.count; i++)
+            barModel.setProperty(i, "v", 0);
+    }
 
-        Text {
-            id: icon
-            Layout.alignment: root.wrap ? Qt.AlignTop : Qt.AlignVCenter
-            // nf-fa-pause / nf-fa-play
-            text: root.player && root.player.isPlaying ? "\uf04c" : "\uf04b"
-            color: Theme.green
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.iconFontSize
-            font.bold: true
-        }
+    Row {
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 5
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: root.barSpacing
 
-        Text {
-            id: label
-            Layout.fillWidth: true
-            text: root.displayText
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            font.bold: true
-            wrapMode: root.wrap ? Text.WordWrap : Text.NoWrap
-            maximumLineCount: root.wrap ? 2 : 1
-            elide: Text.ElideRight
-            verticalAlignment: root.wrap ? Text.AlignTop : Text.AlignVCenter
+        Repeater {
+            model: barModel
+
+            delegate: Rectangle {
+                required property real v
+
+                width: root.barWidth
+                radius: width / 2
+                height: Math.max(width, (v / 100) * root.barMaxHeight)
+                anchors.bottom: parent.bottom
+                color: root.player && root.player.isPlaying ? Theme.mauve : Theme.subtext1
+
+                Behavior on height {
+                    NumberAnimation { duration: 90; easing.type: Easing.OutQuad }
+                }
+                Behavior on color {
+                    ColorAnimation { duration: 150 }
+                }
+            }
         }
+    }
+
+    MediaHoverPopup {
+        id: hoverPopup
+        player: root.player
+        displayTitle: root.displayTitle || root.displayFallback
+        displayArtist: root.titleKnown ? root.displayArtist : ""
     }
 
     MouseArea {
         anchors.fill: parent
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        onEntered: hoverPopup.open(root)
+        onExited: hoverPopup.close()
         onClicked: {
             if (!root.player)
                 return;

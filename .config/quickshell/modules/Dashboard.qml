@@ -289,6 +289,36 @@ PanelWindow {
                 }
             }
 
+            // Always expanded (no click-to-expand like the cards further
+            // down) - media is high-priority persistent state, placed
+            // right after the toggle grid per the cross-project research
+            // in docs/ideas/media-player-popup.md, not buried mid-stack.
+            Loader {
+                Layout.fillWidth: true
+                active: Mpris.players.values.length > 0
+                visible: active
+                Layout.preferredHeight: item ? item.implicitHeight : 0
+
+                sourceComponent: Rectangle {
+                    width: parent ? parent.width : 0
+                    radius: Theme.radius
+                    // Matches AudioMixerRow/PowerButton row's own card
+                    // background - plain Theme.surface2 collides with
+                    // MediaExpandCard's disabled prev/next icon color,
+                    // making them invisible against the card.
+                    color: Qt.lighter(Theme.surface1, 1.3)
+                    implicitHeight: cardContent.implicitHeight + 24
+
+                    MediaExpandCard {
+                        id: cardContent
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 12
+                    }
+                }
+            }
+
             SliderRow {
                 Layout.fillWidth: true
                 icon: root.volumeIcon()
@@ -318,35 +348,6 @@ PanelWindow {
                 accentColor: Theme.teal
                 value: brightLogic.brightness
                 onMoved: v => brightLogic.setLocal(v)
-            }
-
-            Loader {
-                Layout.fillWidth: true
-                // Media.qml always renders a play/pause glyph even with no
-                // player (relies on callers gating it, same as Bar.qml's
-                // own Loader) - without this guard an idle dashboard shows
-                // a phantom play icon with no track.
-                active: Mpris.players.values.length > 0
-                visible: active
-                Layout.preferredHeight: item ? item.implicitHeight : 0
-
-                // Pill's own implicitWidth is content-driven by default -
-                // explicitly matching the Loader's assigned width (Loader
-                // becomes the Pill's parent here) is what lets the Media
-                // label below wrap instead of eliding.
-                sourceComponent: Pill {
-                    width: parent.width
-                    // Pill's own implicitHeight is a fixed Theme.moduleHeight
-                    // (single-line pills elsewhere) - grow it to fit a
-                    // wrapped two-line title instead of clipping it.
-                    implicitHeight: Math.max(Theme.moduleHeight, mediaContent.implicitHeight + 12)
-                    horizontalPadding: 14
-                    Media {
-                        id: mediaContent
-                        wrap: true
-                        Layout.fillWidth: true
-                    }
-                }
             }
 
             RowLayout {

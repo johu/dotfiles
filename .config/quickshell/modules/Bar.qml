@@ -91,10 +91,16 @@ PanelWindow {
         // child can get stuck without a repaint on this compositor's
         // event-loop-driven (non-animation-driven) render path — a Loader
         // sidesteps that by constructing a fresh Pill/Media instance only
-        // once a player is actually playing, instead of toggling visibility
+        // once a player is actually available, instead of toggling visibility
         // on a long-lived one.
+        //
+        // Matches Dashboard.qml's MediaExpandCard guard (`players.length > 0`)
+        // rather than the old isPlaying/lastActivePlayerId-stopped check -
+        // the cava visualizer pill should appear whenever any player is
+        // registered (e.g. paused, not yet pressed play), same as the
+        // dashboard card, not just while something is actively playing.
         Loader {
-            active: Mpris.players.values.some(p => p.isPlaying || (p.dbusName === bar.lastActivePlayerId && p.playbackState !== MprisPlaybackState.Stopped))
+            active: Mpris.players.values.length > 0
             visible: active
             Layout.preferredWidth: item ? item.implicitWidth : 0
             Layout.preferredHeight: item ? item.implicitHeight : 0
