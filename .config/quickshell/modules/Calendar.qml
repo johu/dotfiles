@@ -40,8 +40,8 @@ PopupWindow {
     // shake (compositor support for reactive repositioning is incomplete).
     // Keeping the window static and animating the cards inside it avoids
     // that entirely.
-    implicitWidth: 480
-    implicitHeight: 300
+    implicitWidth: 540
+    implicitHeight: 336
 
     readonly property var shownDate: {
         const now = new Date();
@@ -68,6 +68,31 @@ PopupWindow {
             id: calendarLayout
             anchors.centerIn: parent
             spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Layout.alignment: Qt.AlignHCenter
+
+                Image {
+                    source: "file://" + WeatherData.imageForCode(WeatherData.currentCode, WeatherData.currentIsDay)
+                    width: 18
+                    height: 18
+                    sourceSize.width: 18
+                    sourceSize.height: 18
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    fillMode: Image.PreserveAspectFit
+                }
+
+                Text {
+                    text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 2
+                    elide: Text.ElideRight
+                }
+            }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -201,59 +226,42 @@ PopupWindow {
         id: detailsWrapper
         anchors.top: parent.top
         anchors.left: calendarCard.right
+        clip: true
 
         readonly property var dayEvents: CalendarEvents.eventsOn(root.selectedDate)
+        readonly property bool hasEvents: dayEvents.length > 0
 
-        implicitWidth: detailsCard.implicitWidth + 8
+        implicitWidth: hasEvents ? detailsCard.implicitWidth + 8 : 0
         implicitHeight: calendarCard.implicitHeight
+
+        Behavior on implicitWidth {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Rectangle {
             id: detailsCard
             anchors.top: parent.top
             anchors.right: parent.right
-            implicitWidth: 200
+            implicitWidth: 260
             implicitHeight: calendarCard.implicitHeight
             radius: Theme.radius
             color: Theme.surface1
+            opacity: detailsWrapper.hasEvents ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 12
                 spacing: 10
-
-                // Pinned above the selected-date section so it stays visible
-                // regardless of which day is picked - weather doesn't belong
-                // to a specific day the way the event list does.
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    Image {
-                        source: "file://" + WeatherData.imageForCode(WeatherData.currentCode, WeatherData.currentIsDay)
-                        width: 18
-                        height: 18
-                        sourceSize.width: 18
-                        sourceSize.height: 18
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
-                        fillMode: Image.PreserveAspectFit
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
-                        color: Theme.subtext1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize - 2
-                        elide: Text.ElideRight
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Theme.surface2
-                }
 
                 Text {
                     Layout.fillWidth: true
@@ -263,17 +271,37 @@ PopupWindow {
                     font.pixelSize: Theme.fontSize
                 }
 
-                Repeater {
+                ListView {
+                    id: eventsList
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 8
+                    clip: true
                     model: detailsWrapper.dayEvents
+                    rightMargin: 10
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: eventsList.contentHeight > eventsList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+
+                        contentItem: Rectangle {
+                            implicitWidth: 4
+                            radius: 2
+                            color: Theme.surface2
+                        }
+
+                        background: Item {}
+                    }
 
                     delegate: RowLayout {
+                        id: eventRow
                         required property var modelData
 
-                        Layout.fillWidth: true
+                        width: ListView.view.width - eventsList.rightMargin
                         spacing: 6
 
                         Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.alignment: Qt.AlignTop
+                            Layout.topMargin: 6
                             width: 6
                             height: 6
                             radius: 3
@@ -287,22 +315,10 @@ PopupWindow {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSize
                             font.bold: true
-                            elide: Text.ElideRight
+                            wrapMode: Text.Wrap
                         }
                     }
                 }
-
-                Text {
-                    visible: detailsWrapper.dayEvents.length === 0
-                    Layout.fillWidth: true
-                    text: "No events"
-                    color: Theme.subtext1
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 2
-                    font.italic: true
-                }
-
-                Item { Layout.fillHeight: true }
             }
         }
     }
