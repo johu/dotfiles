@@ -16,6 +16,13 @@ PanelWindow {
     // still relevant".
     property string lastActivePlayerId: ""
 
+    // Self-contained PanelWindow (own IpcHandler target "launcher"), not
+    // part of the bar's visible layout - just needs to exist somewhere so
+    // SUPER+SPACE's `qs ipc call launcher toggle` has a live target. Used
+    // to live nested inside Logo.qml's click handler; that click now
+    // focuses the Gentoo workspace instead, so this moved up here.
+    Launcher {}
+
     Instantiator {
         model: Mpris.players.values
         delegate: Connections {
