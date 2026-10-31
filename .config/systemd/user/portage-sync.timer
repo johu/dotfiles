@@ -2,7 +2,11 @@
 Description=Periodic eix-sync while a Hyprland session is active
 
 [Timer]
-OnActiveSec=30
+# 90s instead of 30s - the initial sync was racing herdr's own cold
+# start (ghostty+zsh+herdr launching for the first time, competing with
+# the rest of autostart.lua), causing portage-sync.sh to give up waiting
+# for the emerge pane before herdr had even finished attaching.
+OnActiveSec=90
 OnUnitActiveSec=4h
 Unit=portage-sync.service
 

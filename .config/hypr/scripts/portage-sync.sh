@@ -37,14 +37,18 @@ previous_workspace=$(hyprctl -j activeworkspace | jq -r '.id')
 
 hyprctl dispatch "hl.dsp.focus({ workspace = 1 })"
 
-for _ in $(seq 1 30); do
+# Up to 90s: herdr's cold start (ghostty + zsh + herdr client attaching
+# and restoring its session) competes with the rest of autostart.lua at
+# session start and can genuinely take longer than a few seconds under
+# that load - the old 15s window gave up before herdr had even attached.
+for _ in $(seq 1 90); do
   if herdr pane list --workspace "$GENTOO_WORKSPACE" 2>/dev/null \
       | jq -e --arg tab "$EMERGE_TAB" '.result.panes[] | select(.tab_id == $tab)' >/dev/null; then
     herdr pane run "$EMERGE_PANE" eix-sync
     hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
     exit 0
   fi
-  sleep 0.5
+  sleep 1
 done
 
 hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"

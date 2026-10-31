@@ -1,6 +1,15 @@
 [Unit]
 Description=Sync the Gentoo portage tree and eix cache, output in herdr's emerge tab
+# Caps the Restart= below to 3 attempts per 10 minutes, so a genuinely
+# broken herdr session fails loud instead of retrying forever.
+StartLimitIntervalSec=600
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
 ExecStart=%h/.config/hypr/scripts/portage-sync.sh
+# Safety net on top of the script's own wait loop: if herdr's emerge pane
+# still isn't up (e.g. an unusually slow cold start), try again shortly
+# instead of silently missing this sync cycle until OnUnitActiveSec.
+Restart=on-failure
+RestartSec=30
