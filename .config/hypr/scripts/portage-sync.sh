@@ -10,6 +10,13 @@ GENTOO_WORKSPACE="w3"
 EMERGE_TAB="w3:t1"
 EMERGE_PANE="w3:p1"
 
+# systemd user services run with a minimal $PATH (no ~/.local/bin) that
+# doesn't include herdr - every herdr call below was silently failing
+# with "command not found" under the service's 2>/dev/null, which looked
+# identical to the pane genuinely never appearing. Resolve it explicitly
+# instead of trusting $PATH.
+HERDR="$HOME/.local/bin/herdr"
+
 # Same ~/.cache/gamemode flag NightLight.qml and PortageUpdates.qml's own
 # pretend-check already respect (see hypr/keybinds.lua's SUPER+F2 toggle).
 # This script forces a workspace switch below, which would yank focus out
@@ -42,9 +49,9 @@ hyprctl dispatch "hl.dsp.focus({ workspace = 1 })"
 # session start and can genuinely take longer than a few seconds under
 # that load - the old 15s window gave up before herdr had even attached.
 for _ in $(seq 1 90); do
-  if herdr pane list --workspace "$GENTOO_WORKSPACE" 2>/dev/null \
+  if "$HERDR" pane list --workspace "$GENTOO_WORKSPACE" 2>/dev/null \
       | jq -e --arg tab "$EMERGE_TAB" '.result.panes[] | select(.tab_id == $tab)' >/dev/null; then
-    herdr pane run "$EMERGE_PANE" eix-sync
+    "$HERDR" pane run "$EMERGE_PANE" eix-sync
     hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
     exit 0
   fi
