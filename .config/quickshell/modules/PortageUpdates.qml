@@ -25,6 +25,10 @@ Singleton {
     property int emergeTotal: 0
     property string emergeAtom: ""
     property int emergeEtaSeconds: 0
+    // Tracks emergeRunning's previous value to fire a one-off recheck the
+    // moment a build ends, instead of waiting up to pollInterval (4h) for
+    // the badge count to reflect the packages that just got merged.
+    property bool wasEmergeRunning: false
 
     // PORT_LOGDIR is configurable in /etc/portage/make.conf (set here to
     // ~/.local/share/logs, not the distro default /var/log) - ask portage
@@ -147,6 +151,10 @@ Singleton {
                 // average; either way there's nothing sane to show.
                 const etaSeconds = root.emergeRunning ? parseInt(parts[3], 10) || 0 : 0;
                 root.emergeEtaSeconds = etaSeconds > 0 ? etaSeconds : 0;
+
+                if (root.wasEmergeRunning && !root.emergeRunning)
+                    root.check();
+                root.wasEmergeRunning = root.emergeRunning;
             }
         }
     }
