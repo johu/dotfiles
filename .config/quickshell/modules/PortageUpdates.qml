@@ -24,6 +24,7 @@ Singleton {
     property int emergeCurrent: 0
     property int emergeTotal: 0
     property string emergeAtom: ""
+    property int emergeEtaSeconds: 0
 
     // PORT_LOGDIR is configurable in /etc/portage/make.conf (set here to
     // ~/.local/share/logs, not the distro default /var/log) - ask portage
@@ -51,6 +52,7 @@ Singleton {
         running=$(pgrep -x emerge -a 2>/dev/null | grep -v -- '-pvuDN @world' | grep -q . && echo 1 || echo 0)
         sync_epoch=$(stat -c %Y /var/cache/eix/portage.eix 2>/dev/null || echo 0)
         progress=\"\"
+        eta=\"\"
         if [ \"$running\" = \"1\" ]; then
             progress=$(awk '
                 /Started emerge on:/ { open=1; prog=\"\" }
@@ -58,8 +60,9 @@ Singleton {
                 open && /=== \\([0-9]+ of [0-9]+\\) (Compiling\\/Merging|Merging|Compiling)/ { prog=$0 }
                 END { if (open) print prog }
             ' \"$emerge_log\" 2>/dev/null)
+            eta=$(qlop -rp -M -C 2>/dev/null | sed -n 's/.*ETA: //p' | tail -1)
         fi
-        printf '%s\\x1f%s\\x1f%s' \"$running\" \"$sync_epoch\" \"$progress\"
+        printf '%s\\x1f%s\\x1f%s\\x1f%s' \"$running\" \"$sync_epoch\" \"$progress\" \"$eta\"
     "
 
     function check() {
@@ -138,6 +141,12 @@ Singleton {
                 root.emergeCurrent = match ? parseInt(match[1], 10) : 0;
                 root.emergeTotal = match ? parseInt(match[2], 10) : 0;
                 root.emergeAtom = match ? match[3] : "";
+                // qlop -rp predicts from past merge history for this exact
+                // package - 0 (or absent) when it's never been built
+                // before, negative when the build already overran its own
+                // average; either way there's nothing sane to show.
+                const etaSeconds = root.emergeRunning ? parseInt(parts[3], 10) || 0 : 0;
+                root.emergeEtaSeconds = etaSeconds > 0 ? etaSeconds : 0;
             }
         }
     }

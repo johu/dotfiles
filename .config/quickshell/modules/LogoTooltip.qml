@@ -34,6 +34,17 @@ PopupWindow {
         return "Last sync: just now";
     }
 
+    function formatEta(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        if (hours > 0)
+            return "ETA: " + hours + "h " + minutes + "m";
+        if (minutes > 0)
+            return "ETA: " + minutes + "m " + secs + "s";
+        return "ETA: " + secs + "s";
+    }
+
     anchor.adjustment: PopupAdjustment.Slide
     grabFocus: false
     color: "transparent"
@@ -85,6 +96,17 @@ PopupWindow {
                 font.pixelSize: Theme.fontSize - 3
                 elide: Text.ElideMiddle
                 Layout.maximumWidth: 240
+            }
+
+            Text {
+                // qlop -rp has no history to predict from the first time
+                // a given package is built - just omit the line then.
+                visible: PortageUpdates.emergeRunning && PortageUpdates.emergeEtaSeconds > 0
+                Layout.alignment: Qt.AlignHCenter
+                text: root.formatEta(PortageUpdates.emergeEtaSeconds)
+                color: Theme.subtext1
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize - 3
             }
 
             Text {
