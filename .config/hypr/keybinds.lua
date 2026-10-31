@@ -85,7 +85,20 @@ end)
 hl.bind('SUPER + F10', hl.dsp.pass { window = 'class:^(discord)$' })
 
 -- Game mode
-local game_mode = false
+-- Seed from the cache file so game_mode survives a `hyprctl reload`
+-- (which re-executes this file) instead of always starting false.
+local gamemode_cache_path = os.getenv 'HOME' .. '/.cache/gamemode'
+
+local function gamemode_cache_exists()
+  local f = io.open(gamemode_cache_path, 'r')
+  if f then
+    f:close()
+    return true
+  end
+  return false
+end
+
+local game_mode = gamemode_cache_exists()
 
 local function enable_game_mode()
   if game_mode then
@@ -93,7 +106,10 @@ local function enable_game_mode()
   end
 
   game_mode = true
-  hl.exec_cmd 'touch ~/.cache/gamemode'
+  local f = io.open(gamemode_cache_path, 'w')
+  if f then
+    f:close()
+  end
   hl.notification.create { text = 'Gamemode enabled', timeout = 2000, color = 'rgba(9ece6aee)' }
 
   hl.config {
@@ -121,7 +137,7 @@ local function disable_game_mode()
   end
 
   game_mode = false
-  hl.exec_cmd 'rm -f ~/.cache/gamemode'
+  os.remove(gamemode_cache_path)
   hl.notification.create { text = 'Gamemode disabled', timeout = 2000, color = 'rgba(f7768eee)' }
   hl.exec_cmd 'hyprctl reload'
 end
@@ -153,13 +169,15 @@ local function any_steam_game_running()
 end
 
 hl.on('window.open', function(w)
-  if is_steam_game(w.class) then
+  if w and is_steam_game(w.class) then
     enable_game_mode()
   end
 end)
 
-hl.on('window.destroy', function(w)
-  if is_steam_game(w.class) and not any_steam_game_running() then
+-- w is always nil here on Hyprland 0.56.2; use the event only as a
+-- "something closed" trigger and re-check the live window list.
+hl.on('window.destroy', function()
+  if game_mode and not any_steam_game_running() then
     disable_game_mode()
   end
 end)
