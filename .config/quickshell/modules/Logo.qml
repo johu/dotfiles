@@ -7,7 +7,13 @@ Item {
     implicitHeight: Theme.moduleHeight
 
     readonly property int pendingUpdates: PortageUpdates.pendingCount
-    readonly property bool badgeVisible: root.pendingUpdates > 0 || PortageUpdates.emergeRunning || PortageUpdates.lastSyncEpoch > 0
+    // Gates the hover-tooltip only - stays true once synced at least once
+    // so "last synced Xh ago" is always checkable, even at 0 pending.
+    readonly property bool tooltipAvailable: root.pendingUpdates > 0 || PortageUpdates.emergeRunning || PortageUpdates.lastSyncEpoch > 0
+    // Gates the badge icon itself - only when there's actually something
+    // to flag, not just "synced before" (that would make it permanently
+    // visible once synced, even with 0 pending updates).
+    readonly property bool hasUpdates: root.pendingUpdates > 0
     // emergeRunning alone also covers an emerge sitting idle at a
     // confirmation prompt (see PortageUpdates.qml) - only switch to the
     // spinner once there's an actual open Compiling/Merging session.
@@ -23,17 +29,46 @@ Item {
         sourceSize.height: 24
         fillMode: Image.PreserveAspectFit
 
-        RotationAnimation on rotation {
-            running: root.buildingActive
+        RotationAnimation {
+            id: spinAnim
+            target: label
+            property: "rotation"
             from: 0
             to: 360
             duration: 900
             loops: Animation.Infinite
         }
+
+        // Stopping spinAnim mid-loop just freezes `rotation` at whatever
+        // angle it happened to be at - finish the current revolution back
+        // to upright instead of leaving the glyph stuck tilted.
+        RotationAnimation {
+            id: settleAnim
+            target: label
+            property: "rotation"
+            to: 360
+            duration: 300
+            onStopped: label.rotation = 0
+        }
     }
 
+    onBuildingActiveChanged: {
+        if (root.buildingActive) {
+            settleAnim.stop();
+            spinAnim.start();
+        } else {
+            spinAnim.stop();
+            settleAnim.from = label.rotation;
+            settleAnim.start();
+        }
+    }
+
+    // onBuildingActiveChanged only fires on change, not the initial
+    // binding evaluation - cover the bar starting mid-build.
+    Component.onCompleted: if (root.buildingActive) spinAnim.start()
+
     Image {
-        visible: root.badgeVisible && !root.buildingActive
+        visible: root.hasUpdates && !root.buildingActive
         source: "file:///home/johu/.config/quickshell/assets/update.svg"
         width: 12
         height: 12
@@ -52,7 +87,7 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: focusGentooWorkspace.running = true
-        onEntered: if (root.badgeVisible) tooltip.open(root)
+        onEntered: if (root.tooltipAvailable) tooltip.open(root)
         onExited: tooltip.close()
     }
 
