@@ -90,7 +90,9 @@ PopupWindow {
             Text {
                 visible: !PortageUpdates.emergeRunning
                 Layout.alignment: Qt.AlignHCenter
-                text: PortageUpdates.pendingCount + (PortageUpdates.pendingCount === 1 ? " update available" : " updates available")
+                text: PortageUpdates.pendingCount === 0
+                    ? "No updates available"
+                    : PortageUpdates.pendingCount + (PortageUpdates.pendingCount === 1 ? " update available" : " updates available")
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 1
