@@ -1,0 +1,10 @@
+[Unit]
+Description=Restart quickshell when a real monitor reappears after idle
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/hypr/scripts/quickshell-watchdog.sh
+Restart=always
+RestartSec=2
+Slice=session.slice
