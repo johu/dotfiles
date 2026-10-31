@@ -20,6 +20,19 @@ if [ -f ~/.cache/gamemode ]; then
   exit 0
 fi
 
+# Same real-build detection PortageUpdates.qml's statusCheck uses: pgrep
+# -x emerge also matches our own pretend check (and eix-sync's internal
+# `emerge --sync`), so exclude both before deciding something is already
+# running. eix-sync itself calls emerge --sync - running it concurrently
+# with a real build risks portage db lock contention, on top of it also
+# forcing a workspace switch over whatever the user is watching build.
+if pgrep -x emerge -a 2>/dev/null \
+    | grep -v -- '-pvuDN @world' \
+    | grep -q .; then
+  echo "portage-sync.sh: emerge already running, skipping" >&2
+  exit 0
+fi
+
 previous_workspace=$(hyprctl -j activeworkspace | jq -r '.id')
 
 hyprctl dispatch "hl.dsp.focus({ workspace = 1 })"
