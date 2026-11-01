@@ -158,6 +158,11 @@ Singleton {
     // notification's own embedded pixel buffer and won't resolve once the
     // notification closes into history.
     function iconSourceFor(notif) {
+        // A cached-to-disk avatar (see cacheLiveImage()) takes priority
+        // over the generic app icon - e.g. Discord's per-sender avatar
+        // over the generic Discord logo.
+        if (notif.cachedImage)
+            return notif.cachedImage;
         if (notif.appIcon)
             return "image://icon/" + notif.appIcon;
         if (!notif.image || notif.image.startsWith("image://qsimage/"))
@@ -193,12 +198,43 @@ Singleton {
                         identifier: a.identifier,
                         text: a.text
                     })),
+            cachedImage: "",
             popup: false,
             queued: false,
             closed: false,
             expiresAt: 0,
             durationMs: 0
         };
+    }
+
+    // image://qsimage/<id>/<generation> is Quickshell's own live pixmap
+    // buffer for an embedded notification image (app_icon/icon_data hints,
+    // e.g. Discord's per-message avatar) - it dies with the Notification
+    // object once closed. Rasterize it to a real file now, while it's
+    // still alive, so the avatar survives into history/restarts instead of
+    // going blank (iconSourceFor/previewImageFor otherwise refuse to use
+    // it at all, for exactly that reason).
+    function cacheLiveImage(key, source) {
+        imageCache.cache(key, source, root.imageCacheDir, path => {
+            if (path)
+                root.applyCachedImage(key, path);
+        });
+    }
+
+    function applyCachedImage(key, path) {
+        const fileUrl = "file://" + path;
+        root.notifications = root.notifications.map(e => {
+            if (e.key !== key)
+                return e;
+            const updated = Object.assign({}, e, {
+                        cachedImage: fileUrl
+                    });
+            updated.iconSource = root.iconSourceFor(updated);
+            return updated;
+        });
+        const entry = root.notifications.find(e => e.key === key);
+        if (entry && entry.closed)
+            root.persistHistory();
     }
 
     function handleNotification(notif) {
@@ -229,6 +265,9 @@ Singleton {
         root.unreadCount++;
 
         notif.closed.connect(reason => root.onNotifClosed(key));
+
+        if (notif.image.startsWith("image://qsimage/"))
+            root.cacheLiveImage(key, notif.image);
     }
 
     function onNotifClosed(key) {
@@ -290,11 +329,17 @@ Singleton {
         const n = root.liveById[key];
         if (n)
             n.dismiss();
+        const entry = root.notifications.find(e => e.key === key);
+        if (entry && entry.cachedImage)
+            imageCache.deleteCachedMany([entry.cachedImage]);
         root.notifications = root.notifications.filter(e => e.key !== key);
         root.persistHistory();
     }
 
     function clearHistory() {
+        const removedImages = root.notifications.filter(e => e.closed && e.cachedImage).map(e => e.cachedImage);
+        if (removedImages.length > 0)
+            imageCache.deleteCachedMany(removedImages);
         root.notifications = root.notifications.filter(e => !e.closed);
         root.persistHistory();
     }
@@ -309,6 +354,7 @@ Singleton {
                     richBody: e.richBody,
                     urgency: e.urgency,
                     image: e.image,
+                    cachedImage: e.cachedImage,
                     iconSource: e.iconSource,
                     previewImage: e.previewImage,
                     time: e.time,
@@ -333,10 +379,15 @@ Singleton {
     }
 
     readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/quickshell"
+    readonly property string imageCacheDir: Quickshell.env("HOME") + "/.cache/quickshell/notif-images"
 
     Process {
         running: true
-        command: ["mkdir", "-p", root.stateDir]
+        command: ["mkdir", "-p", root.stateDir, root.imageCacheDir]
+    }
+
+    NotifImageCache {
+        id: imageCache
     }
 
     FileView {
