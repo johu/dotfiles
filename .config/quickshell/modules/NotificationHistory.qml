@@ -25,6 +25,56 @@ PopupWindow {
         onTriggered: root.clockTick++
     }
 
+    // A single noisy app (Discord sent 55 notifications in one capture
+    // window vs. single digits for everything else) would otherwise bury
+    // every other app's notifications in a flat list - collapse runs of
+    // consecutive same-app entries beyond the preview count into a single
+    // "+N more" row, expandable per-group. Matches the grouping pattern
+    // Caelestia/noctalia/serpantinum all use for the same problem.
+    property int groupPreviewNum: 3
+    property var expandedGroups: ({})
+
+    readonly property var groupedModel: root.buildGroupedModel(Notifications.history, root.groupPreviewNum, root.expandedGroups)
+
+    function buildGroupedModel(history, previewNum, expanded) {
+        const result = [];
+        let i = 0;
+        while (i < history.length) {
+            const appName = history[i].appName;
+            let j = i;
+            while (j < history.length && history[j].appName === appName)
+                j++;
+            const runLength = j - i;
+            const groupKey = "group-" + history[i].key;
+            if (runLength <= previewNum || expanded[groupKey]) {
+                for (let k = i; k < j; k++)
+                    result.push(Object.assign({
+                                type: "notif"
+                            }, history[k]));
+            } else {
+                for (let k = i; k < i + previewNum; k++)
+                    result.push(Object.assign({
+                                type: "notif"
+                            }, history[k]));
+                result.push({
+                    type: "group",
+                    key: groupKey,
+                    appName: appName,
+                    count: runLength - previewNum,
+                    iconSource: history[i + previewNum].iconSource
+                });
+            }
+            i = j;
+        }
+        return result;
+    }
+
+    function expandGroup(key) {
+        const next = Object.assign({}, root.expandedGroups);
+        next[key] = true;
+        root.expandedGroups = next;
+    }
+
     function open(item) {
         const win = item.QsWindow;
         const pos = win.mapFromItem(item, item.width, item.height);
@@ -69,7 +119,7 @@ PopupWindow {
                 Layout.fillHeight: true
                 spacing: 6
                 clip: true
-                model: Notifications.history
+                model: root.groupedModel
                 rightMargin: 14
 
                 ScrollBar.vertical: ScrollBar {
@@ -98,12 +148,59 @@ PopupWindow {
                     // the scrollbar track - without this the scrollbar sat
                     // flush against (overlapping) the card's right edge.
                     width: ListView.view.width - list.rightMargin
-                    height: entryRow.implicitHeight + 20
+                    height: (modelData.type === "group" ? groupRow.implicitHeight : entryRow.implicitHeight) + 20
                     radius: Theme.radius / 2
                     color: Theme.surface1
 
+                    Item {
+                        id: groupRow
+                        visible: modelData.type === "group"
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.topMargin: 10
+                        anchors.rightMargin: 10
+                        anchors.bottomMargin: 10
+                        anchors.leftMargin: 0
+                        implicitHeight: groupContent.implicitHeight
+
+                        RowLayout {
+                            id: groupContent
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            spacing: 8
+
+                            Item {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.preferredWidth: 34
+                                Layout.preferredHeight: 28
+
+                                ResolvedIcon {
+                                    anchors.centerIn: parent
+                                    iconSource: modelData.iconSource
+                                    size: 28
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "+" + modelData.count + " more from " + modelData.appName
+                                color: Theme.subtext1
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize - 2
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.expandGroup(modelData.key)
+                        }
+                    }
+
                     RowLayout {
                         id: entryRow
+                        visible: modelData.type !== "group"
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
