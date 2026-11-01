@@ -3,20 +3,23 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Resolves a PID to a Steam library icon file, for games launched through
-// Proton - their audio stream's binary (e.g. "wine64-preloader",
-// "D2R.exe") has no .desktop entry at all (see AppIconResolver.qml,
-// which only covers native-Linux installed apps). A Proton game's actual
-// process is several forks deep under Steam's own `reaper` launcher,
-// whose command line is the one place the Steam AppID shows up
-// (`SteamLaunch AppId=<id> -- ...`, confirmed via /proc/<pid>/cmdline on
-// a running Diablo II: Resurrected session) - walk up the process tree
-// looking for it, then read the matching 32x32 icon Steam already
-// cached locally for its own library UI.
+// Resolves a PID to a Steam library icon file and the game's display
+// name, for games launched through Proton - their audio stream's binary
+// (e.g. "wine64-preloader", "D2R.exe") has no .desktop entry at all (see
+// AppIconResolver.qml, which only covers native-Linux installed apps). A
+// Proton game's actual process is several forks deep under Steam's own
+// `reaper` launcher, whose command line is the one place the Steam AppID
+// shows up (`SteamLaunch AppId=<id> -- ...`, confirmed via
+// /proc/<pid>/cmdline on a running Diablo II: Resurrected session) - walk
+// up the process tree looking for it, then read the matching 32x32 icon
+// Steam already cached locally for its own library UI, and the "name"
+// field out of that library's appmanifest_<id>.acf (the name isn't in
+// the icon cache or the AppId itself - the .acf is the one place a
+// human-readable title is sitting in plain text on disk).
 Singleton {
     id: root
 
-    // pid -> icon file path ("" = looked up, nothing found)
+    // pid -> { icon: "path or ''", name: "title or ''" }
     property var cache: ({})
     property var queue: []
 
@@ -27,16 +30,34 @@ Singleton {
             cmd=$(tr '\\0' ' ' < /proc/$pid/cmdline 2>/dev/null)
             appid=$(printf '%s' \"$cmd\" | grep -oE 'AppId=[0-9]+' | head -1 | cut -d= -f2)
             if [ -n \"$appid\" ]; then
-                for base in \"$HOME/.local/share/Steam/appcache/librarycache\" \"$HOME/.steam/steam/appcache/librarycache\"; do
-                    dir=\"$base/$appid\"
-                    if [ -d \"$dir\" ]; then
-                        icon=$(find \"$dir\" -maxdepth 1 -regextype posix-extended -iregex '.*/[0-9a-f]{40}\\.jpg' 2>/dev/null | head -1)
-                        if [ -n \"$icon\" ]; then
-                            echo \"$icon\"
-                            exit 0
-                        fi
+                icon=\"\"
+                name=\"\"
+                for base in \"$HOME/.local/share/Steam\" \"$HOME/.steam/steam\"; do
+                    cachedir=\"$base/appcache/librarycache/$appid\"
+                    if [ -z \"$icon\" ] && [ -d \"$cachedir\" ]; then
+                        icon=$(find \"$cachedir\" -maxdepth 1 -regextype posix-extended -iregex '.*/[0-9a-f]{40}\\.jpg' 2>/dev/null | head -1)
+                    fi
+                    manifest=\"$base/steamapps/appmanifest_$appid.acf\"
+                    if [ -z \"$name\" ] && [ -f \"$manifest\" ]; then
+                        name=$(grep -m1 '\"name\"' \"$manifest\" | sed -E 's/.*\"name\"[[:space:]]+\"([^\"]*)\".*/\\1/')
+                    fi
+                    vdf=\"$base/steamapps/libraryfolders.vdf\"
+                    if [ -z \"$name\" ] && [ -f \"$vdf\" ]; then
+                        libpaths=$(grep -oE '\"path\"[[:space:]]+\"[^\"]*\"' \"$vdf\" | sed -E 's/.*\"path\"[[:space:]]+\"([^\"]*)\".*/\\1/')
+                        while IFS= read -r libpath; do
+                            [ -n \"$libpath\" ] || continue
+                            manifest=\"$libpath/steamapps/appmanifest_$appid.acf\"
+                            if [ -f \"$manifest\" ]; then
+                                name=$(grep -m1 '\"name\"' \"$manifest\" | sed -E 's/.*\"name\"[[:space:]]+\"([^\"]*)\".*/\\1/')
+                                break
+                            fi
+                        done <<EOF
+$libpaths
+EOF
                     fi
                 done
+                echo \"$icon\"
+                echo \"$name\"
                 exit 0
             fi
             pid=$(awk '{print $4}' /proc/$pid/stat 2>/dev/null)
@@ -48,8 +69,17 @@ Singleton {
     // if this pid hasn't been seen before - same lazy-memoized shape as
     // AppIconResolver.iconNameForBinary.
     function iconPathForPid(pid) {
+        return root.entryForPid(pid).icon;
+    }
+
+    // Returns the cached game title (possibly "") for this pid.
+    function gameNameForPid(pid) {
+        return root.entryForPid(pid).name;
+    }
+
+    function entryForPid(pid) {
         if (!pid)
-            return "";
+            return { icon: "", name: "" };
         const key = String(pid);
         if (key in root.cache)
             return root.cache[key];
@@ -57,7 +87,7 @@ Singleton {
             root.queue.push(key);
             root.processNext();
         }
-        return "";
+        return { icon: "", name: "" };
     }
 
     function processNext() {
@@ -76,9 +106,9 @@ Singleton {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                const found = this.text.trim();
+                const lines = this.text.split("\n");
                 const next = Object.assign({}, root.cache);
-                next[lookupProc.pidArg] = found;
+                next[lookupProc.pidArg] = { icon: (lines[0] || "").trim(), name: (lines[1] || "").trim() };
                 root.cache = next;
                 root.processNext();
             }

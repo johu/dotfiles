@@ -45,12 +45,29 @@ Item {
         // ResourceRow.qml's own comment warns about for a poll-driven
         // array literal) - only reassign when the actual node set changed.
         const unchanged = apps.length === root.streams.length && apps.every((n, i) => n === root.streams[i]);
-        if (!unchanged) {
+        if (!unchanged)
             root.streams = apps;
-            // See AppVolumeRow.qml's appName for why process.binary wins
-            // over application.name.
-            root.summaryText = apps.length === 0 ? "No apps playing" : apps.map(n => n.properties?.["application.process.binary"] || n.properties?.["application.name"] || n.description || n.name).join(" · ");
-        }
+        root.refreshSummaryText();
+    }
+
+    // Split out from refreshStreams() - SteamGameIcon's process-tree
+    // lookup (see its own comment) resolves asynchronously, so a Proton
+    // game's title ("Diablo II: Resurrected") isn't available on the
+    // first pass, only once that lookup's Process finishes and bumps
+    // SteamGameIcon.cache. The stream node set itself hasn't changed at
+    // that point, so this needs to be callable on its own, not gated
+    // behind refreshStreams()'s unchanged-node-set early-out above.
+    function refreshSummaryText() {
+        const apps = root.streams;
+        // See AppVolumeRow.qml's appName for why process.binary wins over
+        // application.name - and its steamGameName for why a Proton
+        // game's resolved title wins over that binary name
+        // ("wine64-preloader") when available.
+        root.summaryText = apps.length === 0 ? "No apps playing" : apps.map(n => {
+            const pid = n.properties?.["application.process.id"];
+            const steamName = pid ? SteamGameIcon.gameNameForPid(pid) : "";
+            return steamName || n.properties?.["application.process.binary"] || n.properties?.["application.name"] || n.description || n.name;
+        }).join(" · ");
     }
 
     Component.onCompleted: root.refreshStreams()
@@ -59,6 +76,13 @@ Item {
         target: Pipewire.nodes
         function onValuesChanged() {
             root.refreshStreams();
+        }
+    }
+
+    Connections {
+        target: SteamGameIcon
+        function onCacheChanged() {
+            root.refreshSummaryText();
         }
     }
 

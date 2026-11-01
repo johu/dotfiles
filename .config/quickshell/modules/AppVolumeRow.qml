@@ -67,6 +67,12 @@ RowLayout {
     // over both the theme-name lookups above when present.
     readonly property string steamIconPath: root.appPid ? SteamGameIcon.iconPathForPid(root.appPid) : ""
 
+    // Same walk resolves the game's actual title out of Steam's
+    // appmanifest ("Diablo II: Resurrected") - wins over appName's
+    // wine64-preloader/<Game>.exe binary name for the hover tooltip.
+    readonly property string steamGameName: root.appPid ? SteamGameIcon.gameNameForPid(root.appPid) : ""
+    readonly property string displayName: root.steamGameName || root.appName
+
     spacing: 10
     opacity: root.muted ? 0.5 : 1
 
@@ -133,7 +139,7 @@ RowLayout {
             Text {
                 id: tooltipText
                 anchors.centerIn: parent
-                text: root.appName
+                text: root.displayName
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 2
