@@ -14,6 +14,12 @@ Singleton {
     readonly property int pollInterval: 4 * 60 * 60 * 1000
     property int pendingCount: 0
     property bool gameModeActive: false
+    // Set when the pretend run can't produce a "Total: N packages" line
+    // at all - a blocked/masked dependency or a USE flag conflict, not
+    // just "zero updates". conflictSummary holds the first "!!!" line
+    // emerge printed, for the tooltip.
+    property bool hasConflict: false
+    property string conflictSummary: ""
 
     // Live build state, refreshed every statusInterval regardless of
     // gameModeActive (cheap: pgrep + a stat + an awk pass over emerge.log,
@@ -121,11 +127,23 @@ Singleton {
 
     Process {
         id: checkProc
-        command: ["sh", "-c", "emerge -pvuDN @world 2>/dev/null"]
+        // Combine stderr into stdout: emerge reports blockers/USE-flag
+        // conflicts as "!!!" lines, and those need to be seen to tell a
+        // real conflict apart from a plain "0 updates" run.
+        command: ["sh", "-c", "emerge -pvuDN @world 2>&1"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const match = this.text.match(/Total:\s*(\d+)\s*packages?/);
-                root.pendingCount = match ? parseInt(match[1], 10) : 0;
+                if (match) {
+                    root.pendingCount = parseInt(match[1], 10);
+                    root.hasConflict = false;
+                    root.conflictSummary = "";
+                } else {
+                    root.pendingCount = 0;
+                    const conflictLine = this.text.match(/^!!!.*$/m);
+                    root.hasConflict = conflictLine !== null;
+                    root.conflictSummary = conflictLine ? conflictLine[0].replace(/^!!!\s*/, "") : "";
+                }
             }
         }
     }

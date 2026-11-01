@@ -7,9 +7,10 @@ Item {
     implicitHeight: Theme.moduleHeight
 
     readonly property int pendingUpdates: PortageUpdates.pendingCount
+    readonly property bool hasConflict: PortageUpdates.hasConflict
     // Gates the hover-tooltip only - stays true once synced at least once
     // so "last synced Xh ago" is always checkable, even at 0 pending.
-    readonly property bool tooltipAvailable: root.pendingUpdates > 0 || PortageUpdates.emergeRunning || PortageUpdates.lastSyncEpoch > 0
+    readonly property bool tooltipAvailable: root.pendingUpdates > 0 || root.hasConflict || PortageUpdates.emergeRunning || PortageUpdates.lastSyncEpoch > 0
     // Gates the badge icon itself - only when there's actually something
     // to flag, not just "synced before" (that would make it permanently
     // visible once synced, even with 0 pending updates).
@@ -18,6 +19,10 @@ Item {
     // confirmation prompt (see PortageUpdates.qml) - only switch to the
     // spinner once there's an actual open Compiling/Merging session.
     readonly property bool buildingActive: PortageUpdates.emergeRunning && PortageUpdates.emergeTotal > 0
+    // An emerge process is open but hasn't started compiling yet (still
+    // resolving deps, or idling at a confirmation prompt) - distinct from
+    // buildingActive, which gets the spinning glyph instead of a badge.
+    readonly property bool idleEmerge: PortageUpdates.emergeRunning && !root.buildingActive
 
     Image {
         id: label
@@ -68,17 +73,24 @@ Item {
     Component.onCompleted: if (root.buildingActive) spinAnim.start()
 
     Image {
-        visible: root.hasUpdates && !root.buildingActive
-        source: "file:///home/johu/.config/quickshell/assets/update.svg"
-        width: 12
-        height: 12
-        sourceSize.width: 12
-        sourceSize.height: 12
+        visible: (root.hasUpdates || root.hasConflict || root.idleEmerge) && !root.buildingActive
+        // Priority when multiple states are true at once: a conflict is
+        // the most actionable, then an open-but-idle emerge session,
+        // then a plain pending-update count.
+        source: root.hasConflict
+            ? "file:///home/johu/.config/quickshell/assets/conflict.svg"
+            : root.idleEmerge
+                ? "file:///home/johu/.config/quickshell/assets/idle.svg"
+                : "file:///home/johu/.config/quickshell/assets/update.svg"
+        width: 15
+        height: 15
+        sourceSize.width: 15
+        sourceSize.height: 15
         fillMode: Image.PreserveAspectFit
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        anchors.bottomMargin: 1
-        anchors.rightMargin: -1
+        anchors.bottomMargin: 2
+        anchors.rightMargin: 0
     }
 
     MouseArea {

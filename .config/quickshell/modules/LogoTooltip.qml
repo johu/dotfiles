@@ -80,11 +80,23 @@ PopupWindow {
                 Layout.alignment: Qt.AlignHCenter
                 text: PortageUpdates.emergeTotal > 0
                     ? "Building " + PortageUpdates.emergeCurrent + " of " + PortageUpdates.emergeTotal
-                    : "Emerge running"
-                color: Theme.text
+                    : "Waiting"
+                color: PortageUpdates.emergeTotal > 0 ? Theme.text : Theme.mauve
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 1
                 font.bold: true
+            }
+
+            Text {
+                visible: PortageUpdates.emergeRunning && PortageUpdates.emergeTotal === 0
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: 280
+                text: "Resolving dependencies, or waiting on a confirmation prompt"
+                color: Theme.subtext1
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize - 3
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
             }
 
             Text {
@@ -110,15 +122,37 @@ PopupWindow {
             }
 
             Text {
-                visible: !PortageUpdates.emergeRunning
+                visible: !PortageUpdates.emergeRunning && !PortageUpdates.hasConflict
                 Layout.alignment: Qt.AlignHCenter
                 text: PortageUpdates.pendingCount === 0
                     ? "No updates available"
                     : PortageUpdates.pendingCount + (PortageUpdates.pendingCount === 1 ? " update available" : " updates available")
-                color: Theme.text
+                color: Theme.green
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 1
                 font.bold: true
+            }
+
+            Text {
+                visible: !PortageUpdates.emergeRunning && PortageUpdates.hasConflict
+                Layout.alignment: Qt.AlignHCenter
+                text: "Dependency conflict"
+                color: Theme.yellow
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize - 1
+                font.bold: true
+            }
+
+            Text {
+                visible: !PortageUpdates.emergeRunning && PortageUpdates.hasConflict && PortageUpdates.conflictSummary !== ""
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: 280
+                text: PortageUpdates.conflictSummary
+                color: Theme.subtext1
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize - 3
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
             }
 
             Text {
