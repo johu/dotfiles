@@ -22,6 +22,21 @@ Rectangle {
 
     readonly property string accent: notif.urgency === NotificationUrgency.Critical ? Theme.red : (notif.urgency === NotificationUrgency.Low ? Theme.subtext1 : Theme.blue)
 
+    // "default" is the freedesktop-spec reserved action id for "the
+    // action meant to fire when the notification itself is clicked" (not
+    // a dedicated button) - most daemons (dunst/mako/swaync) invoke it on
+    // body click rather than rendering it in the actions row. Mirror that
+    // instead of showing a redundant "View"-labelled button.
+    readonly property bool hasDefaultAction: root.notif.actions.some(a => a.identifier === "default")
+    readonly property var visibleActions: root.notif.actions.filter(a => a.identifier !== "default")
+
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.hasDefaultAction
+        cursorShape: Qt.PointingHandCursor
+        onClicked: Notifications.invokeAction(root.notif.key, "default")
+    }
+
     Rectangle {
         width: 3
         radius: 1.5
@@ -141,12 +156,12 @@ Rectangle {
             }
 
             RowLayout {
-                visible: root.notif.actions.length > 0
+                visible: root.visibleActions.length > 0
                 Layout.fillWidth: true
                 spacing: 6
 
                 Repeater {
-                    model: root.notif.actions
+                    model: root.visibleActions
 
                     Rectangle {
                         radius: Theme.radius / 2
