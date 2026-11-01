@@ -13,6 +13,18 @@ PopupWindow {
     implicitWidth: 400
     implicitHeight: 440
 
+    // Date.now()-based relative-time text doesn't re-evaluate on its own -
+    // this tick forces the bindings below to recompute while the popup
+    // is open. Only runs while visible, so it's free the rest of the time.
+    property int clockTick: 0
+
+    Timer {
+        running: root.visible
+        repeat: true
+        interval: 30000
+        onTriggered: root.clockTick++
+    }
+
     function open(item) {
         const win = item.QsWindow;
         const pos = win.mapFromItem(item, item.width, item.height);
@@ -151,6 +163,16 @@ PopupWindow {
                                 Text {
                                     Layout.alignment: Qt.AlignTop
                                     Layout.topMargin: Math.max(0, (titleMetrics.height - implicitHeight) / 2)
+                                    text: (root.clockTick, Notifications.relativeTime(modelData.time))
+                                    color: Theme.subtext1
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSize - 3
+                                }
+
+                                Text {
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.topMargin: Math.max(0, (titleMetrics.height - implicitHeight) / 2)
+                                    Layout.leftMargin: 6
                                     text: "\uf1f8"
                                     color: Theme.subtext1
                                     font.family: Theme.fontFamily

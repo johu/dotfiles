@@ -237,6 +237,22 @@ Singleton {
             root.persistHistory();
     }
 
+    function relativeTime(ms) {
+        if (!ms)
+            return "";
+        const diffSec = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+        if (diffSec < 60)
+            return "now";
+        const diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60)
+            return diffMin + "m";
+        const diffHour = Math.floor(diffMin / 60);
+        if (diffHour < 24)
+            return diffHour + "h";
+        const diffDay = Math.floor(diffHour / 24);
+        return diffDay + "d";
+    }
+
     function handleNotification(notif) {
         notif.tracked = true;
 
