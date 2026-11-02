@@ -173,11 +173,23 @@ PanelWindow {
         }
     }
 
+    // DesktopEntry.execute() explicitly ignores runInTerminal (see
+    // quickshell's desktopentry.hpp), so a CLI app with Terminal=true in
+    // its .desktop file gets exec'd directly with no terminal attached —
+    // it launches detached and does nothing visible. Wrap those in the
+    // user's $TERMINAL (same convention Hyprland's env.lua/globals.lua
+    // already export it under) instead of hardcoding one, since it
+    // differs per machine.
     function launch(index) {
         const entry = root.filtered[index];
         if (!entry)
             return;
-        entry.execute();
+        if (entry.runInTerminal) {
+            const terminal = Quickshell.env("TERMINAL") || "xterm";
+            Quickshell.execDetached([terminal, "-e", ...entry.command]);
+        } else {
+            entry.execute();
+        }
         root.close();
     }
 
