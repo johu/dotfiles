@@ -4,6 +4,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
+Environment=TERMINAL=ghostty
 ExecStart=/usr/bin/qs -p %h/.config/quickshell
 Restart=on-failure
 RestartSec=2
