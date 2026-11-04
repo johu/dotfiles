@@ -5,6 +5,7 @@ hl.env('XDG_SESSION_DESKTOP', 'Hyprland')
 
 -- quickshell
 hl.env('QS_BAR_SCREEN', require('globals').main_monitor)
+hl.env('TERMINAL', require('globals').terminal)
 
 -- cursor
 hl.env('HYPRCURSOR_THEME', 'Bibata-Modern-Ice')
