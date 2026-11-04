@@ -237,15 +237,14 @@ PanelWindow {
             spacing: 12
 
             GridLayout {
-                columns: 5
-                columnSpacing: 8
-                rowSpacing: 8
+                columns: 6
+                columnSpacing: 6
+                rowSpacing: 6
                 Layout.alignment: Qt.AlignHCenter
 
                 ToggleTile {
                     id: wifiTile
                     icon: netLogic.activeWifiNetwork ? netLogic.wifiIcon(netLogic.activeWifiNetwork.signalStrength) : (netLogic.wiredDevice?.connected ? "\u{f0200}" : "\uf1eb")
-                    label: netLogic.activeWifiNetwork ? "WiFi" : (netLogic.wiredDevice?.connected ? "LAN" : "WiFi")
                     accentColor: Theme.sky
                     active: !!netLogic.activeWifiNetwork || !!netLogic.wiredDevice?.connected
                     enabled: netLogic.present
@@ -258,7 +257,6 @@ PanelWindow {
                 }
                 ToggleTile {
                     icon: "\uf293"
-                    label: "BT"
                     accentColor: Theme.blue
                     active: btLogic.powered
                     enabled: btLogic.present
@@ -266,7 +264,6 @@ PanelWindow {
                 }
                 ToggleTile {
                     icon: Notifications.dnd ? "\uf1f7" : "\uf0a2"
-                    label: "DND"
                     accentColor: Theme.red
                     active: Notifications.dnd
                     onClicked: Notifications.setDndSilently(!Notifications.dnd)
@@ -274,7 +271,6 @@ PanelWindow {
                 ToggleTile {
                     icon: "\uf186"
                     iconSource: nightLogic.active ? "" : Quickshell.shellPath("assets/icons/sun.svg")
-                    label: "Night"
                     accentColor: Theme.yellow
                     active: nightLogic.active
                     enabled: nightLogic.present
@@ -288,11 +284,24 @@ PanelWindow {
                 }
                 ToggleTile {
                     icon: "\uf0f4"
-                    label: "Awake"
                     accentColor: Theme.green
                     active: idleLogic.active
                     onClicked: idleLogic.active = !idleLogic.active
                 }
+
+                ToggleTile {
+                    icon: "\uf011"
+                    accentColor: Theme.lavender
+                    onClicked: {
+                        wlogoutProc.running = true;
+                        root.visible = false;
+                    }
+                }
+            }
+
+            Process {
+                id: wlogoutProc
+                command: ["wlogout"]
             }
 
             // Always expanded (no click-to-expand like the cards further
@@ -308,7 +317,7 @@ PanelWindow {
                 sourceComponent: Rectangle {
                     width: parent ? parent.width : 0
                     radius: Theme.radius
-                    // Matches AudioMixerRow/PowerButton row's own card
+                    // Matches AudioMixerRow's own card
                     // background - plain Theme.surface2 collides with
                     // MediaExpandCard's disabled prev/next icon color,
                     // making them invisible against the card.
@@ -354,38 +363,6 @@ PanelWindow {
                 accentColor: Theme.teal
                 value: brightLogic.brightness
                 onMoved: v => brightLogic.setLocal(v)
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                // Same actions wlogout's own layout.json defines (see
-                // ~/.config/wlogout/layout) - a subset surfaced here for
-                // daily use; the rest stay behind the wlogout shortcut.
-                PowerButton {
-                    icon: "\uf023"
-                    label: "Lock"
-                    accentColor: Theme.subtext1
-                    command: ["sh", "-c", "sleep 1;hyprlock"]
-                    onActivated: root.visible = false
-                }
-
-                PowerButton {
-                    icon: "\uf011"
-                    label: "Logout"
-                    accentColor: Theme.red
-                    command: ["hyprshutdown"]
-                    onActivated: root.visible = false
-                }
-
-                PowerButton {
-                    icon: "\uf021"
-                    label: "Reboot"
-                    accentColor: Theme.sky
-                    command: ["sh", "-c", "hyprshutdown -t 'Restarting...' --post-cmd 'reboot'"]
-                    onActivated: root.visible = false
-                }
             }
 
             // Tighter spacing than the outer layout's 12px - these two

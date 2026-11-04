@@ -34,7 +34,7 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        // Matches the Lock/Logout/Reboot row's PowerButton background.
+        // Matches the other dashboard card rows' background.
         color: Qt.lighter(Theme.surface1, 1.3)
         radius: Theme.radius
         implicitHeight: summaryRow.implicitHeight + 16
