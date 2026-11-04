@@ -74,6 +74,7 @@ PanelWindow {
         weatherRow.expanded = false;
         audioRow.expanded = false;
         sysRow.expanded = false;
+        agentRow.expanded = false;
         netPanel.visible = false;
     }
 
@@ -161,6 +162,11 @@ PanelWindow {
 
     SystemResources {
         id: sysLogic
+        visible: false
+    }
+
+    AgentUsage {
+        id: agentLogic
         visible: false
     }
 
@@ -415,6 +421,17 @@ PanelWindow {
                     tempCelsius: sysLogic.tempCelsius
                     rootDiskPercent: sysLogic.rootDiskPercent
                     disks: sysLogic.disks
+                }
+
+                AgentUsageRow {
+                    id: agentRow
+                    Layout.fillWidth: true
+                    ok: agentLogic.ok
+                    status: agentLogic.status
+                    sessionPercent: agentLogic.sessionPercent
+                    sessionResetsAt: agentLogic.sessionResetsAt
+                    weeklyPercent: agentLogic.weeklyPercent
+                    weeklyResetsAt: agentLogic.weeklyResetsAt
                 }
             }
         }
