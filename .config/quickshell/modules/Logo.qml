@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
 Item {
@@ -27,7 +28,7 @@ Item {
     Image {
         id: label
         anchors.centerIn: parent
-        source: "file:///home/johu/.config/quickshell/assets/gentoo-logo.svg"
+        source: Quickshell.shellPath("assets/gentoo-logo.svg")
         width: 24
         height: 24
         sourceSize.width: 24
@@ -78,10 +79,10 @@ Item {
         // the most actionable, then an open-but-idle emerge session,
         // then a plain pending-update count.
         source: root.hasConflict
-            ? "file:///home/johu/.config/quickshell/assets/conflict.svg"
+            ? Quickshell.shellPath("assets/conflict.svg")
             : root.idleEmerge
-                ? "file:///home/johu/.config/quickshell/assets/idle.svg"
-                : "file:///home/johu/.config/quickshell/assets/update.svg"
+                ? Quickshell.shellPath("assets/idle.svg")
+                : Quickshell.shellPath("assets/update.svg")
         width: 15
         height: 15
         sourceSize.width: 15

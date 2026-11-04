@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 // Card for Dashboard.qml's expanded detail view. Purely presentational -
 // backed by an invisible SystemResources {} logic instance owned by
@@ -43,7 +44,7 @@ Rectangle {
         ResourceRow {
             // No nerd-font glyph renders reliably for RAM in this font -
             // custom asset instead, same approach as NightLight's sun.svg.
-            iconSource: "file:///home/johu/.config/quickshell/assets/icons/ram.svg"
+            iconSource: Quickshell.shellPath("assets/icons/ram.svg")
             value: Math.round(root.ramPercent) + "%"
             tooltip: root.ramTotalStr.length > 0 ? root.ramUsedStr + " used\n" + root.ramTotalStr + " total\n" + root.ramFreeStr + " free" : ""
             percent: root.ramPercent

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 // Always-visible CPU/RAM/Disk summary for Dashboard.qml; click toggles the
 // detailed SystemResourcesCard (CPU/RAM/temp/disk) below it. Backed by an
@@ -40,7 +41,7 @@ ColumnLayout {
             Image {
                 // Distinct from the detail card's CPU glyph - this
                 // summarizes CPU+RAM+Disk together, not just CPU.
-                source: "file:///home/johu/.config/quickshell/assets/icons/system.svg"
+                source: Quickshell.shellPath("assets/icons/system.svg")
                 width: 18
                 height: 18
                 sourceSize.width: 18

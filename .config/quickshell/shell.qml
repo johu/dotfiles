@@ -4,10 +4,10 @@ import "./modules"
 
 ShellRoot {
     Bar {
-        screen: Quickshell.screens.find(s => s.name === "DP-3") ?? null
+        screen: Env.targetScreen()
     }
 
     ToastLayer {
-        screen: Quickshell.screens.find(s => s.name === "DP-3") ?? null
+        screen: Env.targetScreen()
     }
 }

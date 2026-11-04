@@ -267,7 +267,7 @@ PanelWindow {
                 }
                 ToggleTile {
                     icon: "\uf186"
-                    iconSource: nightLogic.active ? "" : "file:///home/johu/.config/quickshell/assets/icons/sun.svg"
+                    iconSource: nightLogic.active ? "" : Quickshell.shellPath("assets/icons/sun.svg")
                     label: "Night"
                     accentColor: Theme.yellow
                     active: nightLogic.active

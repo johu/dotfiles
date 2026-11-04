@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 
@@ -117,7 +118,7 @@ Item {
     Process {
         id: cava
         running: root.player !== null
-        command: ["cava", "-p", "/home/johu/.config/quickshell/assets/cava.conf"]
+        command: ["cava", "-p", Quickshell.shellPath("assets/cava.conf")]
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {

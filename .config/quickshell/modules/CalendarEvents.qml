@@ -42,7 +42,7 @@ Singleton {
     // ICS URLs live in an untracked local file (not in the dotfiles repo) so
     // the secret calendar URL never ends up in version control:
     // { "icalUrls": ["https://calendar.google.com/calendar/ical/.../private-.../basic.ics"] }
-    readonly property string secretsPath: "/home/johu/.config/quickshell/secrets.json"
+    readonly property string secretsPath: Quickshell.shellPath("secrets.json")
 
     property var pendingUrls: []
     property var fetchedRaw: []

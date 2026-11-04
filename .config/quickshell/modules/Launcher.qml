@@ -11,7 +11,7 @@ PanelWindow {
 
     visible: false
     color: "transparent"
-    screen: Quickshell.screens.find(s => s.name === "DP-3") ?? null
+    screen: Env.targetScreen()
 
     anchors {
         top: true

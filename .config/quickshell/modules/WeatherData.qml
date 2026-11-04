@@ -9,7 +9,7 @@ Singleton {
     // Location lives in the same untracked secrets.json as icalUrls - not
     // strictly a secret, but keeps all user-specific config in one place:
     // { "weatherLocation": { "lat": 53.0793, "lon": 8.8017 } }
-    readonly property string secretsPath: "/home/johu/.config/quickshell/secrets.json"
+    readonly property string secretsPath: Quickshell.shellPath("secrets.json")
 
     property real lat: 0
     property real lon: 0
@@ -127,7 +127,7 @@ Singleton {
     // tracked in dotfiles) instead of Quickshell's image://icon/ provider
     // (QIcon::fromTheme() + flat QPixmap only, no real hicolor walk - see
     // ResolvedIcon.qml's workaround) or a third-party icon theme.
-    readonly property string assetsDir: "/home/johu/.config/quickshell/assets/weather"
+    readonly property string assetsDir: Quickshell.shellPath("assets/weather")
 
     function imageForCode(code, isDay) {
         if (code === 0)

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Services.Mpris
 
 // Always-expanded dashboard media card (see docs/ideas/media-player-popup.md).
@@ -146,7 +147,7 @@ ColumnLayout {
         spacing: 26
 
         Image {
-            source: "file:///home/johu/.config/quickshell/assets/icons/media-previous.svg"
+            source: Quickshell.shellPath("assets/icons/media-previous.svg")
             width: 18
             height: 18
             sourceSize: Qt.size(width, height)
@@ -168,7 +169,7 @@ ColumnLayout {
 
             Image {
                 anchors.centerIn: parent
-                source: root.player && root.player.isPlaying ? "file:///home/johu/.config/quickshell/assets/icons/media-pause.svg" : "file:///home/johu/.config/quickshell/assets/icons/media-play.svg"
+                source: root.player && root.player.isPlaying ? Quickshell.shellPath("assets/icons/media-pause.svg") : Quickshell.shellPath("assets/icons/media-play.svg")
                 width: 20
                 height: 20
                 sourceSize: Qt.size(width, height)
@@ -183,7 +184,7 @@ ColumnLayout {
         }
 
         Image {
-            source: "file:///home/johu/.config/quickshell/assets/icons/media-next.svg"
+            source: Quickshell.shellPath("assets/icons/media-next.svg")
             width: 18
             height: 18
             sourceSize: Qt.size(width, height)
