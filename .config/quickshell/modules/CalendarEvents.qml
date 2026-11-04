@@ -23,7 +23,7 @@ Singleton {
         if (date < d)
             return false;
         if (!ev.rrule || !ev.rrule.freq) {
-            if (ev.dtend)
+            if (ev.dtend && ev.dtend.getTime() > d.getTime())
                 return date >= d && date < ev.dtend;
             return sameDay(d, date);
         }
