@@ -22,8 +22,11 @@ Singleton {
         const d = ev.dtstart.date;
         if (date < d)
             return false;
-        if (!ev.rrule || !ev.rrule.freq)
+        if (!ev.rrule || !ev.rrule.freq) {
+            if (ev.dtend)
+                return date >= d && date < ev.dtend;
             return sameDay(d, date);
+        }
         if (ev.rrule.until && date > ev.rrule.until)
             return false;
         if (ev.rrule.freq === "YEARLY")
@@ -131,6 +134,8 @@ Singleton {
                     cur.summary = unescapeIcs(value);
                 else if (key === "DTSTART")
                     cur.dtstart = parseIcsDate(value, rawKey);
+                else if (key === "DTEND")
+                    cur.dtend = parseIcsDate(value, rawKey).date;
                 else if (key === "RRULE")
                     cur.rrule = parseRRule(value);
             }
