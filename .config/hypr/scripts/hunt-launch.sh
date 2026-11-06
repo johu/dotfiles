@@ -18,6 +18,8 @@ CROSSHAIR="$HOME/.config/hypr/scripts/hunt-crosshair.py"
 CROSSHAIR_PRELOAD="/usr/lib64/libgtk4-layer-shell.so.0"
 EE_PRESET="hunt-compressor"
 EE_SINK="easyeffects_sink"
+EE_TARGET_DEVICE="alsa_output.usb-JDS_Labs_JDS_Labs_UAC2_DAC__XU208_-00.iec958-stereo"
+EE_CONFIG="$HOME/.config/easyeffects/db/easyeffectsrc"
 
 set_shader() {
   [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && command -v hyprctl >/dev/null 2>&1 || return 0
@@ -28,13 +30,22 @@ uvx nvibrant "${ON[@]}" >/dev/null 2>&1
 set_shader "$CAS_SHADER"
 
 prev_sink="$(pactl get-default-sink 2>/dev/null)"
-ee_started_by_us=0
-if ! pgrep -xf 'easyeffects --service-mode --hide-window' >/dev/null 2>&1; then
-  nohup easyeffects --service-mode --hide-window >/dev/null 2>&1 &
-  disown
-  ee_started_by_us=1
-  sleep 2
+
+# Pin EasyEffects' output target to the JDS Labs DAC before (re)starting it -
+# it otherwise tracks whatever sink happened to be default last time it
+# saved its config, which silently routes game audio to the wrong device
+# if the default sink had changed (e.g. onboard audio) since.
+if pgrep -xf 'easyeffects --service-mode --hide-window' >/dev/null 2>&1; then
+  easyeffects -q >/dev/null 2>&1
+  sleep 1
 fi
+if [ -f "$EE_CONFIG" ]; then
+  sed -i "s|^outputDevice=.*|outputDevice=$EE_TARGET_DEVICE|" "$EE_CONFIG"
+fi
+nohup easyeffects --service-mode --hide-window >/dev/null 2>&1 &
+disown
+ee_started_by_us=1
+sleep 2
 easyeffects -l "$EE_PRESET" >/dev/null 2>&1
 pactl set-default-sink "$EE_SINK" >/dev/null 2>&1
 
