@@ -6,4 +6,5 @@ import QtQuick
 // needing a direct reference to the Dashboard instance Settings.qml owns.
 QtObject {
     signal openNetworkRequested()
+    signal openBluetoothRequested()
 }

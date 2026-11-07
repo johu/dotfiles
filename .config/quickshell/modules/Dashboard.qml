@@ -86,6 +86,12 @@ PanelWindow {
         function onOpenNetworkRequested() {
             root.open();
             networkRow.expanded = true;
+            bluetoothRow.expanded = false;
+        }
+        function onOpenBluetoothRequested() {
+            root.open();
+            bluetoothRow.expanded = true;
+            networkRow.expanded = false;
         }
     }
 
@@ -99,6 +105,7 @@ PanelWindow {
         sysRow.expanded = false;
         agentRow.expanded = false;
         networkRow.expanded = false;
+        bluetoothRow.expanded = false;
     }
 
     // Hyprland.focusedWorkspace is reassigned to a *new* object on every
@@ -198,11 +205,6 @@ PanelWindow {
         visible: false
     }
 
-    Process {
-        id: btManager
-        command: ["blueman-manager"]
-    }
-
     // Covers the whole screen - click anywhere outside the card to dismiss
     // (same dismiss pattern as Launcher.qml's own full-screen MouseArea).
     MouseArea {
@@ -267,14 +269,28 @@ PanelWindow {
                     accentColor: Theme.sky
                     active: !!netLogic.activeWifiNetwork || !!netLogic.wiredDevice?.connected
                     enabled: netLogic.present
-                    onClicked: networkRow.expanded = !networkRow.expanded
+                    // Mutually exclusive with bluetoothRow below - opening
+                    // one collapses the other (with its own animation)
+                    // rather than having both expanded at once.
+                    onClicked: {
+                        const opening = !networkRow.expanded;
+                        networkRow.expanded = opening;
+                        if (opening)
+                            bluetoothRow.expanded = false;
+                    }
                 }
                 ToggleTile {
                     icon: "\uf293"
+                    id: bluetoothTile
                     accentColor: Theme.blue
                     active: btLogic.powered
                     enabled: btLogic.present
-                    onClicked: btManager.running = true
+                    onClicked: {
+                        const opening = !bluetoothRow.expanded;
+                        bluetoothRow.expanded = opening;
+                        if (opening)
+                            networkRow.expanded = false;
+                    }
                 }
                 ToggleTile {
                     icon: Notifications.dnd ? "\uf1f7" : "\uf0a2"
@@ -325,6 +341,13 @@ PanelWindow {
                 id: networkRow
                 Layout.fillWidth: true
                 onPskActiveChanged: root.networkPskActive = pskActive
+            }
+
+            // No summary row of its own - bluetoothTile above is the
+            // toggle, this is just its reveal, same pattern as NetworkRow.
+            BluetoothRow {
+                id: bluetoothRow
+                Layout.fillWidth: true
             }
 
             // Always expanded (no click-to-expand like the cards further

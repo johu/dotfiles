@@ -1,48 +1,18 @@
 import QtQuick
 import Quickshell.Io
+import Quickshell.Bluetooth
 
 Text {
     id: root
 
-    property bool present: false
-    property bool powered: false
-    property int connectedCount: 0
+    readonly property var adapter: Bluetooth.defaultAdapter
+    readonly property bool present: root.adapter !== null
+    readonly property bool powered: root.adapter?.enabled ?? false
+    readonly property int connectedCount: root.adapter ? root.adapter.devices.values.filter(d => d.connected).length : 0
 
     visible: present
 
-    Process {
-        id: poll
-        command: ["sh", "-c", "out=$(timeout 2 bluetoothctl show 2>/dev/null); if [ -z \"$out\" ]; then echo NONE; exit 0; fi; powered=$(echo \"$out\" | grep -q 'Powered: yes' && echo yes || echo no); count=$(timeout 2 bluetoothctl devices Connected 2>/dev/null | grep -c '^Device'); echo \"$powered|$count\""]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const line = this.text.trim();
-                if (line === "NONE" || line.length === 0) {
-                    root.present = false;
-                    return;
-                }
-                const [pw, count] = line.split("|");
-                root.present = true;
-                root.powered = pw === "yes";
-                root.connectedCount = parseInt(count, 10) || 0;
-            }
-        }
-    }
-
-    Timer {
-        interval: 15000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: poll.running = true
-    }
-
-    text: {
-        if (!root.powered)
-            return "\uf293";
-        if (root.connectedCount > 0)
-            return "\uf293 " + root.connectedCount;
-        return "\uf293";
-    }
+    text: root.connectedCount > 0 ? " " + root.connectedCount : ""
 
     color: root.powered ? (root.connectedCount > 0 ? Theme.blue : Theme.subtext1) : Theme.crust
     font.family: Theme.fontFamily
@@ -52,8 +22,20 @@ Text {
 
     MouseArea {
         anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
-        onClicked: manager.running = true
+        onClicked: mouse => {
+            if (mouse.button === Qt.LeftButton) {
+                // The device list now lives in Dashboard.qml's expand row
+                // (BluetoothRow/BluetoothCard) - jump straight there.
+                // Pairing a brand-new device still needs blueman-manager
+                // (right-click), since Quickshell registers no BlueZ
+                // pairing agent - see docs/ideas/bluetooth.md.
+                DashboardBridge.openBluetoothRequested();
+            } else {
+                manager.running = true;
+            }
+        }
     }
 
     Process {
