@@ -76,7 +76,7 @@ PanelWindow {
 
             ActiveWindow {
                 id: activeWindow
-                Layout.maximumWidth: 400
+                Layout.maximumWidth: 600
             }
         }
     }
