@@ -160,7 +160,7 @@ RowLayout {
             anchors.bottom: parent.bottom
             radius: 4
             width: parent.width * Math.max(0, Math.min(1, root.volume))
-            color: Theme.teal
+            color: Theme.blue
         }
 
         MouseArea {

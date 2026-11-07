@@ -20,6 +20,7 @@ QtObject {
     readonly property string maroon: "#ff9e64"
     readonly property string red: "#f7768e"
     readonly property string mauve: "#bb9af7"
+    readonly property string pink: "#ff8fc7"
 
     readonly property int radius: 16
     readonly property int barHeight: 42

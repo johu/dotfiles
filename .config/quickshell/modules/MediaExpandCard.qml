@@ -165,7 +165,7 @@ ColumnLayout {
             implicitWidth: 44
             implicitHeight: 44
             radius: width / 2
-            color: Theme.mauve
+            color: Theme.green
 
             Image {
                 anchors.centerIn: parent

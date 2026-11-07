@@ -41,7 +41,7 @@ ColumnLayout {
             Image {
                 // Distinct from the detail card's CPU glyph - this
                 // summarizes CPU+RAM+Disk together, not just CPU.
-                source: Quickshell.shellPath("assets/icons/system.svg")
+                source: Quickshell.shellPath("assets/icons/system-mauve.svg")
                 width: 18
                 height: 18
                 sourceSize.width: 18

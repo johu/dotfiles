@@ -32,7 +32,7 @@ ColumnLayout {
 
             Text {
                 text: "\uf028"
-                color: Theme.teal
+                color: Theme.blue
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.iconFontSize
                 font.bold: true

@@ -14,7 +14,7 @@ Text {
     }
 
     text: Qt.formatDateTime(now, "ddd, d.MMM HH:mm")
-    color: Theme.green
+    color: Theme.pink
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
     font.bold: true

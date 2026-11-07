@@ -155,7 +155,7 @@ Item {
                 radius: width / 2
                 height: Math.max(width, (v / 100) * root.barMaxHeight)
                 anchors.bottom: parent.bottom
-                color: root.player && root.player.isPlaying ? Theme.mauve : Theme.subtext1
+                color: root.player && root.player.isPlaying ? Theme.green : Theme.subtext1
 
                 Behavior on height {
                     NumberAnimation { duration: 90; easing.type: Easing.OutQuad }
