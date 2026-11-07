@@ -112,6 +112,15 @@ Item {
         }
     }
 
+    // True while cava hears sound, even if the MPRIS player is paused
+    // (e.g. a Steam game playing while Spotify sits paused).
+    property bool audioActive: false
+    Timer {
+        id: silenceTimer
+        interval: 800
+        onTriggered: root.audioActive = false
+    }
+
     // Only spawned while a player is actually active - otherwise it keeps
     // a PipeWire capture stream open and burns CPU on FFT work for a bar
     // element nobody can see (hidden by the Loader in Bar.qml).
@@ -125,8 +134,17 @@ Item {
                 const parts = data.split(";").filter(s => s.length > 0);
                 if (parts.length === 0)
                     return;
-                for (let i = 0; i < barModel.count && i < parts.length; i++)
-                    barModel.setProperty(i, "v", Number(parts[i]));
+                let peak = 0;
+                for (let i = 0; i < barModel.count && i < parts.length; i++) {
+                    const n = Number(parts[i]);
+                    peak = Math.max(peak, n);
+                    barModel.setProperty(i, "v", n);
+                }
+                // Audio from non-MPRIS sources (games, etc.) still counts as "active".
+                if (peak > 0) {
+                    root.audioActive = true;
+                    silenceTimer.restart();
+                }
             }
         }
     }
@@ -155,7 +173,7 @@ Item {
                 radius: width / 2
                 height: Math.max(width, (v / 100) * root.barMaxHeight)
                 anchors.bottom: parent.bottom
-                color: root.player && root.player.isPlaying ? Theme.green : Theme.subtext1
+                color: (root.player && root.player.isPlaying) || root.audioActive ? Theme.green : Theme.subtext1
 
                 Behavior on height {
                     NumberAnimation { duration: 90; easing.type: Easing.OutQuad }
