@@ -51,18 +51,14 @@ Text {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton) {
-                if (panel.visible)
-                    panel.visible = false;
-                else
-                    panel.open(root);
+                // The network list now lives in Dashboard.qml's expand
+                // row (NetworkRow/NetworkCard) instead of a standalone
+                // popup - jump straight there.
+                DashboardBridge.openNetworkRequested();
             } else {
                 nmtui.running = true;
             }
         }
-    }
-
-    NetworkPanel {
-        id: panel
     }
 
     Process {

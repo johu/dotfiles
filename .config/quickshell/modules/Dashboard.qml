@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
+import Quickshell.Wayland
 
 // Quick-settings dashboard, design variant C (compact popup). Rows are
 // thin wrappers around already-existing per-feature modules rather than
@@ -49,6 +50,18 @@ PanelWindow {
     // math already assumes.
     exclusionMode: ExclusionMode.Ignore
 
+    // Only the network card's password prompt needs real keyboard input;
+    // granting it unconditionally would steal focus from other windows
+    // every time the dashboard is just being used for toggles/sliders.
+    // Pushed up imperatively from networkRow (see its onPskActiveChanged
+    // below) rather than bound directly to `networkRow.pskActive` here -
+    // a WlrLayershell attached-property binding referencing a not-yet-
+    // constructed nested id throws "ReferenceError: networkRow is not
+    // defined" at startup (confirmed in log.qslog), unlike ordinary Item
+    // properties which defer evaluation until the whole document exists.
+    property bool networkPskActive: false
+    WlrLayershell.keyboardFocus: root.networkPskActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
     function open() {
         root.visible = true;
     }
@@ -65,17 +78,27 @@ PanelWindow {
         }
     }
 
+    // NetworkIndicator.qml's bar glyph has no direct reference to this
+    // Dashboard instance (Settings.qml owns it), so it asks through this
+    // singleton instead of needing one.
+    Connections {
+        target: DashboardBridge
+        function onOpenNetworkRequested() {
+            root.open();
+            networkRow.expanded = true;
+        }
+    }
+
     // Reset on every reopen so expanded detail rows don't stay stuck open.
-    // netPanel is a separate PopupWindow only ever closed by re-clicking
-    // the WiFi tile - without this, any dashboard-close path other than
-    // that tile (outside click, workspace switch, power buttons) leaves
-    // it stranded open with no remaining way to dismiss it.
+    // Without this, any dashboard-close path other than the row's own
+    // summary click (outside click, workspace switch, power buttons)
+    // leaves it stranded open with no remaining way to dismiss it.
     onVisibleChanged: if (!root.visible) {
         weatherRow.expanded = false;
         audioRow.expanded = false;
         sysRow.expanded = false;
         agentRow.expanded = false;
-        netPanel.visible = false;
+        networkRow.expanded = false;
     }
 
     // Hyprland.focusedWorkspace is reassigned to a *new* object on every
@@ -175,10 +198,6 @@ PanelWindow {
         visible: false
     }
 
-    NetworkPanel {
-        id: netPanel
-    }
-
     Process {
         id: btManager
         command: ["blueman-manager"]
@@ -248,12 +267,7 @@ PanelWindow {
                     accentColor: Theme.sky
                     active: !!netLogic.activeWifiNetwork || !!netLogic.wiredDevice?.connected
                     enabled: netLogic.present
-                    onClicked: {
-                        if (netPanel.visible)
-                            netPanel.visible = false;
-                        else
-                            netPanel.open(wifiTile);
-                    }
+                    onClicked: networkRow.expanded = !networkRow.expanded
                 }
                 ToggleTile {
                     icon: "\uf293"
@@ -302,6 +316,15 @@ PanelWindow {
             Process {
                 id: wlogoutProc
                 command: ["wlogout"]
+            }
+
+            // No summary row of its own - wifiTile above is the toggle,
+            // this is just its reveal, so it sits directly under the grid
+            // rather than down with the click-to-expand summary cards.
+            NetworkRow {
+                id: networkRow
+                Layout.fillWidth: true
+                onPskActiveChanged: root.networkPskActive = pskActive
             }
 
             // Always expanded (no click-to-expand like the cards further
