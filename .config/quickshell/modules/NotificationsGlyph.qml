@@ -54,7 +54,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton)
-                history.toggle(root);
+                PopupManager.toggle("notifications");
             else
                 Notifications.dnd = !Notifications.dnd;
         }
@@ -62,5 +62,11 @@ Item {
 
     NotificationHistory {
         id: history
+    }
+
+    PopupBehavior {
+        name: "notifications"
+        popup: history
+        openFn: () => history.open(root)
     }
 }

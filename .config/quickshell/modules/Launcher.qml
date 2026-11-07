@@ -158,6 +158,13 @@ PanelWindow {
         root.visible = false;
     }
 
+    PopupBehavior {
+        name: "launcher"
+        popup: root
+        focusGrab: false
+        openFn: () => root.open()
+    }
+
     function toggle() {
         if (root.visible)
             root.close();

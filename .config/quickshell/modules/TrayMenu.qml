@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 
 // Renders a tray item's context menu entirely in QML instead of invoking
 // the native Qt PlatformMenuEntry, whose icon resolution is pure C++ with
@@ -46,10 +45,11 @@ PopupWindow {
 
     function applyOpen(item, handle) {
         const win = item.QsWindow;
-        const pos = win.mapFromItem(item, 0, item.height);
+        const pos = win.mapFromItem(item, 0, 0);
         root.anchor.window = win.window;
         root.anchor.rect.x = pos.x;
-        root.anchor.rect.y = pos.y + 4;
+        // Same gap below the bar as every other popup (see PopupManager).
+        root.anchor.rect.y = Theme.barHeight + 8;
         root.rootHandle = handle;
         root.stack = [];
         root.visible = true;
@@ -80,10 +80,9 @@ PopupWindow {
     implicitWidth: 220
     implicitHeight: list.implicitHeight + 12
 
-    HyprlandFocusGrab {
-        windows: [root]
-        active: root.visible
-        onCleared: root.visible = false
+    PopupBehavior {
+        name: "tray"
+        popup: root
     }
 
     QsMenuOpener {

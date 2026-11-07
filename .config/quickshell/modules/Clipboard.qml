@@ -15,12 +15,13 @@ Text {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            if (picker.visible)
-                picker.visible = false;
-            else
-                picker.open(root);
-        }
+        onClicked: PopupManager.toggle("clipboard")
+    }
+
+    PopupBehavior {
+        name: "clipboard"
+        popup: picker
+        openFn: () => picker.open(root)
     }
 
     ClipboardPicker {

@@ -28,12 +28,13 @@ Text {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            if (calendarPopup.visible)
-                calendarPopup.visible = false;
-            else
-                calendarPopup.open(root);
-        }
+        onClicked: PopupManager.toggle("calendar")
+    }
+
+    PopupBehavior {
+        name: "calendar"
+        popup: calendarPopup
+        openFn: () => calendarPopup.open(root)
     }
 
     Calendar {

@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 
 PopupWindow {
     id: root
@@ -33,20 +32,11 @@ PopupWindow {
         root.filterText = "";
         root.confirmClear = false;
         root.visible = true;
-        focusGrab.active = true;
         listProc.running = true;
     }
 
     function close() {
         root.visible = false;
-    }
-
-    // grabFocus dismisses popups too eagerly on Hyprland; use a real
-    // input grab for keyboard focus and click-outside-to-dismiss instead.
-    HyprlandFocusGrab {
-        id: focusGrab
-        windows: [root]
-        onCleared: root.close()
     }
 
     function copyEntry(id) {
@@ -121,7 +111,6 @@ PopupWindow {
     onVisibleChanged: {
         if (!visible) {
             confirmClear = false;
-            focusGrab.active = false;
         }
     }
 

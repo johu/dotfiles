@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
@@ -108,14 +107,15 @@ PanelWindow {
         bluetoothRow.expanded = false;
     }
 
-    // Hyprland.focusedWorkspace is reassigned to a *new* object on every
-    // workspace switch (not the same object with its id mutated), so a
-    // Connections { target: Hyprland.focusedWorkspace; onIdChanged } would
-    // miss switches - track the id through a plain property binding
-    // instead, which re-evaluates on either the reference or the id
-    // changing.
-    readonly property int focusedWorkspaceId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
-    onFocusedWorkspaceIdChanged: root.visible = false
+    // Shared dismiss policy (one-at-a-time, close on workspace switch).
+    // focusGrab is off: the full-screen MouseArea below already swallows
+    // outside clicks.
+    PopupBehavior {
+        name: "dashboard"
+        popup: root
+        focusGrab: false
+        openFn: () => root.open()
+    }
 
     // On a machine running EasyEffects (or any filter-chain tool), the
     // PipeWire "default sink" can be a virtual node (e.g. easyeffects_sink)

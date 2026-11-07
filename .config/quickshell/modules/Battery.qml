@@ -77,12 +77,13 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            if (detail.visible)
-                detail.visible = false;
-            else
-                detail.open(root);
-        }
+        onClicked: PopupManager.toggle("battery")
+    }
+
+    PopupBehavior {
+        name: "battery"
+        popup: detail
+        openFn: () => detail.open(root)
     }
 
     BatteryDetail {

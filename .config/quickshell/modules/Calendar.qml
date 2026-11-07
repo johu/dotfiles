@@ -43,6 +43,19 @@ PopupWindow {
     implicitWidth: 540
     implicitHeight: 336
 
+    // The window is deliberately larger than the visible cards (see
+    // above), so without a mask clicks on the transparent remainder
+    // count as "inside" the popup's focus grab and never dismiss it.
+    // Restrict input to the cards themselves.
+    mask: Region {
+        Region {
+            item: calendarCard
+        }
+        Region {
+            item: detailsWrapper
+        }
+    }
+
     readonly property var shownDate: {
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
