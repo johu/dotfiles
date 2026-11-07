@@ -15,12 +15,12 @@ Rectangle {
     property real weeklyPercent: -1
     property string weeklyResetsAt: ""
 
-    function accentFor(percent, base) {
+    function accentFor(percent) {
         if (percent >= 90)
             return Theme.red;
-        if (percent >= 75)
+        if (percent >= 70)
             return Theme.yellow;
-        return base;
+        return Theme.green;
     }
 
     function resetsIn(iso) {
@@ -72,7 +72,7 @@ Rectangle {
             value: root.ok ? Math.round(root.sessionPercent) + "%" : "\u2014"
             tooltip: root.ok ? "Session (5-hour)\n" + root.resetsIn(root.sessionResetsAt) : root.helpText()
             percent: root.ok ? root.sessionPercent : -1
-            accentColor: root.accentFor(root.sessionPercent, Theme.blue)
+            accentColor: root.accentFor(root.sessionPercent)
         }
 
         ResourceRow {
@@ -80,7 +80,7 @@ Rectangle {
             value: root.ok ? Math.round(root.weeklyPercent) + "%" : "\u2014"
             tooltip: root.ok ? "Weekly (7-day)\n" + root.resetsIn(root.weeklyResetsAt) : root.helpText()
             percent: root.ok ? root.weeklyPercent : -1
-            accentColor: root.accentFor(root.weeklyPercent, Theme.mauve)
+            accentColor: root.accentFor(root.weeklyPercent)
         }
     }
 }
