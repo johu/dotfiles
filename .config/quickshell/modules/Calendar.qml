@@ -43,19 +43,6 @@ PopupWindow {
     implicitWidth: 540
     implicitHeight: 336
 
-    // The window is deliberately larger than the visible cards (see
-    // above), so without a mask clicks on the transparent remainder
-    // count as "inside" the popup's focus grab and never dismiss it.
-    // Restrict input to the cards themselves.
-    mask: Region {
-        Region {
-            item: calendarCard
-        }
-        Region {
-            item: detailsWrapper
-        }
-    }
-
     readonly property var shownDate: {
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
@@ -66,6 +53,19 @@ PopupWindow {
             monthOffset = 0;
             selectedDate = new Date();
         }
+    }
+
+    // The window is deliberately larger than the visible cards (see the
+    // fixed implicitWidth/Height above). Clicks on its transparent
+    // remainder count as *inside* the popup's focus grab, so they would
+    // never dismiss it - catch them here and close explicitly. Declared
+    // before the cards so they sit above it and keep their own clicks.
+    // (An input `mask` Region was tried instead and broke clicks on the
+    // cards themselves: the compositor treated every click as outside the
+    // grab and dismissed the popup before the day cells saw it.)
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.visible = false
     }
 
     Rectangle {

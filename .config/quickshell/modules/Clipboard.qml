@@ -21,6 +21,8 @@ Text {
     PopupBehavior {
         name: "clipboard"
         popup: picker
+        // Has a search box: needs keyboard focus on the popup itself.
+        grabAnchor: false
         openFn: () => picker.open(root)
     }
 
