@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Networking
+import Quickshell.Io
 
 // Detail content for NetworkRow.qml's expand section. Unlike
 // WeatherCard/SystemResourcesCard/AudioMixerCard, this has no Rectangle
@@ -15,6 +16,65 @@ ColumnLayout {
     readonly property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property var wiredDevice: Networking.devices.values.find(d => d.type === DeviceType.Wired) ?? null
     readonly property var sortedNetworks: wifiDevice ? [...wifiDevice.networks.values].sort((a, b) => b.signalStrength - a.signalStrength) : []
+    readonly property var activeWifiNetwork: root.sortedNetworks.find(n => n.connected) ?? null
+
+    // Interface currently carrying traffic, if any - drives the
+    // connection-details block below. Quickshell.Networking's device API
+    // only exposes the MAC address (NetworkDevice.address); IPv4/IPv6/DNS
+    // aren't available natively, so those come from an on-demand `nmcli`
+    // call keyed on this.
+    readonly property string activeIface: root.wiredDevice?.connected ? root.wiredDevice.name : (root.activeWifiNetwork ? root.wifiDevice?.name ?? "" : "")
+
+    property string detailIp4Address: ""
+    property string detailIp4Gateway: ""
+    property string detailIp4Dns: ""
+    property string detailIp6Address: ""
+    property string detailIp6Gateway: ""
+    property string detailIp6Dns: ""
+    property string detailMac: ""
+    property bool detailsLoaded: false
+
+    function clearDetails() {
+        root.detailIp4Address = "";
+        root.detailIp4Gateway = "";
+        root.detailIp4Dns = "";
+        root.detailIp6Address = "";
+        root.detailIp6Gateway = "";
+        root.detailIp6Dns = "";
+        root.detailMac = "";
+        root.detailsLoaded = false;
+    }
+
+    onActiveIfaceChanged: {
+        root.detailsLoaded = false;
+        if (root.visible && root.activeIface.length > 0)
+            detailsProc.running = true;
+        else
+            root.clearDetails();
+    }
+
+    Process {
+        id: detailsProc
+        command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,IP6.ADDRESS,IP6.GATEWAY,IP6.DNS,GENERAL.HWADDR", "device", "show", root.activeIface]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // nmcli -g escapes literal colons inside a field (so they
+                // aren't mistaken for the field separator) and joins
+                // multi-value fields (e.g. several IPv6 addresses) with " | ".
+                const unescape = s => (s ?? "").replace(/\\:/g, ":");
+                const list = s => unescape(s).split(" | ").filter(v => v.length > 0).join(", ");
+                const lines = this.text.split("\n");
+                root.detailIp4Address = unescape(lines[0]);
+                root.detailIp4Gateway = unescape(lines[1]);
+                root.detailIp4Dns = list(lines[2]);
+                root.detailIp6Address = list(lines[3]);
+                root.detailIp6Gateway = unescape(lines[4]);
+                root.detailIp6Dns = list(lines[5]);
+                root.detailMac = unescape(lines[6]).trim();
+                root.detailsLoaded = true;
+            }
+        }
+    }
 
     // Secured, not-yet-known network the user just clicked - shows an
     // inline password prompt under its row until it connects or is
@@ -57,8 +117,12 @@ ColumnLayout {
     onVisibleChanged: {
         if (root.wifiDevice)
             root.wifiDevice.scannerEnabled = root.visible;
-        if (!root.visible)
+        if (!root.visible) {
             root.cancelPsk();
+            root.clearDetails();
+        } else if (root.activeIface.length > 0) {
+            detailsProc.running = true;
+        }
     }
 
     RowLayout {
@@ -87,6 +151,41 @@ ColumnLayout {
             color: root.wiredDevice?.connected ? Theme.green : Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
+        }
+    }
+
+    ColumnLayout {
+        visible: root.wiredDevice?.connected === true && root.detailsLoaded
+        Layout.fillWidth: true
+        spacing: 2
+
+        NetworkDetailRow {
+            label: "IPv4"
+            value: root.detailIp4Address
+        }
+        NetworkDetailRow {
+            label: "Gateway"
+            value: root.detailIp4Gateway
+        }
+        NetworkDetailRow {
+            label: "DNS"
+            value: root.detailIp4Dns
+        }
+        NetworkDetailRow {
+            label: "IPv6"
+            value: root.detailIp6Address
+        }
+        NetworkDetailRow {
+            label: "Gateway"
+            value: root.detailIp6Gateway
+        }
+        NetworkDetailRow {
+            label: "DNS"
+            value: root.detailIp6Dns
+        }
+        NetworkDetailRow {
+            label: "MAC"
+            value: root.detailMac
         }
     }
 
@@ -212,6 +311,41 @@ ColumnLayout {
                         Layout.preferredWidth: 36
                         horizontalAlignment: Text.AlignRight
                     }
+                }
+            }
+
+            ColumnLayout {
+                visible: modelData.connected && root.detailsLoaded
+                Layout.fillWidth: true
+                spacing: 2
+
+                NetworkDetailRow {
+                    label: "IPv4"
+                    value: root.detailIp4Address
+                }
+                NetworkDetailRow {
+                    label: "Gateway"
+                    value: root.detailIp4Gateway
+                }
+                NetworkDetailRow {
+                    label: "DNS"
+                    value: root.detailIp4Dns
+                }
+                NetworkDetailRow {
+                    label: "IPv6"
+                    value: root.detailIp6Address
+                }
+                NetworkDetailRow {
+                    label: "Gateway"
+                    value: root.detailIp6Gateway
+                }
+                NetworkDetailRow {
+                    label: "DNS"
+                    value: root.detailIp6Dns
+                }
+                NetworkDetailRow {
+                    label: "MAC"
+                    value: root.detailMac
                 }
             }
 
