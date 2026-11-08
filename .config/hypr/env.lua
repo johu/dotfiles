@@ -29,9 +29,6 @@ hl.env('MOZ_ENABLE_WAYLAND', 1)
 -- chrome & co
 hl.env('ELECTRON_OZONE_PLATFORM_HINT', 'wayland')
 
--- screenshots
-hl.env('HYPRSHOT_DIR', 'pics/screenshots')
-
 hl.env(
   'XDG_DATA_DIRS',
   '/usr/local/share:/usr/share:/etc/eselect/wine/share:/usr/share/gdm:/var/lib/flatpak/exports/share:'

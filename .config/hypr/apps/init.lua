@@ -1,6 +1,5 @@
 require 'apps.browser'
 require 'apps.geforce'
-require 'apps.hyprshot'
 require 'apps.jetbrains'
 require 'apps.localsend'
 require 'apps.pip'
