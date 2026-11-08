@@ -220,7 +220,7 @@ PanelWindow {
         anchors.rightMargin: 15
         radius: Theme.radius
         color: Theme.surface1
-        width: 324
+        width: 368
         height: layout.implicitHeight + 24
         // AudioMixerRow/SystemResourcesRow reserve their detail card's
         // full height the instant `expanded` flips (only opacity fades in
@@ -254,11 +254,11 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.margins: 12
-            width: 300
+            width: 344
             spacing: 12
 
             GridLayout {
-                columns: 6
+                columns: 7
                 columnSpacing: 6
                 rowSpacing: 6
                 Layout.alignment: Qt.AlignHCenter
@@ -317,6 +317,20 @@ PanelWindow {
                     accentColor: Theme.green
                     active: idleLogic.active
                     onClicked: idleLogic.active = !idleLogic.active
+                }
+
+                ToggleTile {
+                    icon: "\uf030"
+                    accentColor: Theme.mauve
+                    // Left click = region picker, right click = whole screen.
+                    onClicked: {
+                        root.visible = false;
+                        DashboardBridge.captureRequested("region");
+                    }
+                    onRightClicked: {
+                        root.visible = false;
+                        DashboardBridge.captureRequested("screen");
+                    }
                 }
 
                 ToggleTile {

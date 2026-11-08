@@ -23,6 +23,9 @@ PanelWindow {
     // focuses the Gentoo workspace instead, so this moved up here.
     Launcher {}
 
+    // Screenshot picker (IPC target "capture"), same self-contained pattern.
+    Capture {}
+
     Instantiator {
         model: Mpris.players.values
         delegate: Connections {
