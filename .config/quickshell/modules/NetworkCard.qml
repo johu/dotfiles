@@ -34,6 +34,35 @@ ColumnLayout {
     property string detailMac: ""
     property bool detailsLoaded: false
 
+    // Live throughput of the active interface, from its sysfs byte
+    // counters (diffed between 1s ticks, only while this card is shown).
+    // Shows 0 KB/s until the second sample arrives, so the rows are
+    // always present instead of popping in after a tick.
+    readonly property string zeroRate: "0 KB/s"
+    property string rateDown: zeroRate
+    property string rateUp: zeroRate
+    property real prevRx: -1
+    property real prevTx: -1
+    property real prevRateTime: 0
+
+    function formatRate(bps) {
+        const units = ["B/s", "KB/s", "MB/s", "GB/s"];
+        let v = bps;
+        let i = 0;
+        while (v >= 1024 && i < units.length - 1) {
+            v /= 1024;
+            i++;
+        }
+        return (i === 0 ? Math.round(v) : v.toFixed(v < 10 ? 2 : 1)) + " " + units[i];
+    }
+
+    function resetRate() {
+        root.rateDown = root.zeroRate;
+        root.rateUp = root.zeroRate;
+        root.prevRx = -1;
+        root.prevTx = -1;
+    }
+
     function clearDetails() {
         root.detailIp4Address = "";
         root.detailIp4Gateway = "";
@@ -46,11 +75,41 @@ ColumnLayout {
     }
 
     onActiveIfaceChanged: {
+        root.resetRate();
         root.detailsLoaded = false;
         if (root.visible && root.activeIface.length > 0)
             detailsProc.running = true;
         else
             root.clearDetails();
+    }
+
+    Process {
+        id: rateProc
+        command: ["cat", "/sys/class/net/" + root.activeIface + "/statistics/rx_bytes", "/sys/class/net/" + root.activeIface + "/statistics/tx_bytes"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const [rx, tx] = this.text.trim().split("\n").map(Number);
+                if (isNaN(rx) || isNaN(tx))
+                    return;
+                const now = Date.now();
+                if (root.prevRx >= 0 && now > root.prevRateTime) {
+                    const dt = (now - root.prevRateTime) / 1000;
+                    root.rateDown = root.formatRate(Math.max(0, (rx - root.prevRx) / dt));
+                    root.rateUp = root.formatRate(Math.max(0, (tx - root.prevTx) / dt));
+                }
+                root.prevRx = rx;
+                root.prevTx = tx;
+                root.prevRateTime = now;
+            }
+        }
+    }
+
+    Timer {
+        interval: 1000
+        running: root.visible && root.activeIface.length > 0
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: rateProc.running = true
     }
 
     Process {
@@ -120,6 +179,7 @@ ColumnLayout {
         if (!root.visible) {
             root.cancelPsk();
             root.clearDetails();
+            root.resetRate();
         } else if (root.activeIface.length > 0) {
             detailsProc.running = true;
         }
@@ -159,6 +219,14 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 2
 
+        NetworkDetailRow {
+            label: "Down"
+            value: root.rateDown
+        }
+        NetworkDetailRow {
+            label: "Up"
+            value: root.rateUp
+        }
         NetworkDetailRow {
             label: "IPv4"
             value: root.detailIp4Address
@@ -319,6 +387,14 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 2
 
+                NetworkDetailRow {
+                    label: "Down"
+                    value: root.rateDown
+                }
+                NetworkDetailRow {
+                    label: "Up"
+                    value: root.rateUp
+                }
                 NetworkDetailRow {
                     label: "IPv4"
                     value: root.detailIp4Address
