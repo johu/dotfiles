@@ -148,6 +148,14 @@ Singleton {
         }
     }
 
+    // Desktop notification (lands in NotificationHistory via our own
+    // notification server) when an emerge run ends.
+    Process {
+        id: notifyDone
+        command: ["notify-send", "-a", "Portage", "-i", Quickshell.shellPath("assets/gentoo-logo.svg"),
+                  "Emerge finished", "The emerge process has completed."]
+    }
+
     Process {
         id: statusCheck
         command: ["sh", "-c", root.statusScript, "sh", root.emergeLogPath]
@@ -170,8 +178,10 @@ Singleton {
                 const etaSeconds = root.emergeRunning ? parseInt(parts[3], 10) || 0 : 0;
                 root.emergeEtaSeconds = etaSeconds > 0 ? etaSeconds : 0;
 
-                if (root.wasEmergeRunning && !root.emergeRunning)
+                if (root.wasEmergeRunning && !root.emergeRunning) {
                     root.check();
+                    notifyDone.running = true;
+                }
                 root.wasEmergeRunning = root.emergeRunning;
             }
         }
