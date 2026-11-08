@@ -13,11 +13,11 @@ hl.bind(mod .. ' + SPACE', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call 
 hl.bind(mod .. ' + T', hl.dsp.layout 'togglesplit') -- dwindle only
 hl.bind(mod .. ' + F1', hl.dsp.exec_cmd '~/.config/hypr/scripts/keybinds.sh', { desc = 'Show keybinds' })
 hl.bind('CTRL + ALT + L', hl.dsp.exec_cmd 'hyprlock', { desc = 'Lock screen' })
-hl.bind('PRINT', hl.dsp.exec_cmd 'hyprshot -m window', { desc = 'Screenshot' })
-hl.bind(mod .. ' + PRINT', hl.dsp.exec_cmd 'hyprshot -m window', { desc = 'Screenshot window' })
-hl.bind('PRINT', hl.dsp.exec_cmd 'hyprshot -m output', { desc = 'Screenshot' })
-hl.bind(mod .. ' + SHIFT + S', hl.dsp.exec_cmd 'hyprshot -m output', { desc = 'Screenshot' })
-hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'hyprshot -m region', { desc = 'Screenshot region' })
+hl.bind(mod .. ' + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture window', { desc = 'Screenshot window' })
+hl.bind('PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
+hl.bind('F11', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
+hl.bind(mod .. ' + SHIFT + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
+hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
 hl.bind(mod .. ' + V', hl.dsp.exec_cmd '~/.config/hypr/scripts/clipboard.sh', { desc = 'Clipboard' })
 hl.bind(mod .. ' + B', hl.dsp.exec_cmd 'killall -SIGUSR1 waybar', { desc = 'Toggle waybar' })
 
