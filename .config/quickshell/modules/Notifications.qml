@@ -67,7 +67,7 @@ Singleton {
             return 0;
         if (notif.expireTimeout > 0)
             return Math.min(notif.expireTimeout * 1000, 30000);
-        return notif.urgency === NotificationUrgency.Low ? 5000 : 8000;
+        return notif.urgency === NotificationUrgency.Low ? 8000 : 12000;
     }
 
     function escapeHtml(text) {
