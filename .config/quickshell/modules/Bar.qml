@@ -124,6 +124,46 @@ PanelWindow {
             }
         }
 
+        // Recording indicator: red dot + elapsed time, click to stop.
+        Loader {
+            active: Recorder.recording
+            visible: active
+            Layout.preferredWidth: item ? item.implicitWidth : 0
+            Layout.preferredHeight: item ? item.implicitHeight : 0
+
+            sourceComponent: Pill {
+                horizontalPadding: 12
+                spacing: 8
+
+                Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 5
+                    color: Theme.red
+                    Layout.alignment: Qt.AlignVCenter
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.35; duration: 700 }
+                        NumberAnimation { to: 1; duration: 700 }
+                    }
+                }
+
+                Text {
+                    text: Recorder.stopping ? "Saving…" : Recorder.elapsedText
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Recorder.stop()
+                }
+            }
+        }
+
         Pill {
             // waybar's #system margin is asymmetric (7px top/3px bottom, not
             // centered); padding is bumped past waybar's raw 10px since our

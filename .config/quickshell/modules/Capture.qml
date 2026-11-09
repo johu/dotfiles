@@ -51,7 +51,12 @@ PanelWindow {
     property string phase: "hover"
     property var windows: []
 
-    function open() {
+    // "shot": the picker takes a screenshot. "record": it starts a screen
+    // recording (Recorder.qml) of the picked area instead.
+    property string pickMode: "shot"
+
+    function open(mode) {
+        root.pickMode = mode ?? "shot";
         root.phase = "hover";
         root.selW = 0;
         root.selH = 0;
@@ -71,7 +76,7 @@ PanelWindow {
         name: "capture"
         popup: root
         focusGrab: false
-        openFn: () => root.open()
+        openFn: () => root.open("shot")
     }
 
     // --- window snapping ---------------------------------------------------
@@ -147,6 +152,7 @@ PanelWindow {
     // --- capture -----------------------------------------------------------
 
     property string pendingGeometry: ""
+    property string pendingRegion: ""
 
     function capture(x, y, w, h) {
         const gx = Math.round(Math.max(0, x) + root.screen.x);
@@ -157,8 +163,16 @@ PanelWindow {
             root.close();
             return;
         }
-        root.pendingGeometry = gx + "," + gy + " " + gw + "x" + gh;
+        const mode = root.pickMode;
         root.close();
+        if (mode === "record") {
+            // Same logical-coordinate rect, in gpu-screen-recorder's format.
+            // The overlay must be gone before frames are grabbed.
+            root.pendingRegion = gw + "x" + gh + "+" + gx + "+" + gy;
+            recordDelay.restart();
+            return;
+        }
+        root.pendingGeometry = gx + "," + gy + " " + gw + "x" + gh;
         // Let the compositor finish unmapping the overlay (and its fade).
         grabDelay.restart();
     }
@@ -172,6 +186,12 @@ PanelWindow {
         id: grabDelay
         interval: 250
         onTriggered: grimProc.running = true
+    }
+
+    Timer {
+        id: recordDelay
+        interval: 250
+        onTriggered: Recorder.start("region", root.pendingRegion)
     }
 
     Process {
@@ -201,6 +221,7 @@ PanelWindow {
     }
 
     function request(mode) {
+        root.pickMode = "shot";
         if (mode === "screen")
             root.capture(0, 0, root.screen.width, root.screen.height);
         else if (mode === "window")
@@ -221,15 +242,52 @@ PanelWindow {
         target: "capture"
 
         function region(): void {
-            root.open();
+            root.open("shot");
         }
 
         function screen(): void {
+            root.pickMode = "shot";
             root.capture(0, 0, root.screen.width, root.screen.height);
         }
 
         function window(): void {
+            root.pickMode = "shot";
             activeProc.running = true;
+        }
+    }
+
+    // Screen recording. `region` picks an area (or window) then records;
+    // `screen`/`window` start immediately; `stop` finishes and saves;
+    // `toggle` stops if recording, else opens the region picker.
+    IpcHandler {
+        target: "record"
+
+        function region(): void {
+            if (Recorder.recording)
+                Recorder.stop();
+            else
+                root.open("record");
+        }
+
+        function screen(): void {
+            Recorder.toggleScreen(root.screen.name);
+        }
+
+        function window(): void {
+            if (Recorder.recording) {
+                Recorder.stop();
+                return;
+            }
+            root.pickMode = "record";
+            activeProc.running = true;
+        }
+
+        function stop(): void {
+            Recorder.stop();
+        }
+
+        function toggle(): void {
+            region();
         }
     }
 
@@ -349,7 +407,7 @@ PanelWindow {
             color: Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize - 1
-            text: root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  Esc cancel"
+            text: root.pickMode === "record" ? (root.phase === "edit" ? "Enter record  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to record  ·  drag to select area  ·  Esc cancel") : root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  Esc cancel"
         }
     }
 
