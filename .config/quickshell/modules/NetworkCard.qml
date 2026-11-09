@@ -15,7 +15,7 @@ ColumnLayout {
 
     readonly property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property var wiredDevice: Networking.devices.values.find(d => d.type === DeviceType.Wired) ?? null
-    readonly property var sortedNetworks: wifiDevice ? [...wifiDevice.networks.values].sort((a, b) => b.signalStrength - a.signalStrength) : []
+    readonly property var sortedNetworks: wifiDevice ? [...wifiDevice.networks.values].sort((a, b) => (b.connected - a.connected) || (b.signalStrength - a.signalStrength)) : []
     readonly property var activeWifiNetwork: root.sortedNetworks.find(n => n.connected) ?? null
 
     // Interface currently carrying traffic, if any - drives the
