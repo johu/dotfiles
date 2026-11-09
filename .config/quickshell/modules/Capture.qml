@@ -222,6 +222,17 @@ PanelWindow {
 
     function request(mode) {
         root.pickMode = "shot";
+        if (mode === "record-region") {
+            if (Recorder.recording)
+                Recorder.stop();
+            else
+                root.open("record");
+            return;
+        }
+        if (mode === "record-screen") {
+            Recorder.toggleScreen(root.screen.name);
+            return;
+        }
         if (mode === "screen")
             root.capture(0, 0, root.screen.width, root.screen.height);
         else if (mode === "window")
@@ -286,6 +297,12 @@ PanelWindow {
             Recorder.stop();
         }
 
+        // audio: "off" | "desktop" | "mic" | "both"
+        function audio(mode: string): void {
+            Recorder.setDesktopAudio(mode === "desktop" || mode === "both");
+            Recorder.setMicAudio(mode === "mic" || mode === "both");
+        }
+
         function toggle(): void {
             region();
         }
@@ -301,6 +318,14 @@ PanelWindow {
         Keys.onReturnPressed: root.captureSelection()
         Keys.onEnterPressed: root.captureSelection()
         Keys.onSpacePressed: root.captureSelection()
+        Keys.onPressed: ev => {
+            if (root.pickMode !== "record")
+                return;
+            if (ev.key === Qt.Key_D)
+                Recorder.setDesktopAudio(!Recorder.desktopAudio);
+            else if (ev.key === Qt.Key_M)
+                Recorder.setMicAudio(!Recorder.micAudio);
+        }
     }
 
     readonly property color dimColor: Qt.rgba(0, 0, 0, 0.5)
@@ -407,7 +432,7 @@ PanelWindow {
             color: Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize - 1
-            text: root.pickMode === "record" ? (root.phase === "edit" ? "Enter record  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to record  ·  drag to select area  ·  Esc cancel") : root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  Esc cancel"
+            text: root.pickMode === "record" ? (root.phase === "edit" ? "Enter record  ·  drag edges to resize  ·  drag inside to move  ·  D/M audio  ·  Esc cancel" : "Click window to record  ·  drag to select area  ·  D/M audio  ·  Esc cancel") : root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  Esc cancel"
         }
     }
 
@@ -524,6 +549,54 @@ PanelWindow {
             else {
                 root.phase = "hover";
                 root.snapTo(ev.x, ev.y);
+            }
+        }
+    }
+
+    // Audio source toggles, record mode only. Declared after the full-screen
+    // MouseArea so they sit above it and receive clicks.
+    Row {
+        visible: root.pickMode === "record"
+        spacing: 8
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.height - 36 - 40 - height - 8
+
+        Repeater {
+            model: [
+                {
+                    label: "Desktop audio (D)",
+                    on: Recorder.desktopAudio,
+                    toggle: () => Recorder.setDesktopAudio(!Recorder.desktopAudio)
+                },
+                {
+                    label: "Microphone (M)",
+                    on: Recorder.micAudio,
+                    toggle: () => Recorder.setMicAudio(!Recorder.micAudio)
+                }
+            ]
+
+            Rectangle {
+                required property var modelData
+                radius: Theme.radius
+                color: modelData.on ? Qt.rgba(Theme.red.r, Theme.red.g, Theme.red.b, 0.25) : Theme.base
+                border.color: modelData.on ? Theme.red : Theme.surface2
+                width: chipText.implicitWidth + 28
+                height: chipText.implicitHeight + 14
+
+                Text {
+                    id: chipText
+                    anchors.centerIn: parent
+                    text: (modelData.on ? "● " : "○ ") + modelData.label
+                    color: modelData.on ? Theme.text : Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 1
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: modelData.toggle()
+                }
             }
         }
     }

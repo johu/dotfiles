@@ -7,6 +7,6 @@ import QtQuick
 QtObject {
     signal openNetworkRequested()
     signal openBluetoothRequested()
-    // mode: "region" | "screen" | "window" - handled by Capture.qml
+    // mode: "region" | "screen" | "window" | "record-region" | "record-screen" - handled by Capture.qml
     signal captureRequested(string mode)
 }

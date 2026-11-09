@@ -11,6 +11,27 @@ QtObject {
 
     readonly property string saveDir: Quickshell.env("HOME") + "/videos/screenrecordings"
 
+    // Audio sources for the next recording (persisted). Desktop = default
+    // output monitor, mic = default input; both are mixed into one track.
+    property bool desktopAudio: false
+    property bool micAudio: false
+
+    function setDesktopAudio(on) {
+        root.desktopAudio = on;
+        root.saveState();
+    }
+
+    function setMicAudio(on) {
+        root.micAudio = on;
+        root.saveState();
+    }
+
+    function saveState() {
+        adapter.desktopAudio = root.desktopAudio;
+        adapter.micAudio = root.micAudio;
+        stateFile.writeAdapter();
+    }
+
     property bool recording: false
     property string file: ""
     property int elapsed: 0
@@ -34,7 +55,15 @@ QtObject {
         const stamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss");
         root.file = root.saveDir + "/" + stamp + ".mp4";
         const w = target === "region" ? ["-w", "region", "-region", region] : ["-w", target];
-        root.args = w.concat(["-k", "auto", "-f", "60", "-fm", "cfr", "-fallback-cpu-encoding", "yes", "-o", root.file]);
+        const devices = [];
+        if (root.desktopAudio)
+            devices.push("default_output");
+        if (root.micAudio)
+            devices.push("default_input");
+        // "|" merges the sources into a single track (separate tracks only
+        // play one at a time in most players).
+        const audio = devices.length > 0 ? ["-a", devices.join("|"), "-ac", "aac"] : [];
+        root.args = w.concat(audio).concat(["-k", "auto", "-f", "60", "-fm", "cfr", "-fallback-cpu-encoding", "yes", "-o", root.file]);
         root.stopping = false;
         root.elapsed = 0;
         root.startMs = Date.now();
@@ -57,6 +86,22 @@ QtObject {
             root.stop();
         else
             root.start(monitor, "");
+    }
+
+    property var stateFile: FileView {
+        id: stateFile
+        path: Quickshell.env("HOME") + "/.local/state/quickshell/recorder.json"
+        printErrors: false
+        onLoaded: {
+            root.desktopAudio = adapter.desktopAudio;
+            root.micAudio = adapter.micAudio;
+        }
+
+        JsonAdapter {
+            id: adapter
+            property bool desktopAudio: false
+            property bool micAudio: false
+        }
     }
 
     property var mkdir: Process {

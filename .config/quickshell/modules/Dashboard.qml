@@ -220,7 +220,7 @@ PanelWindow {
         anchors.rightMargin: 15
         radius: Theme.radius
         color: Theme.surface1
-        width: 368
+        width: 418
         height: layout.implicitHeight + 24
         // AudioMixerRow/SystemResourcesRow reserve their detail card's
         // full height the instant `expanded` flips (only opacity fades in
@@ -254,11 +254,11 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.margins: 12
-            width: 344
+            width: 394
             spacing: 12
 
             GridLayout {
-                columns: 7
+                columns: 8
                 columnSpacing: 6
                 rowSpacing: 6
                 Layout.alignment: Qt.AlignHCenter
@@ -330,6 +330,22 @@ PanelWindow {
                     onRightClicked: {
                         root.visible = false;
                         DashboardBridge.captureRequested("screen");
+                    }
+                }
+
+                ToggleTile {
+                    icon: "\uf111"
+                    accentColor: Theme.red
+                    active: Recorder.recording
+                    // Left click = region picker, right click = whole
+                    // screen; either stops a running recording.
+                    onClicked: {
+                        root.visible = false;
+                        DashboardBridge.captureRequested("record-region");
+                    }
+                    onRightClicked: {
+                        root.visible = false;
+                        DashboardBridge.captureRequested("record-screen");
                     }
                 }
 
