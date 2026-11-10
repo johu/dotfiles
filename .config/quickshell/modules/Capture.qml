@@ -75,9 +75,15 @@ PanelWindow {
     property string pendingFreeze: ""
     property string pendingCrop: ""
 
-    function open(mode) {
+    // Shot mode: open the annotator (satty) right after capturing instead
+    // of showing the notification. Per capture; A toggles it in the picker.
+    property bool annotate: false
+    property bool pendingAnnotate: false
+
+    function open(mode, annotate) {
         if (freezeProc.running)
             return;
+        root.annotate = annotate === true;
         root.retarget();
         root.pickMode = mode ?? "shot";
         root.phase = "hover";
@@ -214,6 +220,7 @@ PanelWindow {
             return;
         }
         const mode = root.pickMode;
+        root.pendingAnnotate = root.annotate && mode === "shot";
         root.pendingFreeze = "";
         if (mode === "shot" && root.freezePath !== "" && root.screen.width > 0) {
             const k = freezeImage.implicitWidth / root.screen.width;
@@ -261,7 +268,7 @@ PanelWindow {
 
     Process {
         id: grimProc
-        command: [Quickshell.shellPath("scripts/capture-save.sh"), root.saveDir, root.pendingGeometry, root.pendingFreeze, root.pendingCrop]
+        command: [Quickshell.shellPath("scripts/capture-save.sh"), root.saveDir, root.pendingGeometry, root.pendingFreeze, root.pendingCrop, root.pendingAnnotate ? "1" : ""]
         onExited: code => {
             // Success is announced by the script's notification (Open/Edit actions).
             if (code !== 0)
@@ -322,14 +329,21 @@ PanelWindow {
             root.open("shot");
         }
 
+        // Region picker, then straight into the annotator.
+        function annotate(): void {
+            root.open("shot", true);
+        }
+
         function screen(): void {
             root.retarget();
+            root.annotate = false;
             root.pickMode = "shot";
             root.capture(0, 0, root.screen.width, root.screen.height);
         }
 
         function window(): void {
             root.retarget();
+            root.annotate = false;
             root.pickMode = "shot";
             activeProc.running = true;
         }
@@ -389,8 +403,11 @@ PanelWindow {
         Keys.onEnterPressed: root.captureSelection()
         Keys.onSpacePressed: root.captureSelection()
         Keys.onPressed: ev => {
-            if (root.pickMode !== "record")
+            if (root.pickMode !== "record") {
+                if (ev.key === Qt.Key_A)
+                    root.annotate = !root.annotate;
                 return;
+            }
             if (ev.key === Qt.Key_D)
                 Recorder.setDesktopAudio(!Recorder.desktopAudio);
             else if (ev.key === Qt.Key_M)
@@ -511,7 +528,7 @@ PanelWindow {
             color: Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize - 1
-            text: root.pickMode === "record" ? (root.phase === "edit" ? "Enter record  ·  drag edges to resize  ·  drag inside to move  ·  D/M audio  ·  Esc cancel" : "Click window to record  ·  drag to select area  ·  D/M audio  ·  Esc cancel") : root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  Esc cancel"
+            text: root.pickMode === "record" ? (root.phase === "edit" ? "Enter record  ·  drag edges to resize  ·  drag inside to move  ·  D/M audio  ·  Esc cancel" : "Click window to record  ·  drag to select area  ·  D/M audio  ·  Esc cancel") : root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  A annotate" + (root.annotate ? " ✓" : "") + "  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  A annotate" + (root.annotate ? " ✓" : "") + "  ·  Esc cancel"
         }
     }
 
