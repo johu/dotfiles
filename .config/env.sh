@@ -13,7 +13,7 @@ export XDG_BIN_HOME="$HOME/.local/bin"
 # default programs
 export EDITOR="nvim"
 export TERMINAL="ghostty"
-export BROWSER="firefox"
+export BROWSER="zen"
 export MANPAGER='nvim +Man!'
 
 # dotfile management
