@@ -55,7 +55,18 @@ PanelWindow {
     // recording (Recorder.qml) of the picked area instead.
     property string pickMode: "shot"
 
+    // Follow the focused monitor (falls back to Env.targetScreen()), so the
+    // picker and whole-screen/window captures hit the screen in use.
+    function retarget() {
+        if (root.visible)
+            return;
+        const name = Hyprland.focusedMonitor?.name;
+        const match = name ? Quickshell.screens.find(s => s.name === name) : null;
+        root.screen = match ?? Env.targetScreen();
+    }
+
     function open(mode) {
+        root.retarget();
         root.pickMode = mode ?? "shot";
         root.phase = "hover";
         root.selW = 0;
@@ -221,6 +232,7 @@ PanelWindow {
     }
 
     function request(mode) {
+        root.retarget();
         root.pickMode = "shot";
         if (mode === "record-region") {
             if (Recorder.recording)
@@ -257,11 +269,13 @@ PanelWindow {
         }
 
         function screen(): void {
+            root.retarget();
             root.pickMode = "shot";
             root.capture(0, 0, root.screen.width, root.screen.height);
         }
 
         function window(): void {
+            root.retarget();
             root.pickMode = "shot";
             activeProc.running = true;
         }
@@ -281,6 +295,7 @@ PanelWindow {
         }
 
         function screen(): void {
+            root.retarget();
             Recorder.toggleScreen(root.screen.name);
         }
 
@@ -289,6 +304,7 @@ PanelWindow {
                 Recorder.stop();
                 return;
             }
+            root.retarget();
             root.pickMode = "record";
             activeProc.running = true;
         }
