@@ -17,6 +17,7 @@ hl.bind(mod .. ' + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call 
 hl.bind('PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
 hl.bind('ALT + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call record toggle', { desc = 'Record region / stop recording' })
 hl.bind('ALT + SHIFT + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call record screen', { desc = 'Record screen / stop recording' })
+hl.bind('SHIFT + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture annotate', { desc = 'Screenshot region and annotate' })
 hl.bind('F11', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
 hl.bind(mod .. ' + SHIFT + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
 hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
