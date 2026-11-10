@@ -92,7 +92,7 @@ PanelWindow {
         root.windows = [];
         root.freezeKeep = false;
         root.freezePath = "";
-        if (root.pickMode === "shot") {
+        if (root.pickMode === "shot" || root.pickMode === "ocr" || root.pickMode === "qr") {
             freezeProc.running = true;
             return;
         }
@@ -222,7 +222,8 @@ PanelWindow {
         const mode = root.pickMode;
         root.pendingAnnotate = root.annotate && mode === "shot";
         root.pendingFreeze = "";
-        if (mode === "shot" && root.freezePath !== "" && root.screen.width > 0) {
+        root.pendingTool = mode === "ocr" || mode === "qr" ? mode : "";
+        if ((mode === "shot" || mode === "ocr" || mode === "qr") && root.freezePath !== "" && root.screen.width > 0) {
             const k = freezeImage.implicitWidth / root.screen.width;
             if (k > 0) {
                 const cx = Math.round(Math.max(0, x) * k);
@@ -242,7 +243,7 @@ PanelWindow {
         }
         root.pendingGeometry = gx + "," + gy + " " + gw + "x" + gh;
         if (root.pendingFreeze !== "") {
-            grimProc.running = true;
+            root.runGrab();
             return;
         }
         // Let the compositor finish unmapping the overlay (and its fade).
@@ -257,7 +258,61 @@ PanelWindow {
     Timer {
         id: grabDelay
         interval: 250
-        onTriggered: grimProc.running = true
+        onTriggered: root.runGrab()
+    }
+
+    property string pendingTool: ""
+
+    function runGrab() {
+        if (root.pendingTool === "ocr")
+            ocrProc.running = true;
+        else if (root.pendingTool === "qr")
+            qrProc.running = true;
+        else
+            grimProc.running = true;
+    }
+
+    // QR pick mode: the decoded payload goes to the clipboard (links also
+    // get an Open notification from the script).
+    Process {
+        id: qrProc
+        command: [Quickshell.shellPath("scripts/capture-qr.sh"), root.pendingGeometry, root.pendingFreeze, root.pendingCrop]
+        stdout: StdioCollector {
+            id: qrOut
+        }
+        onExited: code => {
+            if (code === 2) {
+                ToastManager.show("No QR code found", "");
+                return;
+            }
+            if (code !== 0) {
+                ToastManager.show("QR scan failed", "");
+                return;
+            }
+            const t = qrOut.text.trim();
+            ToastManager.show("QR copied: " + (t.length > 60 ? t.slice(0, 60) + "…" : t), "");
+        }
+    }
+
+    // OCR pick mode: the selection's text goes to the clipboard.
+    Process {
+        id: ocrProc
+        command: [Quickshell.shellPath("scripts/capture-ocr.sh"), root.pendingGeometry, root.pendingFreeze, root.pendingCrop]
+        stdout: StdioCollector {
+            id: ocrOut
+        }
+        onExited: code => {
+            if (code === 2) {
+                ToastManager.show("No text found", "");
+                return;
+            }
+            if (code !== 0) {
+                ToastManager.show("Text capture failed", "");
+                return;
+            }
+            const t = ocrOut.text.trim().replace(/\s+/g, " ");
+            ToastManager.show("Text copied: " + (t.length > 60 ? t.slice(0, 60) + "…" : t), "");
+        }
     }
 
     Timer {
@@ -341,6 +396,16 @@ PanelWindow {
             root.capture(0, 0, root.screen.width, root.screen.height);
         }
 
+        // Region picker, then OCR the selection into the clipboard.
+        function text(): void {
+            root.open("ocr");
+        }
+
+        // Region picker, then decode a QR code in the selection.
+        function qr(): void {
+            root.open("qr");
+        }
+
         function window(): void {
             root.retarget();
             root.annotate = false;
@@ -404,7 +469,7 @@ PanelWindow {
         Keys.onSpacePressed: root.captureSelection()
         Keys.onPressed: ev => {
             if (root.pickMode !== "record") {
-                if (ev.key === Qt.Key_A)
+                if (ev.key === Qt.Key_A && root.pickMode === "shot")
                     root.annotate = !root.annotate;
                 return;
             }
@@ -422,6 +487,17 @@ PanelWindow {
         source: root.freezePath !== "" ? "file://" + root.freezePath : ""
         cache: false
         smooth: true
+    }
+
+    function hint() {
+        const edit = root.phase === "edit";
+        const verb = root.pickMode === "record" ? "record" : root.pickMode === "ocr" ? "copy text" : root.pickMode === "qr" ? "scan QR" : "capture";
+        let h = edit ? "Enter " + verb + "  ·  drag edges to resize  ·  drag inside to move" : "Click window to " + verb + "  ·  drag to select area";
+        if (root.pickMode === "record")
+            h += "  ·  D/M audio";
+        else if (root.pickMode === "shot")
+            h += "  ·  A annotate" + (root.annotate ? " ✓" : "");
+        return h + "  ·  Esc cancel";
     }
 
     readonly property color dimColor: Qt.rgba(0, 0, 0, 0.5)
@@ -528,7 +604,7 @@ PanelWindow {
             color: Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize - 1
-            text: root.pickMode === "record" ? (root.phase === "edit" ? "Enter record  ·  drag edges to resize  ·  drag inside to move  ·  D/M audio  ·  Esc cancel" : "Click window to record  ·  drag to select area  ·  D/M audio  ·  Esc cancel") : root.phase === "edit" ? "Enter capture  ·  drag edges to resize  ·  drag inside to move  ·  A annotate" + (root.annotate ? " ✓" : "") + "  ·  Esc cancel" : "Click window to capture  ·  drag to select area  ·  A annotate" + (root.annotate ? " ✓" : "") + "  ·  Esc cancel"
+            text: root.hint()
         }
     }
 
