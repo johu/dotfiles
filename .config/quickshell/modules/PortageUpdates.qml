@@ -35,6 +35,14 @@ Singleton {
     // moment a build ends, instead of waiting up to pollInterval (4h) for
     // the badge count to reflect the packages that just got merged.
     property bool wasEmergeRunning: false
+    // True once the current emerge process was seen merging packages
+    // (a "(N of M)" progress line). An `emerge --sync`/eix-sync process
+    // also counts as emergeRunning but never produces one, so this is
+    // what separates a real build from a sync for the done-notification.
+    property bool sawRealBuild: false
+    // Running emerge with no merge progress: a sync, or a real run still
+    // resolving/fetching before its first merge line.
+    readonly property bool syncOrIdle: emergeRunning && emergeTotal === 0
 
     // PORT_LOGDIR is configurable in /etc/portage/make.conf (set here to
     // ~/.local/share/logs, not the distro default /var/log) - ask portage
@@ -157,13 +165,25 @@ Singleton {
     }
 
     Process {
+        id: notifySyncDone
+        command: ["notify-send", "-a", "Portage", "-i", Quickshell.shellPath("assets/gentoo-logo.svg"),
+                  "Sync finished", "The portage tree sync has completed."]
+    }
+
+    Process {
         id: statusCheck
         command: ["sh", "-c", root.statusScript, "sh", root.emergeLogPath]
         stdout: StdioCollector {
             onStreamFinished: {
                 const parts = this.text.split("\u001f");
                 root.emergeRunning = parts[0] === "1";
-                root.lastSyncEpoch = parseInt(parts[1], 10) || 0;
+                // The eix cache mtime moves when a sync finishes (eix-update
+                // runs last), so a bump over a known previous value means
+                // a sync completed. Skip the first poll (previous == 0).
+                const newSyncEpoch = parseInt(parts[1], 10) || 0;
+                if (root.lastSyncEpoch > 0 && newSyncEpoch > root.lastSyncEpoch)
+                    notifySyncDone.running = true;
+                root.lastSyncEpoch = newSyncEpoch;
 
                 const match = root.emergeRunning
                     ? parts[2].match(/\((\d+) of (\d+)\)\s+\S+\s+\(([^:]+)::/)
@@ -178,9 +198,15 @@ Singleton {
                 const etaSeconds = root.emergeRunning ? parseInt(parts[3], 10) || 0 : 0;
                 root.emergeEtaSeconds = etaSeconds > 0 ? etaSeconds : 0;
 
+                if (root.emergeRunning && root.emergeTotal > 0)
+                    root.sawRealBuild = true;
+
                 if (root.wasEmergeRunning && !root.emergeRunning) {
                     root.check();
-                    notifyDone.running = true;
+                    // Only notify for a real build, not a sync.
+                    if (root.sawRealBuild)
+                        notifyDone.running = true;
+                    root.sawRealBuild = false;
                 }
                 root.wasEmergeRunning = root.emergeRunning;
             }
