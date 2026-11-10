@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 import Quickshell.Networking
 
 Text {
@@ -56,13 +55,8 @@ Text {
                 // popup - jump straight there.
                 DashboardBridge.openNetworkRequested();
             } else {
-                nmtui.running = true;
+                Apps.runInTerminal(["nmtui"]);
             }
         }
-    }
-
-    Process {
-        id: nmtui
-        command: ["ghostty", "-e", "nmtui"]
     }
 }

@@ -130,7 +130,7 @@ Rectangle {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 1
                 wrapMode: Text.Wrap
-                onLinkActivated: link => Qt.openUrlExternally(link)
+                onLinkActivated: link => Apps.openUrl(link)
 
                 MouseArea {
                     anchors.fill: parent

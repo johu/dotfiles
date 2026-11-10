@@ -192,8 +192,7 @@ PanelWindow {
         if (!entry)
             return;
         if (entry.runInTerminal) {
-            const terminal = Quickshell.env("TERMINAL") || "xterm";
-            Quickshell.execDetached([terminal, "-e", ...entry.command]);
+            Apps.runInTerminal(entry.command);
         } else {
             entry.execute();
         }
