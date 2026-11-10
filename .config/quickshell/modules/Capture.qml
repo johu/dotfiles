@@ -65,19 +65,58 @@ PanelWindow {
         root.screen = match ?? Env.targetScreen();
     }
 
+    // Frozen backdrop: the whole output is grabbed before the overlay maps,
+    // shown behind the dim, and cropped for the final screenshot (no
+    // hide-then-wait delay, and moving content can't change). Screenshots
+    // only; if grim fails the picker opens live and captures the old way.
+    readonly property string freezeFile: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/qs-capture-freeze.png"
+    property string freezePath: ""
+    property bool freezeKeep: false
+    property string pendingFreeze: ""
+    property string pendingCrop: ""
+
     function open(mode) {
+        if (freezeProc.running)
+            return;
         root.retarget();
         root.pickMode = mode ?? "shot";
         root.phase = "hover";
         root.selW = 0;
         root.selH = 0;
         root.windows = [];
+        root.freezeKeep = false;
+        root.freezePath = "";
+        if (root.pickMode === "shot") {
+            freezeProc.running = true;
+            return;
+        }
+        root.showPicker();
+    }
+
+    function showPicker() {
         clientsProc.running = true;
         root.visible = true;
         keys.forceActiveFocus();
     }
 
+    Process {
+        id: freezeProc
+        command: ["grim", "-o", root.screen ? root.screen.name : "", root.freezeFile]
+        onExited: code => {
+            root.freezePath = code === 0 ? root.freezeFile : "";
+            root.showPicker();
+        }
+    }
+
+    Process {
+        id: freezeCleanup
+        command: ["rm", "-f", root.freezeFile]
+    }
+
     function close() {
+        if (root.freezePath !== "" && !root.freezeKeep)
+            freezeCleanup.running = true;
+        root.freezePath = "";
         root.visible = false;
         clientsProc.running = false;
         cursorProc.running = false;
@@ -175,6 +214,17 @@ PanelWindow {
             return;
         }
         const mode = root.pickMode;
+        root.pendingFreeze = "";
+        if (mode === "shot" && root.freezePath !== "" && root.screen.width > 0) {
+            const k = freezeImage.implicitWidth / root.screen.width;
+            if (k > 0) {
+                const cx = Math.round(Math.max(0, x) * k);
+                const cy = Math.round(Math.max(0, y) * k);
+                root.pendingCrop = Math.round(gw * k) + "x" + Math.round(gh * k) + "+" + cx + "+" + cy;
+                root.pendingFreeze = root.freezePath;
+                root.freezeKeep = true;
+            }
+        }
         root.close();
         if (mode === "record") {
             // Same logical-coordinate rect, in gpu-screen-recorder's format.
@@ -184,6 +234,10 @@ PanelWindow {
             return;
         }
         root.pendingGeometry = gx + "," + gy + " " + gw + "x" + gh;
+        if (root.pendingFreeze !== "") {
+            grimProc.running = true;
+            return;
+        }
         // Let the compositor finish unmapping the overlay (and its fade).
         grabDelay.restart();
     }
@@ -207,7 +261,7 @@ PanelWindow {
 
     Process {
         id: grimProc
-        command: [Quickshell.shellPath("scripts/capture-save.sh"), root.saveDir, root.pendingGeometry]
+        command: [Quickshell.shellPath("scripts/capture-save.sh"), root.saveDir, root.pendingGeometry, root.pendingFreeze, root.pendingCrop]
         onExited: code => {
             // Success is announced by the script's notification (Open/Edit actions).
             if (code !== 0)
@@ -342,6 +396,15 @@ PanelWindow {
             else if (ev.key === Qt.Key_M)
                 Recorder.setMicAudio(!Recorder.micAudio);
         }
+    }
+
+    Image {
+        id: freezeImage
+        anchors.fill: parent
+        visible: root.freezePath !== ""
+        source: root.freezePath !== "" ? "file://" + root.freezePath : ""
+        cache: false
+        smooth: true
     }
 
     readonly property color dimColor: Qt.rgba(0, 0, 0, 0.5)
