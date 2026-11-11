@@ -6,9 +6,10 @@
 # injecting eix-sync into it, so the sync output is visible live instead
 # of going to a systemd journal nobody looks at.
 
-GENTOO_WORKSPACE="w3"
-EMERGE_TAB="w3:t1"
-EMERGE_PANE="w3:p1"
+# herdr ids (w3, w3:t1, w3:p1) differ between machines, so resolve them
+# by label each poll instead of hard-coding them.
+GENTOO_LABEL="gentoo"
+EMERGE_TAB_LABEL="emerge"
 
 # systemd user services run with a minimal $PATH (no ~/.local/bin) that
 # doesn't include herdr - every herdr call below was silently failing
@@ -48,9 +49,23 @@ hyprctl dispatch "hl.dsp.focus({ workspace = 1 })"
 # and restoring its session) competes with the rest of autostart.lua at
 # session start and can genuinely take longer than a few seconds under
 # that load - the old 15s window gave up before herdr had even attached.
+# Prints the pane id of the first pane in the emerge tab of the gentoo
+# workspace, or nothing (non-zero) if any of them doesn't exist yet.
+find_emerge_pane() {
+  local ws tab
+  ws=$("$HERDR" workspace list 2>/dev/null \
+    | jq -er --arg l "$GENTOO_LABEL" \
+      '[.result.workspaces[] | select(.label == $l)][0].workspace_id') || return 1
+  tab=$("$HERDR" tab list --workspace "$ws" 2>/dev/null \
+    | jq -er --arg l "$EMERGE_TAB_LABEL" \
+      '[.result.tabs[] | select(.label == $l)][0].tab_id') || return 1
+  "$HERDR" pane list --workspace "$ws" 2>/dev/null \
+    | jq -er --arg t "$tab" \
+      '[.result.panes[] | select(.tab_id == $t)][0].pane_id'
+}
+
 for _ in $(seq 1 90); do
-  if "$HERDR" pane list --workspace "$GENTOO_WORKSPACE" 2>/dev/null \
-      | jq -e --arg tab "$EMERGE_TAB" '.result.panes[] | select(.tab_id == $tab)' >/dev/null; then
+  if EMERGE_PANE=$(find_emerge_pane); then
     "$HERDR" pane run "$EMERGE_PANE" eix-sync
     hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
     exit 0
@@ -59,5 +74,5 @@ for _ in $(seq 1 90); do
 done
 
 hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
-echo "portage-sync.sh: herdr pane $EMERGE_PANE never appeared, giving up" >&2
+echo "portage-sync.sh: herdr workspace '$GENTOO_LABEL' / tab '$EMERGE_TAB_LABEL' never appeared, giving up" >&2
 exit 1
