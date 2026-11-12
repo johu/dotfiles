@@ -11,7 +11,15 @@ Singleton {
     property bool loaded: false
 
     function eventsOn(date) {
-        return root.events.filter(ev => matches(ev, date));
+        // All-day events first, then timed events by start time (ascending).
+        return root.events.filter(ev => matches(ev, date)).sort((a, b) => {
+            const ta = a.dtstart.hhmm, tb = b.dtstart.hhmm;
+            if (!ta !== !tb)
+                return ta ? 1 : -1;
+            if (!ta)
+                return 0;
+            return ta < tb ? -1 : (ta > tb ? 1 : 0);
+        });
     }
 
     function hasEventsOn(date) {
