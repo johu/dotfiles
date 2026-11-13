@@ -14,14 +14,14 @@ RowLayout {
     visible: root.value.length > 0
     Layout.fillWidth: true
     Layout.leftMargin: 28
-    spacing: 8
+    spacing: 12
 
     Text {
         text: root.label
         color: Theme.subtext1
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize - 2
-        Layout.preferredWidth: 60
+        Layout.preferredWidth: 80
     }
 
     Text {

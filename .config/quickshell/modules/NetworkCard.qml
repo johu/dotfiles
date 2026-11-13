@@ -220,6 +220,10 @@ ColumnLayout {
         spacing: 2
 
         NetworkDetailRow {
+            label: "Interface"
+            value: root.activeIface
+        }
+        NetworkDetailRow {
             label: "Down"
             value: root.rateDown
         }
@@ -387,6 +391,10 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 2
 
+                NetworkDetailRow {
+                    label: "Interface"
+                    value: root.activeIface
+                }
                 NetworkDetailRow {
                     label: "Down"
                     value: root.rateDown
