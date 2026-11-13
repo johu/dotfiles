@@ -17,6 +17,7 @@ Text {
     color: root.powered ? (root.connectedCount > 0 ? Theme.blue : Theme.subtext1) : Theme.crust
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
+    renderType: Text.NativeRendering
     font.bold: true
     verticalAlignment: Text.AlignVCenter
 

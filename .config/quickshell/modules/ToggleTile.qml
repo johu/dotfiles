@@ -38,6 +38,7 @@ Rectangle {
             color: root.active ? root.accentColor : Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.iconFontSize + 6
+            renderType: Text.NativeRendering
             font.bold: true
         }
 

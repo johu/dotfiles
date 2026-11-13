@@ -24,6 +24,7 @@ Item {
         color: Notifications.dnd ? Theme.red : (root.unread > 0 ? Theme.blue : Theme.subtext1)
         font.family: Theme.fontFamily
         font.pixelSize: Theme.iconFontSize
+        renderType: Text.NativeRendering
         font.bold: true
     }
 
@@ -43,7 +44,8 @@ Item {
             text: root.unread > 9 ? "9+" : String(root.unread)
             color: Theme.base
             font.family: Theme.fontFamily
-            font.pixelSize: 9
+            font.pixelSize: Theme.minFontSize - 2
+            renderType: Text.NativeRendering
             font.bold: true
         }
     }

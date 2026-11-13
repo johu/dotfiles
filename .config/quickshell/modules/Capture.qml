@@ -584,7 +584,9 @@ PanelWindow {
             text: Math.round(root.selW) + " × " + Math.round(root.selH)
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 1
+            font.pixelSize: Theme.small(-1)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
         }
     }
 
@@ -603,7 +605,9 @@ PanelWindow {
             anchors.centerIn: parent
             color: Theme.subtext1
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 1
+            font.pixelSize: Theme.small(-1)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
             text: root.hint()
         }
     }
@@ -761,7 +765,9 @@ PanelWindow {
                     text: (modelData.on ? "● " : "○ ") + modelData.label
                     color: modelData.on ? Theme.text : Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 1
+                    font.pixelSize: Theme.small(-1)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
 
                 MouseArea {

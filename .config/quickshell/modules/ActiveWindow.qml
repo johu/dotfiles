@@ -79,6 +79,7 @@ Item {
         color: Theme.lavender
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
+        renderType: Text.NativeRendering
         font.bold: true
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter

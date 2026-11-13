@@ -47,9 +47,12 @@ ColumnLayout {
                 sourceSize.width: 18
                 sourceSize.height: 18
                 fillMode: Image.PreserveAspectFit
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 18
             }
 
             ColumnLayout {
+                Layout.fillWidth: true
                 spacing: 2
 
                 Text {
@@ -57,14 +60,21 @@ ColumnLayout {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                     font.bold: true
                 }
 
                 Text {
+                    // fillWidth + elide: see WeatherRow - a dynamic-width
+                    // subtitle without both shifts the icon column.
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
                     text: "CPU " + Math.round(root.cpuPercent) + "% \u00b7 RAM " + Math.round(root.ramPercent) + "% \u00b7 Disk " + Math.round(root.rootDiskPercent) + "%"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 2
+                    font.pixelSize: Theme.small(-2)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
             }
         }

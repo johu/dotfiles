@@ -30,5 +30,6 @@ Rectangle {
         color: Theme.subtext1
         font.family: Theme.fontFamily
         font.pixelSize: Math.round(root.width * 0.35)
+        renderType: Text.NativeRendering
     }
 }

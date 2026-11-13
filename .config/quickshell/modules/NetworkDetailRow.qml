@@ -20,7 +20,9 @@ RowLayout {
         text: root.label
         color: Theme.subtext1
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize - 2
+        font.pixelSize: Theme.small(-2)
+        font.weight: Theme.smallWeight
+        renderType: Text.NativeRendering
         Layout.preferredWidth: 80
     }
 
@@ -28,7 +30,9 @@ RowLayout {
         text: root.value
         color: Theme.text
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize - 2
+        font.pixelSize: Theme.small(-2)
+        font.weight: Theme.smallWeight
+        renderType: Text.NativeRendering
         Layout.fillWidth: true
         wrapMode: Text.Wrap
     }

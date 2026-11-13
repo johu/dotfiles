@@ -19,6 +19,7 @@ RowLayout {
         color: Theme.mauve
         font.family: Theme.fontFamily
         font.pixelSize: Theme.iconFontSize
+        renderType: Text.NativeRendering
     }
 
     Text {
@@ -27,5 +28,6 @@ RowLayout {
         color: Theme.mauve
         font.family: Theme.fontFamily
         font.pixelSize: Theme.iconFontSize
+        renderType: Text.NativeRendering
     }
 }

@@ -86,7 +86,8 @@ PopupWindow {
                     text: root.displayTitle || "Nothing playing"
                     color: Theme.text
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 1
+                    font.pixelSize: Theme.small(-1)
+                    renderType: Text.NativeRendering
                     font.bold: true
                     elide: Text.ElideRight
                 }
@@ -98,7 +99,9 @@ PopupWindow {
                     text: root.displayArtist
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 3
+                    font.pixelSize: Theme.small(-3)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                     elide: Text.ElideRight
                 }
             }
@@ -113,7 +116,9 @@ PopupWindow {
                     text: root.formatDuration(root.player ? root.player.position : 0)
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 4
+                    font.pixelSize: Theme.small(-4)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
 
                 Rectangle {
@@ -139,7 +144,9 @@ PopupWindow {
                     text: root.formatRemaining(root.player ? root.player.position : 0, root.player ? root.player.length : 0)
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 4
+                    font.pixelSize: Theme.small(-4)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
             }
         }

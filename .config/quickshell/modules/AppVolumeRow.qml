@@ -107,6 +107,7 @@ RowLayout {
             color: Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.iconFontSize
+            renderType: Text.NativeRendering
         }
 
         MouseArea {
@@ -142,7 +143,9 @@ RowLayout {
                 text: root.displayName
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 2
+                font.pixelSize: Theme.small(-2)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
             }
         }
     }
@@ -190,7 +193,9 @@ RowLayout {
         text: Math.round(root.volume * 100) + "%"
         color: Theme.text
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize - 2
+        font.pixelSize: Theme.small(-2)
+        font.weight: Theme.smallWeight
+        renderType: Text.NativeRendering
         Layout.preferredWidth: 36
         horizontalAlignment: Text.AlignRight
     }

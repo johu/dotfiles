@@ -329,6 +329,7 @@ PanelWindow {
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
                 font.pixelSize: root.inputFontSize
+                renderType: Text.NativeRendering
             }
 
             TextInput {
@@ -340,6 +341,7 @@ PanelWindow {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: root.inputFontSize
+                renderType: Text.NativeRendering
                 clip: true
 
                 onTextChanged: root.query = text
@@ -373,6 +375,7 @@ PanelWindow {
         font.family: Theme.fontFamily
         font.italic: true
         font.pixelSize: root.focusedDescFontSize
+        renderType: Text.NativeRendering
     }
 
     Item {
@@ -441,6 +444,7 @@ PanelWindow {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: root.resultFontSize
+                        renderType: Text.NativeRendering
                         elide: Text.ElideRight
                     }
                 }

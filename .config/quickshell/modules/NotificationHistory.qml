@@ -109,6 +109,7 @@ PopupWindow {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
+                renderType: Text.NativeRendering
                 font.bold: true
                 Layout.fillWidth: true
             }
@@ -187,7 +188,9 @@ PopupWindow {
                                 text: "+" + modelData.count + " more from " + modelData.appName
                                 color: Theme.subtext1
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSize - 2
+                                font.pixelSize: Theme.small(-2)
+                                font.weight: Theme.smallWeight
+                                renderType: Text.NativeRendering
                             }
                         }
 
@@ -247,7 +250,8 @@ PopupWindow {
                                     text: modelData.summary
                                     color: Theme.text
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSize - 1
+                                    font.pixelSize: Theme.small(-1)
+                                    renderType: Text.NativeRendering
                                     font.bold: true
                                     wrapMode: Text.Wrap
                                 }
@@ -263,7 +267,9 @@ PopupWindow {
                                     text: (root.clockTick, Notifications.relativeTime(modelData.time))
                                     color: Theme.subtext1
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSize - 3
+                                    font.pixelSize: Theme.small(-3)
+                                    font.weight: Theme.smallWeight
+                                    renderType: Text.NativeRendering
                                 }
 
                                 Text {
@@ -273,7 +279,9 @@ PopupWindow {
                                     text: "\uf1f8"
                                     color: Theme.subtext1
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSize - 2
+                                    font.pixelSize: Theme.small(-2)
+                                    font.weight: Theme.smallWeight
+                                    renderType: Text.NativeRendering
 
                                     MouseArea {
                                         anchors.fill: parent
@@ -293,7 +301,9 @@ PopupWindow {
                                 linkColor: Theme.blue
                                 color: Theme.subtext1
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSize - 2
+                                font.pixelSize: Theme.small(-2)
+                                font.weight: Theme.smallWeight
+                                renderType: Text.NativeRendering
                                 wrapMode: Text.Wrap
                                 onLinkActivated: link => Apps.openUrl(link)
 
@@ -330,7 +340,9 @@ PopupWindow {
                 text: "No notifications"
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 1
+                font.pixelSize: Theme.small(-1)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
             }
 
             Item {
@@ -353,14 +365,18 @@ PopupWindow {
                         text: "\uf1f8"
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize - 3
+                        font.pixelSize: Theme.small(-3)
+                        font.weight: Theme.smallWeight
+                        renderType: Text.NativeRendering
                     }
 
                     Text {
                         text: "Clear all"
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize - 2
+                        font.pixelSize: Theme.small(-2)
+                        font.weight: Theme.smallWeight
+                        renderType: Text.NativeRendering
                     }
                 }
 

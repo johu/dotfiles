@@ -17,6 +17,7 @@ Text {
     color: Theme.pink
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
+    renderType: Text.NativeRendering
     font.bold: true
     verticalAlignment: Text.AlignVCenter
 

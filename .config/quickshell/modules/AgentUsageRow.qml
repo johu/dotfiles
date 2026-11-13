@@ -53,6 +53,7 @@ ColumnLayout {
                 color: Theme.yellow
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.iconFontSize
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -65,6 +66,7 @@ ColumnLayout {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                     font.bold: true
                 }
 
@@ -79,7 +81,9 @@ ColumnLayout {
                     text: root.summaryText
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 2
+                    font.pixelSize: Theme.small(-2)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                     elide: Text.ElideRight
                 }
             }

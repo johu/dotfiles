@@ -73,6 +73,7 @@ ColumnLayout {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
+            renderType: Text.NativeRendering
             font.bold: true
             elide: Text.ElideRight
         }
@@ -84,7 +85,9 @@ ColumnLayout {
             text: root.player ? root.player.trackArtist : ""
             color: Theme.subtext1
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 2
+            font.pixelSize: Theme.small(-2)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
             elide: Text.ElideRight
         }
     }
@@ -99,7 +102,9 @@ ColumnLayout {
             text: root.formatDuration(root.player ? root.player.position : 0)
             color: Theme.subtext1
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 4
+            font.pixelSize: Theme.small(-4)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
         }
 
         Rectangle {
@@ -137,7 +142,9 @@ ColumnLayout {
             text: root.formatRemaining(root.player ? root.player.position : 0, root.player ? root.player.length : 0)
             color: Theme.subtext1
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 4
+            font.pixelSize: Theme.small(-4)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
         }
     }
 

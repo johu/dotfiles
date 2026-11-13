@@ -38,6 +38,7 @@ PopupWindow {
                 color: root.status === "Charging" ? Theme.green : Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.iconFontSize
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -65,7 +66,9 @@ PopupWindow {
                     text: root.status
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 2
+                    font.pixelSize: Theme.small(-2)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
             }
 
@@ -74,6 +77,7 @@ PopupWindow {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
+                renderType: Text.NativeRendering
                 Layout.preferredWidth: 32
                 horizontalAlignment: Text.AlignRight
             }

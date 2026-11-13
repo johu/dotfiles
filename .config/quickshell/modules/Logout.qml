@@ -9,6 +9,7 @@ Text {
     color: Theme.lavender
     font.family: Theme.fontFamily
     font.pixelSize: Theme.iconFontSize
+    renderType: Text.NativeRendering
     font.bold: true
     verticalAlignment: Text.AlignVCenter
     Layout.preferredHeight: Theme.moduleHeight

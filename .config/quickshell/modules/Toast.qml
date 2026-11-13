@@ -33,6 +33,7 @@ Pill {
         color: Theme.green
         font.family: Theme.fontFamily
         font.pixelSize: Theme.iconFontSize
+        renderType: Text.NativeRendering
         font.bold: true
     }
 
@@ -41,5 +42,6 @@ Pill {
         color: Theme.text
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
+        renderType: Text.NativeRendering
     }
 }

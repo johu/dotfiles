@@ -83,7 +83,8 @@ PopupWindow {
                     : "Waiting"
                 color: PortageUpdates.emergeTotal > 0 ? Theme.text : Theme.mauve
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 1
+                font.pixelSize: Theme.small(-1)
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -94,7 +95,9 @@ PopupWindow {
                 text: "Resolving dependencies, or waiting on a confirmation prompt"
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 3
+                font.pixelSize: Theme.small(-3)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
             }
@@ -105,7 +108,9 @@ PopupWindow {
                 text: PortageUpdates.emergeAtom
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 3
+                font.pixelSize: Theme.small(-3)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
                 elide: Text.ElideMiddle
                 Layout.maximumWidth: 240
             }
@@ -118,7 +123,9 @@ PopupWindow {
                 text: root.formatEta(PortageUpdates.emergeEtaSeconds)
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 3
+                font.pixelSize: Theme.small(-3)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
             }
 
             Text {
@@ -129,7 +136,8 @@ PopupWindow {
                     : PortageUpdates.pendingCount + (PortageUpdates.pendingCount === 1 ? " update available" : " updates available")
                 color: Theme.green
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 1
+                font.pixelSize: Theme.small(-1)
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -139,7 +147,8 @@ PopupWindow {
                 text: "Dependency conflict"
                 color: Theme.yellow
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 1
+                font.pixelSize: Theme.small(-1)
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -150,7 +159,9 @@ PopupWindow {
                 text: PortageUpdates.conflictSummary
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 3
+                font.pixelSize: Theme.small(-3)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
             }
@@ -161,7 +172,9 @@ PopupWindow {
                 text: root.formatSince(PortageUpdates.lastSyncEpoch)
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 3
+                font.pixelSize: Theme.small(-3)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
             }
         }
     }

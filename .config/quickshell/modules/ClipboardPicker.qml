@@ -144,6 +144,7 @@ PopupWindow {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
                         clip: true
                         focus: root.visible
                         onTextChanged: root.filterText = text
@@ -156,6 +157,7 @@ PopupWindow {
                             color: Theme.subtext1
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSize
+                            renderType: Text.NativeRendering
                         }
                     }
                 }
@@ -165,6 +167,7 @@ PopupWindow {
                     color: root.confirmClear ? Theme.red : Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.iconFontSize
+                    renderType: Text.NativeRendering
 
                     MouseArea {
                         anchors.fill: parent
@@ -240,6 +243,7 @@ PopupWindow {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSize
+                            renderType: Text.NativeRendering
                             elide: Text.ElideRight
                         }
 
@@ -248,6 +252,7 @@ PopupWindow {
                             color: deleteMouse.containsMouse ? Theme.red : Theme.subtext1
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.iconFontSize
+                            renderType: Text.NativeRendering
 
                             MouseArea {
                                 id: deleteMouse
@@ -269,6 +274,7 @@ PopupWindow {
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
+                renderType: Text.NativeRendering
             }
         }
     }

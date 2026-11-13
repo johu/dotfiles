@@ -43,6 +43,7 @@ Rectangle {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: 26
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -55,21 +56,27 @@ Rectangle {
                     text: "Precip " + WeatherData.currentPrecipProb + "%"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 3
+                    font.pixelSize: Theme.small(-3)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
 
                 Text {
                     text: "Humidity " + WeatherData.currentHumidity + "%"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 3
+                    font.pixelSize: Theme.small(-3)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
 
                 Text {
                     text: "Wind " + WeatherData.currentWindSpeed + " km/h"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 3
+                    font.pixelSize: Theme.small(-3)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                 }
             }
         }
@@ -154,7 +161,9 @@ Rectangle {
                             text: Qt.formatTime(modelData.time, "hh:00")
                             color: Theme.subtext1
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 4
+                            font.pixelSize: Theme.small(-4)
+                            font.weight: Theme.smallWeight
+                            renderType: Text.NativeRendering
                         }
 
                         Text {
@@ -163,7 +172,9 @@ Rectangle {
                             text: modelData.temp + "\u00b0"
                             color: Theme.text
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 3
+                            font.pixelSize: Theme.small(-3)
+                            font.weight: Theme.smallWeight
+                            renderType: Text.NativeRendering
                         }
                     }
                 }
@@ -198,7 +209,9 @@ Rectangle {
                             text: dayCard.index === 0 ? "Today" : Qt.locale("en_GB").dayName(dayCard.modelData.date.getDay(), Locale.ShortFormat)
                             color: Theme.subtext1
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 3
+                            font.pixelSize: Theme.small(-3)
+                            font.weight: Theme.smallWeight
+                            renderType: Text.NativeRendering
                         }
 
                         Image {
@@ -218,7 +231,8 @@ Rectangle {
                             text: dayCard.modelData.tempMax + "\u00b0"
                             color: Theme.text
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 3
+                            font.pixelSize: Theme.small(-3)
+                            renderType: Text.NativeRendering
                             font.bold: true
                         }
 
@@ -227,7 +241,9 @@ Rectangle {
                             text: dayCard.modelData.tempMin + "\u00b0"
                             color: Theme.subtext1
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 4
+                            font.pixelSize: Theme.small(-4)
+                            font.weight: Theme.smallWeight
+                            renderType: Text.NativeRendering
                         }
                     }
                 }

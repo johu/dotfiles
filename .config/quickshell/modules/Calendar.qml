@@ -102,7 +102,9 @@ PopupWindow {
                     text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 2
+                    font.pixelSize: Theme.small(-2)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                     elide: Text.ElideRight
                 }
             }
@@ -120,6 +122,7 @@ PopupWindow {
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.iconFontSize
+                        renderType: Text.NativeRendering
                     }
 
                     MouseArea {
@@ -139,6 +142,7 @@ PopupWindow {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                     font.bold: true
                 }
 
@@ -152,6 +156,7 @@ PopupWindow {
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.iconFontSize
+                        renderType: Text.NativeRendering
                     }
 
                     MouseArea {
@@ -175,6 +180,7 @@ PopupWindow {
                     color: (model.day === 0 || model.day === 6) ? Theme.green : Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                     font.bold: true
                 }
             }
@@ -206,6 +212,7 @@ PopupWindow {
                         text: dayCell.model.day
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
                         color: {
                             if (dayCell.model.today)
                                 return Theme.base;
@@ -282,6 +289,7 @@ PopupWindow {
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                 }
 
                 ListView {
@@ -327,6 +335,7 @@ PopupWindow {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSize
+                            renderType: Text.NativeRendering
                             font.bold: true
                             wrapMode: Text.Wrap
                         }

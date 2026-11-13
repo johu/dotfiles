@@ -53,6 +53,7 @@ Item {
                 color: root.accentColor
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.iconFontSize
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -107,7 +108,9 @@ Item {
             text: root.value
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 2
+            font.pixelSize: Theme.small(-2)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
             horizontalAlignment: Text.AlignRight
         }
     }
@@ -145,7 +148,9 @@ Item {
             text: root.tooltip
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize - 2
+            font.pixelSize: Theme.small(-2)
+            font.weight: Theme.smallWeight
+            renderType: Text.NativeRendering
         }
     }
 }

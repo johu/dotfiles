@@ -28,4 +28,8 @@ QtObject {
     readonly property string fontFamily: "JetBrainsMono Nerd Font Propo"
     readonly property int fontSize: 14
     readonly property int iconFontSize: 16
+    readonly property int minFontSize: 12
+    // Weight for the small text sizes; Font.Normal to revert.
+    readonly property int smallWeight: Font.Medium
+    function small(delta) { return Math.max(minFontSize, fontSize + delta) }
 }

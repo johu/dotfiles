@@ -8,6 +8,7 @@ Text {
     color: Theme.subtext1
     font.family: Theme.fontFamily
     font.pixelSize: Theme.iconFontSize
+    renderType: Text.NativeRendering
     font.bold: true
     verticalAlignment: Text.AlignVCenter
     Layout.preferredHeight: Theme.moduleHeight

@@ -11,6 +11,7 @@ Text {
     color: root.active ? Theme.yellow : Theme.subtext1
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
+    renderType: Text.NativeRendering
     font.bold: true
     verticalAlignment: Text.AlignVCenter
 

@@ -71,6 +71,7 @@ Item {
 
         font.family: Theme.fontFamily
         font.pixelSize: Theme.iconFontSize
+        renderType: Text.NativeRendering
         font.bold: true
     }
 

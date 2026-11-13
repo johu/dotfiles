@@ -48,6 +48,7 @@ ColumnLayout {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                     font.bold: true
                 }
 
@@ -64,7 +65,9 @@ ColumnLayout {
                     text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize - 2
+                    font.pixelSize: Theme.small(-2)
+                    font.weight: Theme.smallWeight
+                    renderType: Text.NativeRendering
                     elide: Text.ElideRight
                 }
             }

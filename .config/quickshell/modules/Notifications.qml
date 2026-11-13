@@ -48,6 +48,15 @@ Singleton {
         root.unreadCount = 0;
     }
 
+    // Debug: `qs ipc call notifmock set 5` fakes the unread badge count
+    // (`... set 12` shows "9+", `... set 0` clears it). DND hides the badge.
+    IpcHandler {
+        target: "notifmock"
+        function set(count: int): void {
+            root.unreadCount = count;
+        }
+    }
+
     property bool initialized: false
     property var liveById: ({})
     property int seq: 0

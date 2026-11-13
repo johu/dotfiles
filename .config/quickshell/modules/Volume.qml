@@ -60,6 +60,7 @@ Item {
         color: Theme.maroon
         font.family: Theme.fontFamily
         font.pixelSize: root.muted ? Theme.fontSize : Theme.iconFontSize
+        renderType: Text.NativeRendering
         font.bold: true
     }
 

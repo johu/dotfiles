@@ -51,6 +51,7 @@ PopupWindow {
                 color: root.accentColor
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.iconFontSize
+                renderType: Text.NativeRendering
                 font.bold: true
             }
 
@@ -75,6 +76,7 @@ PopupWindow {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
+                renderType: Text.NativeRendering
                 Layout.preferredWidth: 32
                 horizontalAlignment: Text.AlignRight
             }

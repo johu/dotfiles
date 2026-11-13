@@ -93,6 +93,7 @@ Rectangle {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
                     font.bold: true
                     wrapMode: Text.Wrap
                 }
@@ -109,6 +110,7 @@ Rectangle {
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.iconFontSize - 2
+                    renderType: Text.NativeRendering
 
                     MouseArea {
                         anchors.fill: parent
@@ -128,7 +130,9 @@ Rectangle {
                 linkColor: Theme.blue
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 1
+                font.pixelSize: Theme.small(-1)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
                 wrapMode: Text.Wrap
                 onLinkActivated: link => Apps.openUrl(link)
 
@@ -175,7 +179,9 @@ Rectangle {
                             text: modelData.text
                             color: Theme.text
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 2
+                            font.pixelSize: Theme.small(-2)
+                            font.weight: Theme.smallWeight
+                            renderType: Text.NativeRendering
                         }
 
                         MouseArea {

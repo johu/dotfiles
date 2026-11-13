@@ -23,6 +23,7 @@ RowLayout {
         color: root.accentColor
         font.family: Theme.fontFamily
         font.pixelSize: Theme.iconFontSize
+        renderType: Text.NativeRendering
         font.bold: true
         Layout.preferredWidth: 20
         horizontalAlignment: Text.AlignHCenter
@@ -76,7 +77,9 @@ RowLayout {
         text: Math.round(root.value * 100) + "%"
         color: Theme.text
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize - 2
+        font.pixelSize: Theme.small(-2)
+        font.weight: Theme.smallWeight
+        renderType: Text.NativeRendering
         Layout.preferredWidth: 36
         horizontalAlignment: Text.AlignRight
     }

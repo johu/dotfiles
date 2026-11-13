@@ -195,6 +195,7 @@ ColumnLayout {
             color: root.wiredDevice?.connected ? Theme.green : Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.iconFontSize
+            renderType: Text.NativeRendering
             Layout.preferredWidth: 20
         }
 
@@ -204,6 +205,7 @@ ColumnLayout {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
+            renderType: Text.NativeRendering
         }
 
         Text {
@@ -211,6 +213,7 @@ ColumnLayout {
             color: root.wiredDevice?.connected ? Theme.green : Theme.subtext1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
+            renderType: Text.NativeRendering
         }
     }
 
@@ -274,6 +277,7 @@ ColumnLayout {
         color: Theme.subtext1
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
+        renderType: Text.NativeRendering
     }
 
     Text {
@@ -282,6 +286,7 @@ ColumnLayout {
         color: Theme.subtext1
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
+        renderType: Text.NativeRendering
     }
 
     Repeater {
@@ -336,6 +341,7 @@ ColumnLayout {
                         }
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.iconFontSize
+                        renderType: Text.NativeRendering
                         Layout.preferredWidth: 20
                     }
 
@@ -346,6 +352,7 @@ ColumnLayout {
                         color: modelData.connected ? Theme.sky : Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
                         font.bold: modelData.connected
                     }
 
@@ -355,6 +362,7 @@ ColumnLayout {
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
 
                         MouseArea {
                             anchors.fill: parent
@@ -373,6 +381,7 @@ ColumnLayout {
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
                     }
 
                     Text {
@@ -380,6 +389,7 @@ ColumnLayout {
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
                         Layout.preferredWidth: 36
                         horizontalAlignment: Text.AlignRight
                     }
@@ -471,6 +481,7 @@ ColumnLayout {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
                         echoMode: pskRow.showPassword ? TextInput.Normal : TextInput.Password
                         clip: true
                         text: root.pskText
@@ -485,6 +496,7 @@ ColumnLayout {
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
 
                     MouseArea {
                         anchors.fill: parent
@@ -501,7 +513,9 @@ ColumnLayout {
                 text: root.pskError
                 color: Theme.red
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize - 2
+                font.pixelSize: Theme.small(-2)
+                font.weight: Theme.smallWeight
+                renderType: Text.NativeRendering
             }
         }
     }
