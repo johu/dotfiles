@@ -370,6 +370,9 @@ PanelWindow {
             NetworkRow {
                 id: networkRow
                 Layout.fillWidth: true
+                // Collapsed rows have zero height but would still
+                // take a 12px layout spacing slot each.
+                visible: reserved
                 onPskActiveChanged: root.networkPskActive = pskActive
             }
 
@@ -378,6 +381,7 @@ PanelWindow {
             BluetoothRow {
                 id: bluetoothRow
                 Layout.fillWidth: true
+                visible: reserved
             }
 
             // Always expanded (no click-to-expand like the cards further
