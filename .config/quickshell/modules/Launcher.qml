@@ -301,7 +301,7 @@ PanelWindow {
 
     // Inline calculator (omacast row 13). A clear calculation replaces the
     // app results; Enter copies the result.
-    readonly property var calc: root.showHidden ? null : Calculator.evaluate(root.query)
+    readonly property var calc: (root.showHidden || root.webLocked) ? null : Calculator.evaluate(root.query)
 
     function copyCalc() {
         const c = root.calc;
@@ -316,12 +316,19 @@ PanelWindow {
 
     // "yt cats": a provider prefix searches that provider directly and, like
     // a calculation, replaces the app results.
-    readonly property var webPrefix: (root.showHidden || root.calc) ? null : WebSearch.parsePrefix(root.query.trim())
+    // While the provider list is open the typed text is a web search term:
+    // editing it must not switch to app results or the calculator.
+    property bool webLocked: false
+    property var lockedProvider: null
+
+    readonly property var webPrefix: (root.showHidden || root.calc || root.webLocked) ? null : WebSearch.parsePrefix(root.query.trim())
 
     // Web search row: a prefix query, or the default provider when nothing
     // else matched.
     readonly property var web: {
         const q = root.query.trim();
+        if (root.webLocked)
+            return { provider: root.lockedProvider, text: q, fallback: true };
         if (!q || root.showHidden || root.calc)
             return null;
         if (root.webPrefix)
@@ -343,6 +350,8 @@ PanelWindow {
     }
 
     function openSearch(provider, text) {
+        if (!text.trim())
+            return;
         root.recordHistory(root.query);
         root.save();
         Apps.openUrl(WebSearch.url(provider, text));
@@ -351,7 +360,7 @@ PanelWindow {
 
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
-        if ((!q && !root.showHidden) || root.calc || root.webPrefix)
+        if ((!q && !root.showHidden) || root.calc || root.webPrefix || root.webLocked)
             return [];
 
         const now = Date.now() / 1000;
@@ -424,6 +433,7 @@ PanelWindow {
         root.selectedIndex = 0;
         root.showHidden = false;
         root.actionsOpen = false;
+        root.webLocked = false;
         root.historyIndex = -1;
         root.ctrlHeld = false;
         // lastIpcObject is empty until refreshed; needed for window matching.
@@ -682,6 +692,8 @@ PanelWindow {
                             root.actionIndex = Math.max(root.actionIndex - 1, 0);
                         else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                             root.runAction(root.actionIndex);
+                        else if (root.webLocked)
+                            return;
                         event.accepted = true;
                         return;
                     }
@@ -864,10 +876,12 @@ PanelWindow {
 
     readonly property var actions: {
         if (root.web) {
+            // Captured now: the panel closes (and web may change) before run().
+            const text = root.web.text;
             return WebSearch.ordered(root.web.provider.id).map(p => ({
                 title: p.name,
                 keys: [p.prefix],
-                run: () => root.openSearch(p, root.web.text)
+                run: () => root.openSearch(p, text)
             }));
         }
         const e = root.selectedEntry;
@@ -911,7 +925,14 @@ PanelWindow {
         if (!root.selectedEntry && !root.web)
             return;
         root.actionIndex = 0;
+        root.lockedProvider = root.web ? root.web.provider : null;
+        root.webLocked = !!root.web;
         root.actionsOpen = true;
+    }
+
+    onActionsOpenChanged: {
+        if (!root.actionsOpen)
+            root.webLocked = false;
     }
 
     function runAction(i) {
@@ -1140,7 +1161,7 @@ PanelWindow {
                 leftPadding: 12
                 topPadding: 4
                 bottomPadding: 6
-                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web" : "")
+                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : "")
                 elide: Text.ElideRight
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
