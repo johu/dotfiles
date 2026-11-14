@@ -209,8 +209,35 @@ PanelWindow {
     property var history: []
     property int historyIndex: -1
 
+    // ---- Views (launcher-views.md): full-size keyboard-driven screens ----
+    // A view is a component with `hints`, handleKey(event) and
+    // closeRequested(); while one is open it receives every key.
+    property string viewName: ""
+    readonly property bool viewActive: root.viewName !== ""
+
+    function openView(name) {
+        root.actionsOpen = false;
+        root.webLocked = false;
+        searchInput.text = "";
+        root.query = "";
+        root.viewName = name;
+    }
+
+    function closeView() {
+        root.viewName = "";
+        Qt.callLater(() => searchInput.forceActiveFocus());
+    }
+
     // UI scale (Ctrl +/-/0), persisted in launcher.json.
     property real zoom: 1
+
+    // Ctrl +/-/0; returns true when the key was a zoom key.
+    function zoomKey(key) {
+        if (key !== Qt.Key_Plus && key !== Qt.Key_Equal && key !== Qt.Key_Minus && key !== Qt.Key_0)
+            return false;
+        root.setZoom(key === Qt.Key_0 ? 1 : root.zoom + (key === Qt.Key_Minus ? -0.1 : 0.1));
+        return true;
+    }
 
     // Native glyphs are rasterised once and pixelate when scaled; the
     // distance-field renderer stays sharp at any zoom.
@@ -958,6 +985,7 @@ PanelWindow {
         searchInput.text = "";
         root.selectedIndex = 0;
         root.showHidden = false;
+        root.viewName = "";
         root.actionsOpen = false;
         root.webLocked = false;
         root.lastPointer = Qt.point(-1, -1);
@@ -991,6 +1019,12 @@ PanelWindow {
 
         function toggle(): void {
             root.toggle();
+        }
+
+        // Open the launcher straight into a view, e.g. `view calendar`.
+        function view(name: string): void {
+            root.open();
+            root.openView(name);
         }
 
         // Effective file search settings, for checking launcher-config.json.
@@ -1052,6 +1086,10 @@ PanelWindow {
         if (addr) {
             Quickshell.execDetached(["hyprctl", "dispatch", `hl.dsp.focus({ window = "address:${addr}" })`]);
             root.close();
+            return;
+        }
+        if (entry.view) {
+            root.openView(entry.view);
             return;
         }
         if (entry.system) {
@@ -1240,6 +1278,8 @@ PanelWindow {
     // { keys: [...], text } rendered as key-cap chips.
     readonly property int hintFontSize: Theme.fontSize + 2
     readonly property var keyHints: {
+        if (root.viewActive)
+            return viewLoader.item ? viewLoader.item.hints : [];
         if (root.fileMode)
             return root.fileResults.length > 0 ? [[{ keys: ["\u21b5"], text: "open" }, { keys: ["PgUp", "PgDn"], text: "scroll" }, { keys: ["Ctrl", "K"], text: "actions" }]] : [];
         const e = root.selectedEntry;
@@ -1249,6 +1289,16 @@ PanelWindow {
             ? [{ keys: ["\u21b5"], text: "focus window" }, { keys: ["Shift", "\u21b5"], text: "new window" }]
             : [{ keys: ["\u21b5"], text: e.system ? "run" : "open" }];
         return [open.concat([{ keys: ["Ctrl", "K"], text: "actions" }])];
+    }
+
+    Component {
+        id: calendarView
+
+        LauncherCalendarView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.closeView()
+        }
     }
 
     // Everything except the blurred backdrop is scaled around the screen
@@ -1264,9 +1314,40 @@ PanelWindow {
             yScale: root.zoom
         }
 
+        // Container of the open view (launcher-views.md).
+        Rectangle {
+            id: viewBox
+
+            visible: root.viewActive
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: -30
+            width: 1360
+            height: 780
+            radius: Theme.radius
+            color: Theme.surface1
+            border.width: 1
+            border.color: Theme.surface2
+
+            MouseArea {
+                anchors.fill: parent
+            }
+
+            Loader {
+                id: viewLoader
+
+                anchors.fill: parent
+                anchors.margins: 22
+                active: root.viewActive
+                sourceComponent: root.viewName === "calendar" ? calendarView : null
+            }
+        }
+
         Rectangle {
             id: pill
 
+            // Kept (not hidden) so the search input keeps keyboard focus.
+            opacity: root.viewActive ? 0 : 1
             anchors.horizontalCenter: parent.horizontalCenter
             y: parent.height * 0.32 - height / 2
             width: root.pillWidth
@@ -1324,6 +1405,16 @@ PanelWindow {
                         const shift = event.modifiers & Qt.ShiftModifier;
                         if (event.key === Qt.Key_Control)
                             root.ctrlHeld = true;
+                        if (root.viewActive) {
+                            if (ctrl && !alt && root.zoomKey(event.key)) {
+                            } else if (event.key === Qt.Key_Escape) {
+                                root.closeView();
+                            } else if (viewLoader.item) {
+                                viewLoader.item.handleKey(event);
+                            }
+                            event.accepted = true;
+                            return;
+                        }
                         if (root.actionsOpen) {
                             if (event.key === Qt.Key_Escape || (ctrl && event.key === Qt.Key_K))
                                 root.actionsOpen = false;
@@ -1343,8 +1434,7 @@ PanelWindow {
                             event.accepted = true;
                             return;
                         }
-                        if (ctrl && !alt && (event.key === Qt.Key_Plus || event.key === Qt.Key_Equal || event.key === Qt.Key_Minus || event.key === Qt.Key_0)) {
-                        root.setZoom(event.key === Qt.Key_0 ? 1 : root.zoom + (event.key === Qt.Key_Minus ? -0.1 : 0.1));
+                        if (ctrl && !alt && root.zoomKey(event.key)) {
                     } else if (ctrl && !alt && !shift && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
                             if (root.fileMode)
                                 root.openFileAt(event.key - Qt.Key_1);
@@ -1521,9 +1611,9 @@ PanelWindow {
         }
 
         Column {
-            visible: (resultsPanel.visible || fileList.visible) && !root.actionsOpen
+            visible: (resultsPanel.visible || fileList.visible || root.viewActive) && !root.actionsOpen
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: root.fileMode ? fileList.bottom : resultsPanel.bottom
+            anchors.top: root.viewActive ? viewBox.bottom : (root.fileMode ? fileList.bottom : resultsPanel.bottom)
             anchors.topMargin: 14
             spacing: 8
             opacity: 0.85

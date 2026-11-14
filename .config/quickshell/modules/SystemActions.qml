@@ -75,6 +75,9 @@ Singleton {
         if (DashboardBridge.nightLightPresent)
             list.push(root.entry("nightlight", "Night Light", DashboardBridge.nightLightActive ? "Warm screen colour is on" : "Warm screen colour is off", ["night light", "nightlight", "blue light", "warm", "sunset"], "\uf186", Theme.yellow, () => DashboardBridge.toggleNightLightRequested(), DashboardBridge.nightLightActive));
 
+        // Launcher views: opened inside the launcher instead of running a command.
+        list.push(Object.assign(root.entry("view-calendar", "Calendar", "Month grid and agenda with event details", ["calendar", "cal", "agenda", "events", "month", "date", "schedule"], "\uf073", Theme.blue, () => {}), { view: "calendar" }));
+
         // Capture (handled by Capture.qml through DashboardBridge)
         list.push(root.entry("shot-region", "Screenshot Region", "Pick an area to capture", ["screenshot", "screen shot", "capture", "region"], "\uf030", Theme.mauve, () => root.capture("region")));
         list.push(root.entry("shot-screen", "Screenshot Screen", "Capture the whole screen", ["screenshot", "screen shot", "capture", "full screen"], "\uf108", Theme.mauve, () => root.capture("screen")));
