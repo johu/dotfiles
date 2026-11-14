@@ -307,6 +307,7 @@ PanelWindow {
         if (!c)
             return;
         root.recordHistory(root.query);
+        root.save();
         root.copyText(c.copy);
         ToastManager.show("Copied " + c.copy, "\uf0c5");
         root.close();
