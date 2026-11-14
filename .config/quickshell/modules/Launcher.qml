@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
+import "Ansi.js" as Ansi
 import "Calculator.js" as Calculator
 import "Locations.js" as Locations
 import "WebSearch.js" as WebSearch
@@ -518,6 +519,75 @@ PanelWindow {
         onExited: {
             if (root.fileMode && fileProc.target !== root.fileTerm)
                 fileTimer.restart();
+        }
+    }
+
+    // ---- File preview (omacast row 23) ----
+    // First output line is the kind (#dir | #text | #image | #info), the rest
+    // is the body. Nothing is executed; large files are only described.
+    readonly property string previewScript: [
+        'p="$1"',
+        'if [ -d "$p" ]; then',
+        '  echo "#dir"',
+        '  { eza -1 --color=never --group-directories-first -- "$p" 2>/dev/null || ls -1 -- "$p"; } | head -n 100',
+        'else',
+        '  m=$(file --brief --mime-type -- "$p" 2>/dev/null)',
+        '  sz=$(stat -c %s -- "$p" 2>/dev/null || echo 0)',
+        '  case "$m" in',
+        '    image/*) echo "#image";;',
+        '    text/*|application/json|application/xml|application/javascript|inode/x-empty)',
+        '      if [ "$sz" -gt 5000000 ]; then echo "#info"; file --brief -- "$p"; echo "Size: $sz bytes (too large to preview)"',
+        '      else echo "#text"; bat --color=always --theme=ansi --style=numbers --paging=never --wrap=never --line-range :120 -- "$p" 2>/dev/null || head -n 120 -- "$p"; fi;;',
+        '    *) echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; stat -c "Modified: %y" -- "$p";;',
+        '  esac',
+        'fi'
+    ].join("\n")
+
+    readonly property string selectedFilePath: root.selectedFile ? root.selectedFile.path : ""
+    property string previewKind: ""
+    property string previewBody: ""
+    property string previewShown: ""
+
+    onSelectedFilePathChanged: {
+        root.previewKind = "";
+        previewTimer.restart();
+    }
+
+    Timer {
+        id: previewTimer
+
+        interval: 120
+        onTriggered: {
+            if (root.selectedFilePath === "")
+                return;
+            if (previewProc.running) {
+                previewTimer.restart();
+                return;
+            }
+            previewProc.target = root.selectedFilePath;
+            previewProc.running = true;
+        }
+    }
+
+    Process {
+        id: previewProc
+
+        property string target: ""
+
+        command: ["sh", "-c", root.previewScript, "sh", previewProc.target]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const nl = text.indexOf("\n");
+                const kind = nl < 0 ? text.trim() : text.slice(0, nl).trim();
+                const body = nl < 0 ? "" : text.slice(nl + 1);
+                root.previewShown = previewProc.target;
+                root.previewKind = kind.slice(1);
+                root.previewBody = kind === "#text" ? Ansi.toHtml(body) : body;
+            }
+        }
+        onExited: {
+            if (previewProc.target !== root.selectedFilePath)
+                previewTimer.restart();
         }
     }
 
@@ -1287,14 +1357,14 @@ PanelWindow {
     Item {
         id: fileList
 
-        readonly property int rowHeight: 42
+        readonly property int rowHeight: 54
 
         visible: root.fileMode && root.fileResults.length > 0 && !root.actionsOpen
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: focusedDescription.bottom
         anchors.topMargin: 14
-        width: root.resultsPanelWidth
-        height: Math.min(root.fileResults.length, 8) * fileList.rowHeight
+        width: root.pillWidth
+        height: Math.max(Math.min(root.fileResults.length, 7), 5) * fileList.rowHeight
         clip: true
 
         MouseArea {
@@ -1342,25 +1412,31 @@ PanelWindow {
                         renderType: Text.NativeRendering
                     }
 
-                    Text {
-                        Layout.maximumWidth: fileList.width * 0.5
-                        text: fileRow.clean.slice(fileRow.cut + 1)
-                        elide: Text.ElideMiddle
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize + 2
-                        font.bold: true
-                        renderType: Text.NativeRendering
-                    }
-
-                    Text {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        text: fileRow.cut < 0 ? "~" : "~/" + fileRow.clean.slice(0, fileRow.cut)
-                        elide: Text.ElideLeft
-                        color: Theme.subtext1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize
-                        renderType: Text.NativeRendering
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 1
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: fileRow.clean.slice(fileRow.cut + 1)
+                            elide: Text.ElideMiddle
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize + 2
+                            font.bold: true
+                            renderType: Text.NativeRendering
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: fileRow.cut < 0 ? "~" : "~/" + fileRow.clean.slice(0, fileRow.cut)
+                            elide: Text.ElideLeft
+                            color: Theme.subtext1
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize - 1
+                            renderType: Text.NativeRendering
+                        }
                     }
                 }
 
@@ -1374,6 +1450,62 @@ PanelWindow {
                     onClicked: root.openFileAt(fileRow.index)
                 }
             }
+        }
+    }
+
+    // Preview of the selected file result (right of the list).
+    Rectangle {
+        id: previewPane
+
+        visible: fileList.visible
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: fileList.right
+        anchors.leftMargin: 40
+        width: Math.min(780, root.width - fileList.x - fileList.width - 40 - 24)
+        height: Math.round(root.height * 0.6)
+        radius: Theme.radius / 2
+        color: Theme.surface1
+        border.width: 1
+        border.color: Theme.surface2
+        clip: true
+
+        readonly property bool current: root.previewShown === root.selectedFilePath
+
+        Text {
+            visible: previewPane.current && (root.previewKind === "text")
+            anchors.fill: parent
+            anchors.margins: 10
+            textFormat: Text.RichText
+            text: root.previewBody
+            color: Theme.text
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSize + 2
+            renderType: Text.NativeRendering
+            clip: true
+        }
+
+        Text {
+            visible: previewPane.current && (root.previewKind === "dir" || root.previewKind === "info")
+            anchors.fill: parent
+            anchors.margins: 10
+            text: root.previewBody
+            wrapMode: root.previewKind === "info" ? Text.WordWrap : Text.NoWrap
+            color: root.previewKind === "dir" ? Theme.blue : Theme.subtext1
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSize + 2
+            renderType: Text.NativeRendering
+            clip: true
+        }
+
+        Image {
+            visible: previewPane.current && root.previewKind === "image"
+            anchors.fill: parent
+            anchors.margins: 8
+            source: visible ? "file://" + root.selectedFilePath : ""
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+            sourceSize.width: 1000
+            sourceSize.height: 1000
         }
     }
 
