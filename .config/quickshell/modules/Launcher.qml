@@ -537,7 +537,7 @@ PanelWindow {
         '    image/*) echo "#image";;',
         '    text/*|application/json|application/xml|application/javascript|inode/x-empty)',
         '      if [ "$sz" -gt 5000000 ]; then echo "#info"; file --brief -- "$p"; echo "Size: $sz bytes (too large to preview)"',
-        '      else echo "#text"; bat --color=always --theme=ansi --style=numbers --paging=never --wrap=never --line-range :120 -- "$p" 2>/dev/null || head -n 120 -- "$p"; fi;;',
+        '      else echo "#text"; { bat --color=always --theme=ansi --style=numbers --paging=never --wrap=never --line-range :120 -- "$p" 2>/dev/null || head -n 120 -- "$p"; } | head -c 60000; fi;;',
         '    *) echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; stat -c "Modified: %y" -- "$p";;',
         '  esac',
         'fi'
@@ -1480,6 +1480,7 @@ PanelWindow {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize + 2
+            wrapMode: Text.Wrap
             renderType: Text.NativeRendering
             clip: true
         }

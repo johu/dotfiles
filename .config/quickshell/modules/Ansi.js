@@ -36,7 +36,8 @@ function esc(s) {
 }
 
 function toHtml(input) {
-    var text = input.replace(/\x1b\[[0-9;?]*[A-Za-ln-z]/g, "");
+    // The trailing strip drops an escape sequence cut off by the size cap.
+    var text = input.replace(/\x1b\[[0-9;?]*[A-Za-ln-z]/g, "").replace(/\x1b\[?[0-9;]*$/, "");
     var out = [];
     var re = /\x1b\[([0-9;]*)m/g;
     var last = 0;
@@ -85,5 +86,5 @@ function toHtml(input) {
         }
     }
     emit(text.slice(last));
-    return "<pre style=\"margin:0\">" + out.join("") + "</pre>";
+    return '<div style="white-space:pre-wrap">' + out.join("") + "</div>";
 }
