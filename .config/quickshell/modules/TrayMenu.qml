@@ -164,6 +164,7 @@ PopupWindow {
                                 ResolvedIcon {
                                     visible: entryLoader.modelData.icon.length > 0
                                     iconSource: entryLoader.modelData.icon
+                                    searchAppIconDirs: true
                                     size: 16
                                 }
 

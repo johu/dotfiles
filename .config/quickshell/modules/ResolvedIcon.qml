@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 
@@ -17,6 +18,14 @@ Item {
 
     property string resolvedIconPath: ""
 
+    // Opt-in (off by default, so other callers are unchanged): when the theme
+    // can't resolve a plain icon name, look in app-private icon dirs
+    // (/usr/share/<app>/icons, e.g. quassel's connect-quassel). Used by
+    // tray menus, where dbusmenu icon names carry no IconThemePath.
+    property bool searchAppIconDirs: false
+    readonly property bool needsAppSearch: root.searchAppIconDirs && root.iconName.length > 0 && root.explicitPath.length === 0 && Quickshell.iconPath(root.iconName, true) === ""
+    property string appIconPath: ""
+
     implicitWidth: root.size
     implicitHeight: root.size
 
@@ -34,10 +43,18 @@ Item {
         }
     }
 
+    Process {
+        running: root.needsAppSearch
+        command: ["sh", "-c", "for d in /usr/share/*/icons /usr/local/share/*/icons; do [ -d \"$d\" ] && find \"$d\" \\( -name \"$1.svg\" -o -name \"$1.png\" \\); done | awk 'NR==1{f=$0} /dark/ && !d{d=$0} END{print d ? d : f}'", "sh", root.iconName]
+        stdout: StdioCollector {
+            onStreamFinished: root.appIconPath = this.text.trim()
+        }
+    }
+
     IconImage {
         anchors.centerIn: parent
         implicitSize: root.size
-        source: root.resolvedIconPath ? "file://" + root.resolvedIconPath : (root.explicitPath.length === 0 ? root.iconSource : "")
+        source: root.resolvedIconPath ? "file://" + root.resolvedIconPath : (root.appIconPath ? "file://" + root.appIconPath : (root.explicitPath.length === 0 && !root.needsAppSearch ? root.iconSource : ""))
         visible: source.toString().length > 0
     }
 }
