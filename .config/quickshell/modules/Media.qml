@@ -3,31 +3,22 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 
-// Bar pill: a live cava-style audio visualizer, replacing the old
-// icon+"Artist - Title" text pill entirely (see docs/ideas/media-player-popup.md).
-// Left-click: play/pause. Scroll: prev/next. Hover: MediaHoverPopup (cover
-// art + title/artist + playback progress, read-only).
+// Bar pill: a cava-style audio visualizer (see docs/ideas/media-player-popup.md).
+// Left-click: play/pause. Scroll: prev/next. Hover: MediaHoverPopup.
 Item {
     id: root
 
     property string lastActivePlayerId: ""
 
     readonly property var players: Mpris.players.values
-    // When multiple players are simultaneously playing, prefer whichever
-    // one most recently and deliberately started (lastActivePlayerId,
-    // updated in Bar.qml's Instantiator) over an arbitrary array-order
-    // pick — otherwise the control target can silently flip between
-    // sources on every click, pausing/skipping whichever one happens to
-    // win the tie-break instead of the one you actually meant to control.
+    // With several players playing, prefer the one that started most recently
+    // (lastActivePlayerId, set in Bar.qml) so the control target doesn't flip
+    // between sources on each click.
     readonly property var player: players.find(p => p.dbusName === root.lastActivePlayerId && p.playbackState !== MprisPlaybackState.Stopped) ?? players.find(p => p.isPlaying) ?? players[0] ?? null
 
-    // Spotify's MPRIS client occasionally emits a PropertiesChanged delta
-    // with an empty xesam:title around pause/resume, which Quickshell's
-    // MprisPlayer applies as-is, wiping the cached trackTitle until the
-    // next real update (often not until the next track change). Keep our
-    // own last-known-good title per player so that blank blip doesn't drop
-    // the title shown in MediaHoverPopup/MediaExpandCard; it only updates again
-    // once a genuinely new non-empty title arrives, or the player changes.
+    // Spotify's MPRIS occasionally sends an empty xesam:title around
+    // pause/resume, wiping trackTitle until the next track. Keep the last
+    // non-empty title per player instead.
     property string _lastGoodTitle: ""
     property string _lastGoodTitleKey: ""
 
@@ -51,15 +42,10 @@ Item {
         root._lastGoodTitle = root.rawTitle;
     }
 
-    // Firefox/Zen's MPRIS bridge has a related but different bug: switching
-    // videos via YouTube's SPA navigation (no full page reload) often never
-    // updates xesam:title/url at all, even though PlaybackStatus and
-    // Position correctly reflect the new video — confirmed against raw
-    // playerctl output, not a Quickshell or widget bug. The only reliable
-    // fingerprint we have is Position jumping backward (a new video
-    // starting) without xesam:url changing to match; flag that combination
-    // as unconfirmed and show the player's identity instead until the url
-    // eventually does change.
+    // Firefox/Zen's MPRIS bridge doesn't update xesam:title/url on YouTube SPA
+    // navigation. Position jumping backward without a url change is the only
+    // signal, so flag the title as unconfirmed and show the player name until
+    // the url changes.
     property real _lastPosition: 0
     property string _lastPlayerKey: ""
     property string _lastUrl: ""
@@ -78,12 +64,8 @@ Item {
             root.titleUnconfirmed = false;
             return;
         }
-        // Only trust this heuristic for players that actually report a
-        // url (browsers) - Spotify and most native players never populate
-        // xesam:url, so currentUrl stays "" permanently and every normal
-        // track change (position resets to ~0) would otherwise look like
-        // the Firefox/Zen stale-title bug and get stuck unconfirmed
-        // forever, since the only reset path is the url changing.
+        // Only for players that report a url (browsers). Others leave it empty, so
+        // every normal track change would look stale and never reset.
         if (root.currentUrl !== "" && root.currentPosition < root._lastPosition - 3 && root.currentUrl === root._lastUrl)
             root.titleUnconfirmed = true;
         root._lastPosition = root.currentPosition;
@@ -92,8 +74,7 @@ Item {
     readonly property bool titleKnown: root.player && !root.titleUnconfirmed && root.effectiveTitle
     readonly property string displayTitle: root.titleKnown ? root.effectiveTitle : ""
     readonly property string displayArtist: root.player ? (root.titleKnown ? root.player.trackArtist : "") : ""
-    // Fallback identity (player name) for when the title itself is
-    // unconfirmed/stale - same heuristic the old text pill used.
+    // Player name, shown when the title is unconfirmed.
     readonly property string displayFallback: root.player ? (root.player.trackArtist || root.player.identity) : ""
 
     readonly property int barCount: 26
@@ -112,8 +93,7 @@ Item {
         }
     }
 
-    // True while cava hears sound, even if the MPRIS player is paused
-    // (e.g. a Steam game playing while Spotify sits paused).
+    // True while cava hears sound, even with the MPRIS player paused.
     property bool audioActive: false
     Timer {
         id: silenceTimer
@@ -121,9 +101,8 @@ Item {
         onTriggered: root.audioActive = false
     }
 
-    // Only spawned while a player is actually active - otherwise it keeps
-    // a PipeWire capture stream open and burns CPU on FFT work for a bar
-    // element nobody can see (hidden by the Loader in Bar.qml).
+    // Only spawned while active: it holds a PipeWire capture stream open and
+    // burns CPU on FFT work.
     Process {
         id: cava
         running: root.player !== null
@@ -140,7 +119,7 @@ Item {
                     peak = Math.max(peak, n);
                     barModel.setProperty(i, "v", n);
                 }
-                // Audio from non-MPRIS sources (games, etc.) still counts as "active".
+                // Non-MPRIS audio (games, etc.) counts as active too.
                 if (peak > 0) {
                     root.audioActive = true;
                     silenceTimer.restart();
@@ -149,9 +128,8 @@ Item {
         }
     }
 
-    // Bars settle back to 0 rather than freezing mid-animation once cava
-    // stops (player went away) - otherwise the last frame's heights stick
-    // around on a pill that's about to be destroyed by the Loader.
+    // Settle bars to 0 instead of freezing the last frame on a pill the Loader
+    // is about to destroy.
     onPlayerChanged: if (!root.player) {
         for (let i = 0; i < barModel.count; i++)
             barModel.setProperty(i, "v", 0);

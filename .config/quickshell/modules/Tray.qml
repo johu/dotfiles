@@ -6,9 +6,8 @@ import Quickshell.Services.SystemTray
 RowLayout {
     spacing: 8
 
-    // An empty RowLayout is still a layout child of the bar Pill, so its
-    // spacing would add a phantom gap on the left of the pill whenever no
-    // app has registered a tray icon. Hidden layout children are skipped.
+    // An empty RowLayout still adds spacing as a layout child of the pill, a
+    // phantom gap with no tray icons; hide it.
     visible: SystemTray.items.values.length > 0
 
     TrayMenu {

@@ -22,11 +22,8 @@ Rectangle {
 
     readonly property string accent: notif.urgency === NotificationUrgency.Critical ? Theme.red : (notif.urgency === NotificationUrgency.Low ? Theme.subtext1 : Theme.blue)
 
-    // "default" is the freedesktop-spec reserved action id for "the
-    // action meant to fire when the notification itself is clicked" (not
-    // a dedicated button) - most daemons (dunst/mako/swaync) invoke it on
-    // body click rather than rendering it in the actions row. Mirror that
-    // instead of showing a redundant "View"-labelled button.
+    // "default" is the spec's action for clicking the notification itself;
+    // invoke it on body click like other daemons instead of showing a button.
     readonly property bool hasDefaultAction: root.notif.actions.some(a => a.identifier === "default")
     readonly property var visibleActions: root.notif.actions.filter(a => a.identifier !== "default")
 
@@ -52,21 +49,16 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        // leftMargin (gap before the icon's gutter) and spacing (gap
-        // after it, before the text column) are kept equal so the icon
-        // sits visually centered between the card border and the text -
-        // leftMargin only needs to clear the accent-color bar's right
-        // edge (anchors.margins: 8 + width: 3 = 11px).
+        // leftMargin and spacing are equal so the icon sits centered between the
+        // card border and the text; leftMargin only has to clear the accent bar
+        // (8 + 3 = 11px).
         anchors.leftMargin: 14
         anchors.rightMargin: 12
         spacing: 14
 
         Item {
-            // Fixed-width gutter wider than the icon itself, so the icon
-            // sits centered between the card's left border and the text
-            // column instead of hugging flush against the margin. Always
-            // reserved (not just when an icon is present) - lets the
-            // title/body line up at the same left edge across every card.
+            // Fixed-width gutter wider than the icon, always reserved so title and body
+            // share a left edge across cards.
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: 42
             Layout.preferredHeight: 36

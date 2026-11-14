@@ -3,11 +3,8 @@ import QtQuick.Layouts
 import Quickshell.Networking
 import Quickshell.Io
 
-// Detail content for NetworkRow.qml's expand section. Unlike
-// WeatherCard/SystemResourcesCard/AudioMixerCard, this has no Rectangle
-// background of its own - it sits directly on the dashboard's own card
-// color instead of introducing another nested surface tone (replaces the
-// standalone NetworkPanel popup, which had its own Theme.surface1 card).
+// Detail content for NetworkRow's expand section. No background of its own:
+// it sits on the dashboard card instead of nesting another surface tone.
 ColumnLayout {
     id: root
 
@@ -18,11 +15,8 @@ ColumnLayout {
     readonly property var sortedNetworks: wifiDevice ? [...wifiDevice.networks.values].sort((a, b) => (b.connected - a.connected) || (b.signalStrength - a.signalStrength)) : []
     readonly property var activeWifiNetwork: root.sortedNetworks.find(n => n.connected) ?? null
 
-    // Interface currently carrying traffic, if any - drives the
-    // connection-details block below. Quickshell.Networking's device API
-    // only exposes the MAC address (NetworkDevice.address); IPv4/IPv6/DNS
-    // aren't available natively, so those come from an on-demand `nmcli`
-    // call keyed on this.
+    // Interface carrying traffic. Quickshell.Networking only exposes the MAC,
+    // so IPv4/IPv6/DNS come from an on-demand nmcli call keyed on this.
     readonly property string activeIface: root.wiredDevice?.connected ? root.wiredDevice.name : (root.activeWifiNetwork ? root.wifiDevice?.name ?? "" : "")
 
     property string detailIp4Address: ""
@@ -34,10 +28,8 @@ ColumnLayout {
     property string detailMac: ""
     property bool detailsLoaded: false
 
-    // Live throughput of the active interface, from its sysfs byte
-    // counters (diffed between 1s ticks, only while this card is shown).
-    // Shows 0 KB/s until the second sample arrives, so the rows are
-    // always present instead of popping in after a tick.
+    // Throughput from sysfs byte counters, diffed each 1s tick while shown.
+    // Starts at 0 KB/s so the rows don't pop in later.
     readonly property string zeroRate: "0 KB/s"
     property string rateDown: zeroRate
     property string rateUp: zeroRate
@@ -117,9 +109,8 @@ ColumnLayout {
         command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,IP6.ADDRESS,IP6.GATEWAY,IP6.DNS,GENERAL.HWADDR", "device", "show", root.activeIface]
         stdout: StdioCollector {
             onStreamFinished: {
-                // nmcli -g escapes literal colons inside a field (so they
-                // aren't mistaken for the field separator) and joins
-                // multi-value fields (e.g. several IPv6 addresses) with " | ".
+                // nmcli -g escapes colons inside fields and joins multi-value fields
+                // with " | ".
                 const unescape = s => (s ?? "").replace(/\\:/g, ":");
                 const list = s => unescape(s).split(" | ").filter(v => v.length > 0).join(", ");
                 const lines = this.text.split("\n");
@@ -135,10 +126,8 @@ ColumnLayout {
         }
     }
 
-    // Secured, not-yet-known network the user just clicked - shows an
-    // inline password prompt under its row until it connects or is
-    // cancelled. Exposed as pskActive so NetworkRow/Dashboard can grant
-    // real keyboard focus only while a prompt actually needs it.
+    // Secured, unknown network just clicked: shows an inline password prompt.
+    // pskActive lets the dashboard grant keyboard focus only while needed.
     property var pskTarget: null
     property string pskText: ""
     property string pskError: ""
@@ -171,8 +160,7 @@ ColumnLayout {
         root.pskTarget.connectWithPsk(root.pskText);
     }
 
-    // Scanning only while this card is actually shown (reserved by
-    // NetworkRow's expand sequencing), to avoid idling the radio.
+    // Scan only while shown, to avoid idling the radio.
     onVisibleChanged: {
         if (root.wifiDevice)
             root.wifiDevice.scannerEnabled = root.visible;
@@ -313,9 +301,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: rowContent.implicitHeight
 
-                // Declared first so it sits below rowContent's own
-                // forget-icon MouseArea and only catches clicks
-                // elsewhere on the row.
+                // Declared first so it sits below the forget-icon MouseArea.
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
@@ -447,10 +433,7 @@ ColumnLayout {
                 id: pskRow
                 visible: root.pskTarget === modelData
                 Layout.fillWidth: true
-                // Matches the left indent (aligns under the network name,
-                // same as the error text below), mirrored on the right so
-                // the input+eye-toggle group is centered in the remaining
-                // space rather than drifting right from the lone eye icon.
+                // Mirrors the left indent so the input and eye toggle stay centered.
                 Layout.leftMargin: 28
                 Layout.rightMargin: 28
                 spacing: 6

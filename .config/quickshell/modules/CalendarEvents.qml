@@ -50,9 +50,8 @@ Singleton {
         return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
     }
 
-    // ICS URLs live in an untracked local file (not in the dotfiles repo) so
-    // the secret calendar URL never ends up in version control:
-    // { "icalUrls": ["https://calendar.google.com/calendar/ical/.../private-.../basic.ics"] }
+    // ICS URLs live in the untracked secrets.json to keep them out of version
+    // control: { "icalUrls": ["https://calendar.google.com/.../basic.ics"] }
     readonly property string secretsPath: Quickshell.shellPath("secrets.json")
 
     property var pendingUrls: []
@@ -151,9 +150,9 @@ Singleton {
         return results;
     }
 
-    // Best-effort: ignores timezone offsets and RRULE features beyond
-    // FREQ/UNTIL (no BYDAY/INTERVAL/COUNT/exceptions). Good enough for
-    // yearly holiday feeds and simple weekly/daily recurring events.
+    // Best-effort: ignores timezone offsets and RRULE beyond FREQ/UNTIL (no
+    // BYDAY/INTERVAL/COUNT/exceptions); fine for holiday feeds and simple
+    // recurrences.
     function parseIcsDate(value, rawKey) {
         const allDay = rawKey.indexOf("VALUE=DATE") >= 0 && rawKey.indexOf("VALUE=DATE-TIME") < 0;
         const m = value.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?/);

@@ -135,8 +135,6 @@ PanelWindow {
         openFn: () => root.open("shot")
     }
 
-    // --- window snapping ---------------------------------------------------
-
     function windowAt(x, y) {
         for (const w of root.windows) {
             if (x >= w.x && y >= w.y && x < w.x + w.w && y < w.y + w.h)
@@ -204,8 +202,6 @@ PanelWindow {
             }
         }
     }
-
-    // --- capture -----------------------------------------------------------
 
     property string pendingGeometry: ""
     property string pendingRegion: ""
@@ -369,7 +365,6 @@ PanelWindow {
             root.open();
     }
 
-    // Dashboard tile.
     Connections {
         target: DashboardBridge
         function onCaptureRequested(mode) {
@@ -456,8 +451,6 @@ PanelWindow {
             region();
         }
     }
-
-    // --- UI ----------------------------------------------------------------
 
     Item {
         id: keys
@@ -590,7 +583,6 @@ PanelWindow {
         }
     }
 
-    // Hint line.
     Rectangle {
         color: Theme.base
         border.color: Theme.surface2

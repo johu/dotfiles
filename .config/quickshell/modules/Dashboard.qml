@@ -6,24 +6,9 @@ import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 
-// Quick-settings dashboard, design variant C (compact popup). Rows are
-// thin wrappers around already-existing per-feature modules rather than
-// new state. system-resources.md (SystemResourcesRow) departs from the
-// design doc's deferred-"More"-divider sketch slightly: its CPU/RAM
-// summary is always visible, and clicking it expands in place to the
-// detailed card instead of sitting behind a separate generic toggle.
-//
-// Built on a full-screen transparent PanelWindow (same pattern as
-// Launcher.qml) rather than a PopupWindow. A PopupWindow is an xdg-popup,
-// whose live resize goes through a positioner recalculation that visibly
-// glitches on this compositor (footgun #11 below) - a PanelWindow is a
-// wlr-layer-shell surface with a size the client controls directly, so
-// the `card` Rectangle inside can freely grow/shrink (toggle grid rows,
-// the media row, future weather/audio-mixer cards, this file's own
-// SystemResourcesRow expand) with a real `Behavior on height` and no
-// resize-related flicker, confirmed against caelestia/shell's dashboard
-// (`references/shell/modules/dashboard/Content.qml`), which does the
-// same `Behavior on implicitHeight` for the same reason.
+// Quick-settings popup. A full-screen transparent PanelWindow instead of a
+// PopupWindow: xdg-popup resizing glitches here (footgun #11), while a
+// layer-shell surface can animate its height freely.
 PanelWindow {
     id: root
 
@@ -37,27 +22,11 @@ PanelWindow {
         right: true
     }
 
-    // A layer-shell surface anchored to all four edges still gets inset by
-    // other surfaces' exclusive zones by default - the bar's own
-    // `exclusiveZone: implicitHeight` (Bar.qml) pushed this window's local
-    // y=0 down to the real bar's bottom edge, so `card`'s `topMargin:
-    // Theme.barHeight + 8` below was adding the bar height a *second* time
-    // on top of that implicit inset (confirmed via pixel-measuring a
-    // screenshot: the card rendered at y~90, not the intended y~50).
-    // exclusionMode: Ignore opts this window out of that inset so it
-    // truly spans the full screen from y=0, matching what the topMargin
-    // math already assumes.
+    // Ignore the bar's exclusive zone, or topMargin gets added on top of it.
     exclusionMode: ExclusionMode.Ignore
 
-    // Only the network card's password prompt needs real keyboard input;
-    // granting it unconditionally would steal focus from other windows
-    // every time the dashboard is just being used for toggles/sliders.
-    // Pushed up imperatively from networkRow (see its onPskActiveChanged
-    // below) rather than bound directly to `networkRow.pskActive` here -
-    // a WlrLayershell attached-property binding referencing a not-yet-
-    // constructed nested id throws "ReferenceError: networkRow is not
-    // defined" at startup (confirmed in log.qslog), unlike ordinary Item
-    // properties which defer evaluation until the whole document exists.
+    // Only the password prompt needs keyboard focus. Set imperatively:
+    // binding to networkRow.pskActive throws a ReferenceError at startup.
     property bool networkPskActive: false
     WlrLayershell.keyboardFocus: root.networkPskActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
@@ -77,9 +46,7 @@ PanelWindow {
         }
     }
 
-    // NetworkIndicator.qml's bar glyph has no direct reference to this
-    // Dashboard instance (Settings.qml owns it), so it asks through this
-    // singleton instead of needing one.
+    // Lets NetworkIndicator reach the dashboard without a direct reference.
     Connections {
         target: DashboardBridge
         function onOpenNetworkRequested() {
@@ -94,10 +61,7 @@ PanelWindow {
         }
     }
 
-    // Reset on every reopen so expanded detail rows don't stay stuck open.
-    // Without this, any dashboard-close path other than the row's own
-    // summary click (outside click, workspace switch, power buttons)
-    // leaves it stranded open with no remaining way to dismiss it.
+    // Reset on reopen; other close paths would leave detail rows stuck open.
     onVisibleChanged: if (!root.visible) {
         weatherRow.expanded = false;
         audioRow.expanded = false;
@@ -107,9 +71,7 @@ PanelWindow {
         bluetoothRow.expanded = false;
     }
 
-    // Shared dismiss policy (one-at-a-time, close on workspace switch).
-    // focusGrab is off: the full-screen MouseArea below already swallows
-    // outside clicks.
+    // focusGrab is off: the full-screen MouseArea already swallows outside clicks.
     PopupBehavior {
         name: "dashboard"
         popup: root
@@ -117,32 +79,15 @@ PanelWindow {
         openFn: () => root.open()
     }
 
-    // On a machine running EasyEffects (or any filter-chain tool), the
-    // PipeWire "default sink" can be a virtual node (e.g. easyeffects_sink)
-    // whose own effect chain (compressor/limiter) can absorb volume
-    // changes before they ever reach real speakers. Real ALSA-backed
-    // hardware sinks are always named "alsa_output.*" by WirePlumber's ALSA
-    // monitor - virtual/filter sinks never are - so that prefix is a
-    // portable way to tell "is the default already real hardware" apart
-    // from "need to bypass to a real one", without hardcoding EasyEffects
-    // by name. On a machine with no such filter chain (e.g. a laptop),
-    // the default sink already starts with "alsa_output." and is used
-    // directly - no guessing needed.
-    // Confirmed via `pw-link -l`, not guessed from wpctl's sink listing
-    // order (that was the earlier mistake - the HDMI sink isn't actually
-    // wired to anything; EasyEffects' processed output really goes here).
+    // A virtual default sink (e.g. easyeffects_sink) can absorb volume changes,
+    // so target a real "alsa_output.*" sink.
     readonly property string preferredHardwareSinkName: "alsa_output.usb-JDS_Labs_JDS_Labs_UAC2_DAC__XU208_-00.iec958-stereo"
 
     readonly property var hardwareSink: {
         const def = Pipewire.defaultAudioSink;
         if (def && def.name && def.name.startsWith("alsa_output."))
             return def;
-        // Default sink looks virtual - this desktop has multiple real
-        // hardware outputs (HDMI, two digital, a USB mic), so picking
-        // "any" real ALSA sink could grab the wrong one; prefer the one
-        // actually wired to the monitor's speakers when present, and
-        // only fall back to "first real ALSA sink found" as a best-effort
-        // guess on an unknown machine.
+        // Prefer the sink wired to the monitor speakers, else the first real ALSA sink.
         return Pipewire.nodes.values.find(n => n.isSink && !n.isStream && n.name === root.preferredHardwareSinkName) ?? Pipewire.nodes.values.find(n => n.isSink && !n.isStream && n.name && n.name.startsWith("alsa_output.")) ?? def;
     }
     readonly property var sink: root.hardwareSink
@@ -161,10 +106,7 @@ PanelWindow {
         return "\uf026";
     }
 
-    // Logic-only instances (visible: false) backing the toggle tiles below
-    // - sourced for their public state/functions, not their own bar-sized
-    // text glyph, which the tiles replace with a uniform icon+label tile
-    // matching the dashboard design instead.
+    // Invisible instances, used only for their state and functions.
     NetworkIndicator {
         id: netLogic
         visible: false
@@ -205,8 +147,7 @@ PanelWindow {
         visible: false
     }
 
-    // Covers the whole screen - click anywhere outside the card to dismiss
-    // (same dismiss pattern as Launcher.qml's own full-screen MouseArea).
+    // Click outside the card to dismiss.
     MouseArea {
         anchors.fill: parent
         onClicked: root.visible = false
@@ -222,18 +163,8 @@ PanelWindow {
         color: Theme.surface1
         width: 418
         height: layout.implicitHeight + 24
-        // AudioMixerRow/SystemResourcesRow reserve their detail card's
-        // full height the instant `expanded` flips (only opacity fades in
-        // afterward, per their own comments - see SystemResourcesRow.qml's
-        // "Reserves layout space" note) and rely on *this* Rectangle's own
-        // height Behavior below to visually "reveal" that already-laid-out
-        // content as it grows. Without clip: true, the content isn't
-        // actually masked - it just overflows past the still-small
-        // boundary immediately, colliding with whatever row sits below it
-        // (confirmed: AudioMixerRow, not being the last row, looked like it
-        // "snapped" instead of animating, while SystemResourcesRow - last,
-        // so its overflow just extended past the bottom edge unnoticed -
-        // looked fine).
+        // Clip: detail cards reserve their full height at once, so without it they
+        // overflow while the height animates.
         clip: true
 
         Behavior on height {
@@ -243,8 +174,7 @@ PanelWindow {
             }
         }
 
-        // Consumes clicks on the card itself so they don't fall through to
-        // the full-screen dismiss MouseArea behind it.
+        // Swallow clicks so they don't reach the dismiss area behind.
         MouseArea {
             anchors.fill: parent
         }
@@ -269,9 +199,7 @@ PanelWindow {
                     accentColor: Theme.sky
                     active: !!netLogic.activeWifiNetwork || !!netLogic.wiredDevice?.connected
                     enabled: netLogic.present
-                    // Mutually exclusive with bluetoothRow below - opening
-                    // one collapses the other (with its own animation)
-                    // rather than having both expanded at once.
+                    // Opening one collapses the other.
                     onClicked: {
                         const opening = !networkRow.expanded;
                         networkRow.expanded = opening;
@@ -337,8 +265,7 @@ PanelWindow {
                     icon: "\uf111"
                     accentColor: Theme.red
                     active: Recorder.recording
-                    // Left click = region picker, right click = whole
-                    // screen; either stops a running recording.
+                    // Same, and either also stops a running recording.
                     onClicked: {
                         root.visible = false;
                         DashboardBridge.captureRequested("record-region");
@@ -364,30 +291,23 @@ PanelWindow {
                 command: ["wlogout"]
             }
 
-            // No summary row of its own - wifiTile above is the toggle,
-            // this is just its reveal, so it sits directly under the grid
-            // rather than down with the click-to-expand summary cards.
+            // Reveal for wifiTile; has no summary row of its own.
             NetworkRow {
                 id: networkRow
                 Layout.fillWidth: true
-                // Collapsed rows have zero height but would still
-                // take a 12px layout spacing slot each.
+                // Collapsed rows are zero-height but still take a spacing slot.
                 visible: reserved
                 onPskActiveChanged: root.networkPskActive = pskActive
             }
 
-            // No summary row of its own - bluetoothTile above is the
-            // toggle, this is just its reveal, same pattern as NetworkRow.
+            // Reveal for bluetoothTile.
             BluetoothRow {
                 id: bluetoothRow
                 Layout.fillWidth: true
                 visible: reserved
             }
 
-            // Always expanded (no click-to-expand like the cards further
-            // down) - media is high-priority persistent state, placed
-            // right after the toggle grid per the cross-project research
-            // in docs/ideas/media-player-popup.md, not buried mid-stack.
+            // Always expanded: media is persistent, high-priority state.
             Loader {
                 Layout.fillWidth: true
                 active: Mpris.players.values.length > 0
@@ -397,10 +317,7 @@ PanelWindow {
                 sourceComponent: Rectangle {
                     width: parent ? parent.width : 0
                     radius: Theme.radius
-                    // Matches AudioMixerRow's own card
-                    // background - plain Theme.surface2 collides with
-                    // MediaExpandCard's disabled prev/next icon color,
-                    // making them invisible against the card.
+                    // Plain surface2 hides MediaExpandCard's disabled prev/next icons.
                     color: Qt.lighter(Theme.surface1, 1.3)
                     implicitHeight: cardContent.implicitHeight + 24
 
@@ -424,12 +341,7 @@ PanelWindow {
                 onMoved: v => {
                     if (root.sink?.audio) {
                         root.sink.audio.volume = v;
-                        // Dragging all the way down is how a mute gesture
-                        // reads to a user - without this, 0% and muted
-                        // were two different states that looked identical
-                        // (icon already drew the same glyph for both) but
-                        // behaved differently for anything else reading
-                        // PwAudio.muted (media keys, other mixers).
+                        // Dragging to the bottom reads as mute; keep 0% and muted the same state.
                         root.sink.audio.muted = v === 0;
                     }
                 }
@@ -445,10 +357,7 @@ PanelWindow {
                 onMoved: v => brightLogic.setLocal(v)
             }
 
-            // Tighter spacing than the outer layout's 12px - these two
-            // rows read as one "monitoring" group, unlike the looser
-            // spacing between unrelated sections above (toggles, sliders,
-            // media, power buttons).
+            // Tighter spacing: these two rows read as one group.
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 6

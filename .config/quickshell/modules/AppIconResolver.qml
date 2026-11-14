@@ -3,19 +3,15 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Resolves a process binary name (e.g. "Discord", "firefox") to a
-// hicolor icon theme name by matching it against installed .desktop
-// files, for callers (AppVolumeRow.qml) that want an app's real icon
-// instead of whatever application.icon-name PipeWire happens to report -
-// several apps (notably Discord/Electron ones) don't set that property
-// at all. Memoized per binary name; lookups run one at a time through a
-// single Process, queued, since Quickshell.Io.Process has no per-call
-// invocation API.
+// Maps a process binary ("Discord", "firefox") to an icon theme name via
+// installed .desktop files, as many apps (Electron) set no PipeWire
+// icon-name. Memoized; lookups are queued through one Process, which has
+// no per-call invocation API.
 Singleton {
     id: root
 
-    // binary -> icon name. "" means looked up already, nothing found -
-    // still cached so callers don't repeat the Process round-trip.
+    // binary -> icon name. "" = looked up, nothing found (cached to skip a
+    // repeat round-trip).
     property var cache: ({})
     property var queue: []
 
@@ -42,10 +38,8 @@ Singleton {
         fi
     "
 
-    // Returns the cached icon name (possibly "") and kicks off a lookup
-    // if this binary hasn't been seen before. Reading `root.cache` here
-    // makes any binding that calls this re-evaluate once the lookup
-    // completes and `cache` is reassigned below.
+    // Cached icon name (possibly ""); starts a lookup for unseen binaries.
+    // Reading `cache` re-evaluates callers' bindings when it's reassigned.
     function iconNameForBinary(binary) {
         if (!binary)
             return "";
@@ -75,8 +69,7 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 const found = this.text.trim();
-                // Reassign (not mutate in place) so the `cache` property
-                // itself changes identity and notifies bindings.
+                // Reassign, not mutate, so `cache` changes identity and notifies bindings.
                 const next = Object.assign({}, root.cache);
                 next[lookupProc.binaryName] = found;
                 root.cache = next;

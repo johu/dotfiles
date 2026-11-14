@@ -20,15 +20,12 @@ PanelWindow {
         right: true
     }
 
-    // Ignore the bar's reserved exclusive zone so this surface (and the
-    // screencopy capture it blurs) covers the true full screen, not just
-    // the area below the bar — otherwise the capture's aspect ratio no
-    // longer matches the screen's and letterboxes at the edges.
+    // Ignore the bar's exclusive zone so the surface and its screencopy cover
+    // the full screen; otherwise the capture letterboxes.
     exclusionMode: ExclusionMode.Ignore
 
-    // Exclusive keyboard focus on the layer-shell surface (the same
-    // mechanism rofi uses) rather than PopupWindow's grabFocus, which
-    // dismisses almost immediately on Hyprland (see Calendar.qml).
+    // Exclusive keyboard focus, like rofi. PopupWindow's grabFocus dismisses
+    // almost immediately on Hyprland (see Calendar.qml).
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     readonly property int pillWidth: 460
@@ -43,16 +40,11 @@ PanelWindow {
     readonly property int inputFontSize: Theme.fontSize + 8
     readonly property int resultFontSize: Theme.fontSize + 4
     readonly property int focusedDescFontSize: Theme.fontSize + 1
-    // Fixed 2-line slot height so tiles with shorter names don't collapse
-    // upward and misalign icons against their row neighbors.
+    // Fixed 2-line height so short names don't misalign icons.
     readonly property int nameBlockHeight: Math.round(root.resultFontSize * 2.8)
-    // Derived so the margin above the icon exactly equals the margin
-    // below the (fixed-height) name block — not a magic number that could
-    // drift out of sync if nameBlockHeight's formula changes.
+    // Derived so the margin above the icon equals the one below the name.
     readonly property int tileHeight: root.tileContentMargin * 2 + root.tileIconSize + root.tileIconSpacing + root.nameBlockHeight
-    // Reserve a fixed-height slot for the focused-item description so
-    // neither it nor the results grid below it shift position as
-    // selection moves between apps with and without a comment/genericName.
+    // Fixed slot for the focused item's description so the grid doesn't shift.
     readonly property int focusedDescHeight: Math.round(root.focusedDescFontSize * 3.2)
 
     readonly property var selectedEntry: root.filtered[root.selectedIndex] ?? null
@@ -66,9 +58,9 @@ PanelWindow {
         return entries.slice().sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    // fzf-style subsequence scorer: rewards consecutive runs and matches
-    // starting right after a word boundary, penalizes scattered spans.
-    // Returns -1 when needle isn't a subsequence of haystack at all.
+    // fzf-style subsequence scorer: rewards consecutive runs and word-boundary
+    // starts, penalizes scattered spans. Returns -1 if needle isn't a
+    // subsequence.
     function fuzzyScore(needle, haystack) {
         if (!needle)
             return 0;
@@ -145,10 +137,8 @@ PanelWindow {
 
     function open() {
         root.query = "";
-        // searchInput.text isn't bound back to root.query (onTextChanged is
-        // one-way, input -> query), so it must be cleared separately or a
-        // query typed before an Escape-close lingers visibly on reopen
-        // while filtering silently shows no results.
+        // searchInput.text isn't bound to root.query, so clear it separately or a
+        // stale query lingers on reopen.
         searchInput.text = "";
         root.selectedIndex = 0;
         root.visible = true;
@@ -180,13 +170,8 @@ PanelWindow {
         }
     }
 
-    // DesktopEntry.execute() explicitly ignores runInTerminal (see
-    // quickshell's desktopentry.hpp), so a CLI app with Terminal=true in
-    // its .desktop file gets exec'd directly with no terminal attached —
-    // it launches detached and does nothing visible. Wrap those in the
-    // user's $TERMINAL (same convention Hyprland's env.lua/globals.lua
-    // already export it under) instead of hardcoding one, since it
-    // differs per machine.
+    // DesktopEntry.execute() ignores runInTerminal, so wrap Terminal=true apps
+    // in $TERMINAL (differs per machine).
     function launch(index) {
         const entry = root.filtered[index];
         if (!entry)
@@ -206,16 +191,9 @@ PanelWindow {
 
     onFilteredChanged: root.selectedIndex = 0
 
-    // Hyprland's native layer_rule blur doesn't render on this machine's
-    // experimental Lua-config engine (confirmed: layer_rule accepted with
-    // no error, decoration.blur.enabled true, but zero visible blur across
-    // static config, dynamic hyprctl eval, and varying ignore_alpha). Fake
-    // the blur instead via a one-shot screencopy + MultiEffect, same
-    // pattern as references/shell/modules/lock/LockSurface.qml. Captured
-    // fresh each time the launcher opens (Loader re-creates the
-    // ScreencopyView), so it's a snapshot frozen at open-time rather than
-    // a live blur — acceptable tradeoff for a launcher that owns exclusive
-    // keyboard focus anyway.
+    // Hyprland's layer_rule blur doesn't render on this Lua-config engine.
+    // Fake it with a one-shot screencopy + MultiEffect, a snapshot taken when
+    // the launcher opens.
     Item {
         id: blurredBackground
 
@@ -244,12 +222,8 @@ PanelWindow {
         onClicked: root.close()
     }
 
-    // Launcher.qml is pinned to a single screen (root.screen), so only
-    // that monitor ever gets a blurred backdrop above — the rest of the
-    // desktop stays untouched and visibly unblurred on other monitors.
-    // Give every other screen its own blur-only (no pill/results) window
-    // with the same screencopy+MultiEffect fake-blur, so the whole desktop
-    // reads as dimmed while the launcher is open.
+    // The launcher sits on one screen, so give every other screen a blur-only
+    // window to dim the whole desktop.
     Variants {
         model: Quickshell.screens.filter(s => s !== root.screen)
 
@@ -310,8 +284,7 @@ PanelWindow {
         border.width: 1
         border.color: Theme.surface2
 
-        // Swallow clicks so they don't fall through to the fullscreen
-        // dismiss MouseArea behind this pill.
+        // Swallow clicks so they don't reach the dismiss MouseArea behind.
         MouseArea {
             anchors.fill: parent
         }

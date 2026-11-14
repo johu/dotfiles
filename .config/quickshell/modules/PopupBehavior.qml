@@ -25,19 +25,13 @@ Item {
 
     visible: false
 
-    // The anchor window (the bar) is part of the grab so a click on a bar
-    // button is delivered to that button instead of being swallowed as
-    // the "outside click" that clears the grab - otherwise switching from
-    // one popup to another, or closing via its own trigger, takes two
-    // clicks.
+    // The anchor window (the bar) is in the grab so a click on a bar button
+    // reaches it instead of being swallowed as the outside click; otherwise
+    // switching popups takes two clicks.
     //
-    // `active` is NOT bound to popup.visible. Activating the grab in the
-    // same tick the popup becomes visible creates it before the popup's
-    // surface is mapped and committed, so the compositor does not count
-    // the popup as part of the grab: every click on the popup itself
-    // (e.g. a calendar day) is then treated as an outside click and
-    // clears the grab. Activate after a short delay instead (the old
-    // ClipboardPicker likewise set it imperatively after `visible = true`).
+    // `active` isn't bound to popup.visible: activating in the same tick
+    // creates the grab before the popup is mapped, so clicks on the popup count
+    // as outside and clear it. Activate after a short delay.
     HyprlandFocusGrab {
         id: grab
         windows: root.grabAnchor && root.popup.anchor && root.popup.anchor.window ? [root.popup, root.popup.anchor.window] : [root.popup]

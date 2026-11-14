@@ -1,10 +1,9 @@
 import QtQuick
 import Quickshell.Io
 
-// Logic-only: polls Anthropic's OAuth usage endpoint (the same one Claude
-// Code itself uses) for session (5h) / weekly (7d) rate-limit percentages.
-// No visual representation of its own - see AgentUsageCard.qml for that,
-// embedded in Dashboard.qml's expand section via AgentUsageRow.qml.
+// Logic-only: polls Anthropic's OAuth usage endpoint (as Claude Code does)
+// for session (5h) and weekly (7d) rate-limit percentages. UI is in
+// AgentUsageCard.qml.
 Item {
     id: root
 
@@ -18,12 +17,9 @@ Item {
     property real weeklyPercent: -1
     property string weeklyResetsAt: ""
 
-    // Reads the access token Claude Code itself keeps refreshed
-    // (CLAUDE_CONFIG_DIR, defaulting to ~/.claude) and asks Anthropic's
-    // usage endpoint directly - the same authoritative source the `claude`
-    // CLI's own /usage reports from. No local transcript parsing: that
-    // only yields token counts, not the rate-limit percentages this card
-    // shows.
+    // Reads the token Claude Code keeps refreshed (CLAUDE_CONFIG_DIR, default
+    // ~/.claude) and asks the usage endpoint directly; local transcripts only
+    // give token counts, not rate-limit percentages.
     readonly property string collectorScript: `
 import json, os, sys, time, urllib.request
 from pathlib import Path
@@ -40,9 +36,8 @@ def normalize_percent(value, percent_scale):
     return min(100.0, n * 100.0)
 
 env_cfg = os.environ.get("CLAUDE_CONFIG_DIR")
-# No env var set for a bar launched by systemd (it doesn't inherit a login
-# shell's env) - try both the override and its default, then the legacy
-# ~/.claude location, picking whichever one actually has credentials.
+# No login-shell env here: try the override, its default, then the
+# legacy ~/.claude, using whichever has credentials.
 candidates = [Path(env_cfg)] if env_cfg else []
 candidates += [Path.home() / ".config" / "claude", Path.home() / ".claude"]
 

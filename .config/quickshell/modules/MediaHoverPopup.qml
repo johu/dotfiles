@@ -2,11 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 
-// Hover tooltip for the bar's cava pill (Media.qml): cover art +
-// title/artist + a read-only playback progress bar, same information the
-// dashboard's MediaExpandCard shows. No transport controls, no seeking -
-// this is a glance, not a second control surface (that's what the
-// dashboard card is for).
+// Hover tooltip for the cava pill (Media.qml): cover art, title/artist and
+// a read-only progress bar. A glance, not a control surface (that's
+// MediaExpandCard).
 PopupWindow {
     id: root
 
@@ -45,9 +43,8 @@ PopupWindow {
     implicitWidth: card.implicitWidth + 2
     implicitHeight: card.implicitHeight + 2
 
-    // Position doesn't tick on its own between MPRIS position-changed
-    // events - poll it while the tooltip is open and playing so the
-    // progress bar actually moves, same workaround MediaExpandCard uses.
+    // Position doesn't tick between MPRIS events; poll while open and playing
+    // (as MediaExpandCard).
     Timer {
         running: root.visible && !!root.player && root.player.isPlaying
         interval: 500

@@ -20,13 +20,8 @@ Text {
         window: inhibitSurface
     }
 
-    // The idle-inhibit protocol requires a real mapped surface requesting
-    // the inhibition, not just a D-Bus-style call — this invisible panel
-    // exists solely to give IdleInhibitor something to attach to. A truly
-    // 0x0 layer surface apparently never actually gets mapped/committed at
-    // all (confirmed: Hyprland's log had zero "inhibit" lines, meaning the
-    // protocol object was never even registered, not just rejected) - 1x1
-    // is small enough to stay invisible while still being a real surface.
+    // IdleInhibitor needs a real mapped surface. A 0x0 layer surface never maps
+    // (Hyprland logged no "inhibit" lines), so use an invisible 1x1 panel.
     PanelWindow {
         id: inhibitSurface
         implicitWidth: 1

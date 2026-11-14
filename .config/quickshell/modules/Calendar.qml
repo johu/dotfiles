@@ -9,37 +9,29 @@ PopupWindow {
     property int monthOffset: 0
     property var selectedDate: new Date()
 
-    // anchor.item's edges/gravity/margins auto-positioning doesn't land
-    // correctly here, and a declarative mapFromItem binding errors at
-    // startup (item has no window yet). Compute the popup's exact
-    // top-left corner imperatively in open() instead, once the item is
-    // actually on screen — same pattern as the tray menu's position fix.
+    // anchor.item auto-positioning is off here and a mapFromItem binding
+    // errors at startup (no window yet), so compute the position imperatively
+    // in open(), like the tray menu.
     anchor.adjustment: PopupAdjustment.Slide
 
     function open(item) {
         const win = item.QsWindow;
         const pos = win.mapFromItem(item, item.width / 2, 0);
         root.anchor.window = win.window;
-        // Center on calendarCard's width, not the whole (fixed, wider-than-
-        // needed-for-just-the-grid) window, so the grid stays put under the
-        // clock regardless of whether the details panel is expanded.
+        // Center on calendarCard, not the wider fixed window, so the grid stays
+        // put when the details panel expands.
         root.anchor.rect.x = pos.x - calendarCard.implicitWidth / 2;
         root.anchor.rect.y = Theme.barHeight + 8;
         root.visible = true;
     }
 
-    // grabFocus auto-dismisses the popup on Hyprland far too eagerly
-    // (closes almost immediately after opening); toggle visibility via
-    // the clock's own click handler instead.
+    // grabFocus dismisses almost immediately on Hyprland; toggle via the
+    // clock's click handler instead.
     grabFocus: false
     color: "transparent"
 
-    // Fixed, generous size independent of the cards' actual content size.
-    // Driving the window's real implicit size from the details panel's
-    // animation made Hyprland's xdg-popup live-resize/reposition visibly
-    // shake (compositor support for reactive repositioning is incomplete).
-    // Keeping the window static and animating the cards inside it avoids
-    // that entirely.
+    // Fixed generous size: driving it from the details animation makes the
+    // xdg-popup shake on resize. Animate the cards inside instead.
     implicitWidth: 540
     implicitHeight: 336
 
@@ -55,14 +47,10 @@ PopupWindow {
         }
     }
 
-    // The window is deliberately larger than the visible cards (see the
-    // fixed implicitWidth/Height above). Clicks on its transparent
-    // remainder count as *inside* the popup's focus grab, so they would
-    // never dismiss it - catch them here and close explicitly. Declared
-    // before the cards so they sit above it and keep their own clicks.
-    // (An input `mask` Region was tried instead and broke clicks on the
-    // cards themselves: the compositor treated every click as outside the
-    // grab and dismissed the popup before the day cells saw it.)
+    // The window is larger than the cards, and clicks on its transparent part
+    // count as inside the focus grab, so they never dismiss. Catch them here,
+    // declared before the cards so those keep their own clicks. (An input
+    // mask broke clicks on the cards.)
     MouseArea {
         anchors.fill: parent
         onClicked: root.visible = false
@@ -135,9 +123,7 @@ PopupWindow {
                 Text {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    // MonthGrid.title ignores its own `locale` property and
-                    // always formats using the system locale, so build the
-                    // title ourselves instead to stay in English.
+                    // MonthGrid.title ignores `locale`; build the title to stay in English.
                     text: grid.locale.standaloneMonthName(grid.month, Locale.LongFormat) + " " + grid.year
                     color: Theme.text
                     font.family: Theme.fontFamily

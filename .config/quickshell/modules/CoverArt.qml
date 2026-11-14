@@ -1,10 +1,8 @@
 import QtQuick
 
-// Shared cover-art square for MediaHoverPopup/MediaExpandCard.
-// Not every player exposes mpris:artUrl as a file:// URI Image can load
-// directly (some are http:// covers needing a real fetch) - guard with
-// visible: artUrl !== "" and a fallback glyph instead of letting Image
-// silently fail to nothing.
+// Cover-art square shared by MediaHoverPopup/MediaExpandCard. artUrl may be
+// an http:// cover that Image can't load directly, so show a fallback
+// glyph when it's empty.
 Rectangle {
     id: root
 

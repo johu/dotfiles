@@ -5,9 +5,8 @@ import Quickshell.Io
 Item {
     id: root
 
-    // Hyprland.activeToplevel is only populated by the "activewindowv2" IPC
-    // event, which fires on the *next* focus change — it stays null on
-    // startup until then. Query it once ourselves to cover that gap.
+    // activeToplevel is only set by the next "activewindowv2" event, so query
+    // it once at startup.
     property string initialTitle: ""
 
     Process {
@@ -24,11 +23,9 @@ Item {
         }
     }
 
-    // Hyprland.activeToplevel is only ever updated by a *non-empty*
-    // "activewindowv2" IPC event; on a workspace with no windows it stays
-    // stuck pointing at the previously focused (now unfocused) window.
-    // Detect that staleness by cross-checking against focusedWorkspace,
-    // which is driven by reliable workspace/monitor events instead.
+    // activeToplevel only updates on non-empty events, so on an empty
+    // workspace it keeps the previous window. Detect that by cross-checking
+    // focusedWorkspace.
     readonly property var toplevel: Hyprland.activeToplevel
     readonly property var focusedWs: Hyprland.focusedWorkspace
     readonly property bool toplevelStale: toplevel !== null && focusedWs !== null && toplevel.workspace !== null && toplevel.workspace.id !== focusedWs.id
@@ -59,10 +56,8 @@ Item {
 
     readonly property alias text: label.text
 
-    // Text.implicitWidth reads 0 on first render when elide is set and no
-    // explicit width has been assigned yet. Measure separately via
-    // TextMetrics instead, with a small margin for the sub-pixel gap
-    // between its measurement and the Text item's actual glyph layout.
+    // Text.implicitWidth is 0 on first render with elide and no width; measure
+    // with TextMetrics plus a small margin for sub-pixel layout.
     implicitWidth: metrics.width + 4
     implicitHeight: label.implicitHeight
 

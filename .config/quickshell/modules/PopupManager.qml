@@ -47,7 +47,6 @@ Singleton {
             root.activeName = "";
     }
 
-    // Called by PopupBehavior when a popup becomes visible.
     function claim(name) {
         if (root.activeName !== "" && root.activeName !== name) {
             const prev = root.entries[root.activeName];
@@ -57,7 +56,6 @@ Singleton {
         root.activeName = name;
     }
 
-    // Called by PopupBehavior when a popup becomes hidden.
     function release(name) {
         if (root.activeName === name)
             root.activeName = "";
@@ -85,9 +83,8 @@ Singleton {
         }
     }
 
-    // Hyprland.focusedWorkspace is reassigned to a *new* object on every
-    // workspace switch, so track the id through a plain binding (see the
-    // note this replaced in Dashboard.qml).
+    // Hyprland.focusedWorkspace is a new object on every switch, so track the
+    // id through a plain binding.
     readonly property int focusedWorkspaceId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
     onFocusedWorkspaceIdChanged: root.closeAll()
 

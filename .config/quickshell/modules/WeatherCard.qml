@@ -1,12 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Card for Dashboard.qml's expanded detail view. Purely presentational -
-// reads straight from the WeatherData singleton, same as Calendar.qml
-// reading CalendarEvents directly (no logic-instance indirection needed).
-// Loosely modeled on Google's weather search card: big current reading +
-// precip/humidity/wind line, an hourly temperature trend, then a row of
-// day cards - condensed to fit the dashboard's ~300px width.
+// Detail card reading straight from the WeatherData singleton. Loosely
+// modeled on Google's weather card, condensed to the dashboard's ~300px.
 Rectangle {
     id: root
 
@@ -21,8 +17,6 @@ Rectangle {
         anchors.margins: 10
         spacing: 10
 
-        // Current conditions: big icon + temp, with precip/humidity/wind
-        // alongside it.
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
@@ -81,11 +75,8 @@ Rectangle {
             }
         }
 
-        // Hourly temperature trend - a simple filled sparkline (Canvas)
-        // with hour/temp labels underneath, roughly 3h apart. Not pixel-
-        // aligned to the canvas's own per-point x positions (RowLayout
-        // divides by count, Canvas divides by count-1) - an acceptable
-        // approximation at this widget's small scale.
+        // Filled sparkline with labels ~3h apart. Label spacing (RowLayout divides
+        // by count, Canvas by count-1) is only approximately aligned.
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 4
@@ -181,7 +172,6 @@ Rectangle {
             }
         }
 
-        // Daily forecast - today + next 3 days as compact cards.
         RowLayout {
             Layout.fillWidth: true
             spacing: 6

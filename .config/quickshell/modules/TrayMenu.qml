@@ -2,9 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 
-// Renders a tray item's context menu entirely in QML instead of invoking
-// the native Qt PlatformMenuEntry, whose icon resolution is pure C++ with
-// no QML hook to apply ResolvedIcon's icon-fix workaround.
+// Renders a tray item's menu in QML: the native PlatformMenuEntry resolves
+// icons in C++, so ResolvedIcon's workaround can't apply.
 PopupWindow {
     id: root
 
@@ -12,11 +11,9 @@ PopupWindow {
     property var stack: []
     readonly property var currentHandle: root.stack.length > 0 ? root.stack[root.stack.length - 1] : root.rootHandle
 
-    // Tracks which tray icon currently owns the open menu, so a second
-    // right-click on the same icon closes it via toggle(). open() always
-    // closes and reopens rather than just moving the anchor, since
-    // PopupWindow's anchor is only evaluated once when the window
-    // transitions to visible.
+    // Which tray icon owns the open menu, so a second right-click closes it.
+    // open() closes and reopens, as PopupWindow's anchor is only evaluated
+    // when it becomes visible.
     property var currentItem: null
     property var pendingHandle: null
 
@@ -48,7 +45,6 @@ PopupWindow {
         const pos = win.mapFromItem(item, 0, 0);
         root.anchor.window = win.window;
         root.anchor.rect.x = pos.x;
-        // Same gap below the bar as every other popup (see PopupManager).
         root.anchor.rect.y = Theme.barHeight + 8;
         root.rootHandle = handle;
         root.stack = [];

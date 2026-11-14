@@ -27,11 +27,8 @@ Text {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton) {
-                // The device list now lives in Dashboard.qml's expand row
-                // (BluetoothRow/BluetoothCard) - jump straight there.
-                // Pairing a brand-new device still needs blueman-manager
-                // (right-click), since Quickshell registers no BlueZ
-                // pairing agent - see docs/ideas/bluetooth.md.
+                // Opens the bluetooth row in the dashboard. Pairing a new device needs
+                // blueman-manager (right-click): no BlueZ agent, see docs/ideas/bluetooth.md.
                 DashboardBridge.openBluetoothRequested();
             } else {
                 manager.running = true;

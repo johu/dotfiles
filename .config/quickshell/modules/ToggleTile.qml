@@ -5,17 +5,14 @@ Rectangle {
     id: root
 
     property string icon: ""
-    // When set, rendered instead of `icon` as an image (e.g. a custom SVG
-    // asset for a glyph no nerd font provides cleanly) - see NightLight's
-    // "day" state. Empty string falls back to the `icon` glyph.
+    // Shown instead of `icon` when set (an SVG where no nerd font glyph works,
+    // e.g. NightLight's "day"). Empty falls back to the glyph.
     property string iconSource: ""
     property bool active: false
     property color accentColor: Theme.blue
 
-    // `enabled` is inherited from Item (default true) - false when the
-    // underlying service/hardware isn't available (e.g. bluez not
-    // running). Item.enabled already blocks input to descendants, so the
-    // MouseArea doesn't need its own guard; this just also dims the tile.
+    // `enabled` is false when the service/hardware is unavailable; Item.enabled
+    // already blocks input, this also dims the tile.
 
     signal clicked
     signal rightClicked

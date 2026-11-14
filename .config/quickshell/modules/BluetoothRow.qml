@@ -1,10 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Expand section for Dashboard.qml's bluetooth card - no summary row of
-// its own; Dashboard's bluetoothTile toggle (the grid icon) drives
-// `expanded` directly, so this is purely the animated reveal +
-// BluetoothCard content. Mirrors NetworkRow.qml.
+// Expand section of the bluetooth card. No summary row: Dashboard's
+// bluetoothTile drives `expanded`. Mirrors NetworkRow.qml.
 ColumnLayout {
     id: root
 
@@ -12,9 +10,7 @@ ColumnLayout {
 
     spacing: 0
 
-    // Same reserve-then-fade sequencing as WeatherRow.qml/NetworkRow.qml -
-    // see their comments for why this two-step (grow box, then fade
-    // content in) is needed instead of a plain opacity Behavior.
+    // Reserve-then-fade sequencing as in SystemResourcesRow.qml.
     property bool reserved: false
 
     onExpandedChanged: {

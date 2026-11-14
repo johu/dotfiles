@@ -2,9 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 
-// Card for Dashboard.qml's expanded detail view. Purely presentational -
-// backed by an invisible SystemResources {} logic instance owned by
-// Dashboard.qml (via SystemResourcesRow.qml).
+// Detail card; presentational, backed by the SystemResources {} instance
+// owned via SystemResourcesRow.qml.
 Rectangle {
     id: root
 
@@ -16,10 +15,8 @@ Rectangle {
     property string ramTotalStr: ""
     property string ramFreeStr: ""
     property int tempCelsius: -1
-    // ListModel from SystemResources.qml, one entry per local disk
-    // ({mount, used, total, percent}) - passed straight through by
-    // reference rather than copied, so in-place updates still avoid
-    // Repeater churn (see SystemResources.qml's own note on that).
+    // Disk ListModel from SystemResources.qml ({mount, used, total, percent}),
+    // passed by reference so in-place updates avoid Repeater churn.
     property var disks: null
 
     radius: Theme.radius
@@ -42,8 +39,7 @@ Rectangle {
         }
 
         ResourceRow {
-            // No nerd-font glyph renders reliably for RAM in this font -
-            // custom asset instead, same approach as NightLight's sun.svg.
+            // No nerd-font glyph renders reliably for RAM; use a custom asset.
             iconSource: Quickshell.shellPath("assets/icons/ram.svg")
             value: Math.round(root.ramPercent) + "%"
             tooltip: root.ramTotalStr.length > 0 ? root.ramUsedStr + " used\n" + root.ramTotalStr + " total\n" + root.ramFreeStr + " free" : ""

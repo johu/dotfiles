@@ -1,9 +1,8 @@
 import QtQuick
 import Quickshell.Io
 
-// Logic-only: polls CPU/RAM/temp/disk and exposes the values. No visual
-// representation of its own — see SystemResourcesCard.qml for that,
-// embedded in Dashboard.qml's expand section.
+// Logic-only: polls CPU/RAM/temp/disk (see SystemResourcesCard.qml for the
+// UI).
 Item {
     id: root
 
@@ -18,17 +17,13 @@ Item {
 
     property int tempCelsius: -1
 
-    // Root filesystem's percent, kept separately for SystemResourcesRow.qml's
-    // one-line summary (which can't show every disk) - everything else about
-    // disks lives in the `disks` model below.
+    // Root filesystem percent for the one-line summary; other disk data lives
+    // in `disks`.
     property real rootDiskPercent: 0
 
     // One ListModel entry per local disk ({mount, used, total, percent}).
-    // Updated in place (set/append/remove) rather than reassigned wholesale
-    // each poll - a fresh array/object literal gets a new identity every
-    // tick, which makes a Repeater destroy and recreate every delegate and
-    // flicker continuously while visible (see ResourceRow.qml's own note
-    // on the same footgun for the old single-disk row).
+    // Updated in place: a fresh array literal each poll recreates every
+    // Repeater delegate and flickers (see ResourceRow.qml).
     property alias disks: disksModel
     ListModel {
         id: disksModel
@@ -115,9 +110,8 @@ Item {
 
     Process {
         id: diskPoll
-        // Local block-device mounts only - tmpfs/devtmpfs/efivarfs (RAM-backed)
-        // and network filesystems (nfs/nfs4) aren't "disks" in the sense the
-        // dashboard cares about.
+        // Local block devices only; skip RAM-backed (tmpfs, devtmpfs, efivarfs)
+        // and network filesystems.
         command: ["sh", "-c", "df -h -x tmpfs -x devtmpfs -x efivarfs -x nfs -x nfs4 -x overlay -x squashfs --output=target,used,size,pcent | tail -n +2"]
         stdout: StdioCollector {
             onStreamFinished: {

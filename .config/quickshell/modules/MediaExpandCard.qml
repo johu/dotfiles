@@ -3,27 +3,15 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
 
-// Always-expanded dashboard media card (see docs/ideas/media-player-popup.md).
-// No collapsed state, no reserved/growDelay/fadeIn/fadeOut machinery
-// needed like AudioMixerRow/SystemResourcesRow/WeatherRow - just renders
-// whenever a player is active (the enclosing Loader in Dashboard.qml
-// gates that). Layout mirrors MediaHoverPopup.qml (large centered cover
-// art on top, title/artist/progress below) so the bar tooltip and
-// dashboard card read as the same feature. Transport controls use custom
-// SVG icons (assets/icons/media-*.svg) in a Spotify-style layout - a
-// large filled circular play/pause button flanked by plain prev/next
-// glyphs - instead of nerd-font Text icons.
+// Always-expanded dashboard media card (see docs/ideas/media-player-popup.md),
+// rendered whenever a player is active (gated by the Loader in Dashboard).
+// Layout mirrors MediaHoverPopup.qml; transport controls use custom SVGs
+// (assets/icons/media-*.svg).
 //
-// Resolves its own player directly instead of embedding a Media{} logic
-// instance (as netLogic/btLogic etc. do in Dashboard.qml) for two reasons:
-// a Media{} child inside a ColumnLayout participates in the layout itself
-// (Layout only excludes children via visible:false in some Qt versions,
-// not reliably - confirmed broken here), and Media.qml now always spawns
-// its own cava subprocess while a player is active, which would run a
-// second redundant cava process just to read text properties. Skips the
-// Spotify-blip/Firefox-stale-title guards Media.qml has for the compact
-// pill - a one-frame title blip is far less jarring in an already-visible
-// card than it was in the pill, same tradeoff MediaHoverPopup.qml makes.
+// Resolves its own player instead of embedding Media{}: a Media{} child in
+// a ColumnLayout takes part in the layout, and it would spawn a second
+// cava just to read text. Skips Media.qml's title guards; a one-frame blip
+// is less jarring in a visible card.
 ColumnLayout {
     id: root
 
@@ -45,8 +33,8 @@ ColumnLayout {
         return "-" + root.formatDuration(Math.max(0, length - position));
     }
 
-    // Same position-polling workaround as MediaHoverPopup.qml - position only
-    // notifies on nonlinear changes (seek/track change), not continuously.
+    // Position only notifies on seeks/track changes, so poll it (as
+    // MediaHoverPopup.qml).
     Timer {
         running: root.player !== null && root.player.isPlaying
         interval: 500

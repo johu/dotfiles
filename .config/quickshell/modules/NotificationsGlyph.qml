@@ -4,10 +4,8 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    // Fixed width instead of tracking bellText.implicitWidth - the bell
-    // and bell-slash glyphs have different natural widths, so a reactive
-    // implicitWidth here resized the whole Pill (and shifted every icon
-    // after it) on every DND toggle.
+    // Fixed width: the bell and bell-slash glyphs differ in width, and tracking
+    // implicitWidth resized the Pill on every DND toggle.
     implicitWidth: Theme.iconFontSize
     implicitHeight: Theme.moduleHeight
     Layout.preferredWidth: implicitWidth

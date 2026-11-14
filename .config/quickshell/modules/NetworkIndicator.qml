@@ -9,16 +9,11 @@ Text {
 
     readonly property var activeWifiNetwork: wifiDevice?.networks.values.find(n => n.connected) ?? null
 
-    // nf-fa-wifi (U+F1EB) renders as a single flat arc that doesn't read
-    // well at bar size. These are the Material Design Icons wifi-strength
-    // glyphs (Nerd Font's supplementary-plane MDI block, U+F0000-U+F1AF0 -
-    // confirmed via fc-query), the same codepoints `omarchy` uses for its
-    // bar pill, which actually render as tiered signal bars.
+    // nf-fa-wifi (U+F1EB) is a flat arc that reads poorly at bar size. Use the
+    // MDI wifi-strength glyphs (U+F0000+ block, as omarchy) for tiered bars.
     readonly property var wifiStrengthIcons: ["\u{f092f}", "\u{f091f}", "\u{f0922}", "\u{f0925}", "\u{f0928}"]
 
-    // signalStrength is a 0.0-1.0 fraction (see quickshell's
-    // src/network/wifi.hpp), not a percentage - callers that want a
-    // percent value must scale it themselves.
+    // signalStrength is a 0.0-1.0 fraction, not a percentage.
     function wifiIcon(strength) {
         const percent = strength * 100;
         const index = Math.max(0, Math.min(4, Math.ceil(percent / 20) - 1));
@@ -31,9 +26,8 @@ Text {
         if (activeWifiNetwork)
             return `${wifiIcon(activeWifiNetwork.signalStrength)} ${Math.round(activeWifiNetwork.signalStrength * 100)}%`;
         if (wiredDevice && wiredDevice.connected)
-            // nf-fa-plug (U+F1E6) reads as a power plug, not a LAN
-            // connection. This is the MDI "ethernet" glyph (an RJ45 port
-            // icon) that `omarchy` and `serpantinum` both use instead.
+            // nf-fa-plug reads as a power plug; use the MDI "ethernet" glyph (as
+            // omarchy and serpantinum).
             return "\u{f0200}";
         return "Not connected";
     }
@@ -51,9 +45,7 @@ Text {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton) {
-                // The network list now lives in Dashboard.qml's expand
-                // row (NetworkRow/NetworkCard) instead of a standalone
-                // popup - jump straight there.
+                // Opens the network row in the dashboard.
                 DashboardBridge.openNetworkRequested();
             } else {
                 Apps.runInTerminal(["nmtui"]);

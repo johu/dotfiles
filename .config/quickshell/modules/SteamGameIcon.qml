@@ -3,19 +3,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Resolves a PID to a Steam library icon file and the game's display
-// name, for games launched through Proton - their audio stream's binary
-// (e.g. "wine64-preloader", "D2R.exe") has no .desktop entry at all (see
-// AppIconResolver.qml, which only covers native-Linux installed apps). A
-// Proton game's actual process is several forks deep under Steam's own
-// `reaper` launcher, whose command line is the one place the Steam AppID
-// shows up (`SteamLaunch AppId=<id> -- ...`, confirmed via
-// /proc/<pid>/cmdline on a running Diablo II: Resurrected session) - walk
-// up the process tree looking for it, then read the matching 32x32 icon
-// Steam already cached locally for its own library UI, and the "name"
-// field out of that library's appmanifest_<id>.acf (the name isn't in
-// the icon cache or the AppId itself - the .acf is the one place a
-// human-readable title is sitting in plain text on disk).
+// Resolves a PID to a Steam library icon and game title for Proton games,
+// whose binary ("wine64-preloader", "D2R.exe") has no .desktop entry (see
+// AppIconResolver.qml). The AppID appears only in the command line of
+// Steam's `reaper` ancestor (`SteamLaunch AppId=<id> -- ...`), so walk up
+// the process tree, then read Steam's cached 32x32 icon and the title from
+// appmanifest_<id>.acf.
 Singleton {
     id: root
 
@@ -65,14 +58,13 @@ EOF
         done
     "
 
-    // Returns the cached icon path (possibly "") and kicks off a lookup
-    // if this pid hasn't been seen before - same lazy-memoized shape as
+    // Cached icon path (possibly ""); starts a lookup for unseen pids, as
     // AppIconResolver.iconNameForBinary.
     function iconPathForPid(pid) {
         return root.entryForPid(pid).icon;
     }
 
-    // Returns the cached game title (possibly "") for this pid.
+    // Cached game title (possibly "").
     function gameNameForPid(pid) {
         return root.entryForPid(pid).name;
     }

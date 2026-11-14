@@ -2,9 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 
-// Hover tooltip for Logo.qml's update badge: pending-update count and
-// time since the last eix-sync, or live emerge build progress when a
-// build is actually running (see PortageUpdates.qml).
+// Hover tooltip for Logo.qml's badge: pending updates and time since the
+// last sync, or live build progress (see PortageUpdates.qml).
 PopupWindow {
     id: root
 
@@ -52,8 +51,7 @@ PopupWindow {
     implicitWidth: card.implicitWidth + 2
     implicitHeight: card.implicitHeight + 2
 
-    // "Nm ago" needs to keep ticking while the tooltip is open, not just
-    // when lastSyncEpoch itself changes (which only happens once per sync).
+    // Keep "Nm ago" ticking while open; lastSyncEpoch only changes per sync.
     Timer {
         running: root.visible
         interval: 30000
@@ -116,8 +114,7 @@ PopupWindow {
             }
 
             Text {
-                // qlop -rp has no history to predict from the first time
-                // a given package is built - just omit the line then.
+                // qlop -rp has no history for a first-time build; omit the line.
                 visible: PortageUpdates.emergeRunning && PortageUpdates.emergeEtaSeconds > 0
                 Layout.alignment: Qt.AlignHCenter
                 text: root.formatEta(PortageUpdates.emergeEtaSeconds)

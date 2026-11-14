@@ -2,11 +2,9 @@ import QtQuick
 import Quickshell.Widgets
 import Quickshell.Io
 
-// Quickshell's built-in image://icon/ provider never reports a load
-// failure: on a missing icon it synthesizes a checkerboard placeholder
-// pixmap as a *valid* image, so Image.status stays Ready even when
-// nothing was actually found. Resolve icons ourselves via `find` instead,
-// and hide entirely when nothing matches.
+// image://icon/ never reports a load failure (a missing icon becomes a
+// valid checkerboard pixmap), so resolve icons with `find` and hide when
+// nothing matches.
 Item {
     id: root
 
@@ -22,12 +20,9 @@ Item {
     implicitWidth: root.size
     implicitHeight: root.size
 
-    // Only the explicit-path case (icon names qualified with a
-    // hicolor/<size>/status/ theme path, e.g. quassel) needs this
-    // workaround - Quickshell's provider fails to walk that layout.
-    // Plain icon names with no explicit path resolve fine through the
-    // native image://icon/ provider (QIcon::fromTheme), which correctly
-    // follows theme inheritance/symlinks that our own `find` would miss.
+    // Only explicit hicolor/<size>/status/ paths (e.g. quassel) need this;
+    // Quickshell's provider can't walk that layout. Plain names resolve via
+    // image://icon/, which follows theme inheritance that `find` misses.
     Process {
         running: root.explicitPath.length > 0
         command: ["find", root.explicitPath, "-iname", root.iconName + ".*"]

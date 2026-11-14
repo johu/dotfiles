@@ -1,9 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Expand section for Dashboard.qml's network card - no summary row of its
-// own; Dashboard's wifiTile toggle (the grid icon) drives `expanded`
-// directly, so this is purely the animated reveal + NetworkCard content.
+// Expand section of the network card. No summary row: Dashboard's wifiTile
+// drives `expanded`; this is the animated reveal of NetworkCard.
 ColumnLayout {
     id: root
 
@@ -12,10 +11,7 @@ ColumnLayout {
 
     spacing: 0
 
-    // Same reserve-then-fade sequencing as WeatherRow.qml/
-    // SystemResourcesRow.qml - see their comments for why this two-step
-    // (grow box, then fade content in) is needed instead of a plain
-    // opacity Behavior.
+    // Reserve-then-fade sequencing as in SystemResourcesRow.qml.
     property bool reserved: false
 
     onExpandedChanged: {

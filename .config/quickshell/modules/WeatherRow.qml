@@ -1,10 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Always-visible current-conditions summary for Dashboard.qml; click
-// toggles the detailed WeatherCard (today + next 3 days) below it. Reads
-// straight from the WeatherData singleton - no logic instance needed,
-// same as Calendar.qml reading CalendarEvents directly.
+// Current-conditions summary; click expands the WeatherCard. Reads the
+// WeatherData singleton directly.
 ColumnLayout {
     id: root
 
@@ -14,7 +12,6 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        // Matches the other dashboard card rows' background.
         color: Qt.lighter(Theme.surface1, 1.3)
         radius: Theme.radius
         implicitHeight: summaryRow.implicitHeight + 16
@@ -53,14 +50,9 @@ ColumnLayout {
                 }
 
                 Text {
-                    // Layout.fillWidth + elide here isn't just cosmetic
-                    // overflow handling - omitting it (confirmed via
-                    // bisection, not guessed) makes QtQuick.Layouts
-                    // mis-position the ICON column to this Text's left by
-                    // an extra, non-constant offset. Always pair a dynamic-
-                    // width subtitle Text in one of these summary rows with
-                    // both properties, matching AudioMixerRow/
-                    // SystemResourcesRow's established pattern.
+                    // Layout.fillWidth + elide is required, not cosmetic: without it,
+                    // QtQuick.Layouts mis-positions the icon column by a varying offset. Pair
+                    // them on dynamic-width subtitles (as AudioMixerRow/SystemResourcesRow).
                     Layout.fillWidth: true
                     text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
                     color: Theme.subtext1
@@ -80,9 +72,7 @@ ColumnLayout {
         }
     }
 
-    // Same reserve-then-fade sequencing as SystemResourcesRow.qml - see
-    // that file's comment for why this two-step (grow box, then fade
-    // content in) is needed instead of a plain opacity Behavior.
+    // Reserve-then-fade sequencing as in SystemResourcesRow.qml.
     property bool reserved: false
 
     onExpandedChanged: {

@@ -1,10 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Per-stream row for AudioMixerCard.qml: app icon (click to mute, hover
-// for its name) + draggable volume slider + percent. Not built on
-// SliderRow.qml since its icon is a font glyph, not an app icon image
-// (ResolvedIcon.qml).
+// Per-stream row for AudioMixerCard.qml: app icon (click to mute, hover for
+// name), volume slider and percent. Not built on SliderRow.qml, whose icon
+// is a font glyph.
 RowLayout {
     id: root
 
@@ -13,15 +12,9 @@ RowLayout {
     readonly property bool muted: root.node?.audio?.muted ?? false
     readonly property real volume: root.node?.audio?.volume ?? 0
 
-    // Not a `readonly property: root.node.properties?.[...]` binding -
-    // reading .properties inside a binding auto-subscribes it to that
-    // node's propertiesChanged, which for a voice-chat stream fires ~2x/sec
-    // (Discord flips its own pulse.corked on every voice-activity edge,
-    // confirmed via pw-dump) even though the *identity* fields never
-    // actually change after the stream is created. That churn was forcing
-    // this row's text/icon to re-layout constantly, including mid-fade
-    // during AudioMixerRow's expand/collapse animation. Compute once per
-    // node instead.
+    // Captured once per node, not a binding: reading .properties subscribes to
+    // propertiesChanged, which fires ~2x/sec for a voice stream (pulse.corked
+    // flips) and kept re-laying out the row, even mid-fade.
     property string appName: ""
     property string appBinary: ""
     property string pipewireIconName: ""
@@ -35,11 +28,8 @@ RowLayout {
             root.appPid = "";
             return;
         }
-        // application.process.binary (the actual executable) wins over
-        // application.name - some apps' webrtc/media engines set the latter
-        // to their own internal component name instead of the app (e.g.
-        // Discord's voice stream reports application.name "WEBRTC
-        // VoiceEngine" but application.process.binary "Discord").
+        // process.binary beats application.name: some apps set the latter to an
+        // internal component (Discord: "WEBRTC VoiceEngine").
         root.appBinary = root.node.properties?.["application.process.binary"] || "";
         root.appName = root.appBinary || root.node.properties?.["application.name"] || root.node.description || root.node.name;
         root.pipewireIconName = root.node.properties?.["application.icon-name"] ?? "";
@@ -49,27 +39,18 @@ RowLayout {
     onNodeChanged: root.captureIdentity()
     Component.onCompleted: root.captureIdentity()
 
-    // Binary-derived (.desktop file) icon wins over whatever PipeWire
-    // itself reports - several apps (Discord included) never set
-    // application.icon-name at all, so that fallback was blank far more
-    // often than it resolved. AppIconResolver.qml does the actual lookup.
-    // Some apps (Spotify, confirmed via pw-dump) don't set
-    // application.process.binary either - appName is still the display
-    // app name in that case (see captureIdentity above), and "Spotify"
-    // resolves to spotify.desktop just as well as a real binary name
-    // would, so it's a reasonable second key to try.
+    // A binary-derived .desktop icon beats PipeWire's: many apps never set
+    // application.icon-name. Some (Spotify) set no binary either, so appName is
+    // the second key to try.
     readonly property string lookupKey: root.appBinary || root.appName
     readonly property string appIconName: (root.lookupKey ? AppIconResolver.iconNameForBinary(root.lookupKey) : "") || root.pipewireIconName
 
-    // Proton games (wine64-preloader, <Game>.exe) have no .desktop entry
-    // to match at all - SteamGameIcon.qml walks the process tree for a
-    // Steam AppID instead and returns a real icon file path, which wins
-    // over both the theme-name lookups above when present.
+    // Proton games have no .desktop entry; SteamGameIcon.qml finds the Steam
+    // AppID via the process tree and returns an icon path, which wins.
     readonly property string steamIconPath: root.appPid ? SteamGameIcon.iconPathForPid(root.appPid) : ""
 
-    // Same walk resolves the game's actual title out of Steam's
-    // appmanifest ("Diablo II: Resurrected") - wins over appName's
-    // wine64-preloader/<Game>.exe binary name for the hover tooltip.
+    // The same walk resolves the game's title from Steam's appmanifest, which
+    // wins over the binary name in the tooltip.
     readonly property string steamGameName: root.appPid ? SteamGameIcon.gameNameForPid(root.appPid) : ""
     readonly property string displayName: root.steamGameName || root.appName
 
@@ -123,16 +104,11 @@ RowLayout {
             visible: iconHover.containsMouse
             anchors.bottom: iconArea.top
             anchors.bottomMargin: 4
-            // Left-aligned to the icon rather than centered - centering
-            // pushed longer names (e.g. "wine64-preloader") past the
-            // card's left edge, where they got clipped by Dashboard.qml's
-            // `card` Rectangle (clip: true). There's always room to grow
-            // right, never much room to grow left this close to the
-            // card's own left margin.
+            // Left-aligned to the icon: centering pushed long names past the card's
+            // left edge, where `card` clips them.
             anchors.left: iconArea.left
             radius: 6
-            // Lighter than the mixer card (Theme.surface2) it sits on top
-            // of, so the popover reads as elevated instead of blending in.
+            // Lighter than the mixer card so the popover reads as elevated.
             color: Qt.lighter(Theme.surface2, 1.4)
             implicitWidth: tooltipText.implicitWidth + 16
             implicitHeight: tooltipText.implicitHeight + 8

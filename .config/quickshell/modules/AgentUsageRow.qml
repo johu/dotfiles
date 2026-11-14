@@ -1,10 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Always-visible Claude Code usage summary for Dashboard.qml; click
-// toggles the detailed AgentUsageCard (session + weekly meters) below it.
-// Backed by an invisible AgentUsage {} logic instance owned by the caller.
-// Mirrors WeatherRow.qml's summary/expand/fade shape.
+// Claude Code usage summary; click expands the AgentUsageCard. Backed by
+// an invisible AgentUsage {} owned by the caller. Same shape as
+// WeatherRow.qml.
 ColumnLayout {
     id: root
 
@@ -34,7 +33,6 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        // Matches the other dashboard card rows' background.
         color: Qt.lighter(Theme.surface1, 1.3)
         radius: Theme.radius
         implicitHeight: summaryRow.implicitHeight + 16
@@ -71,12 +69,8 @@ ColumnLayout {
                 }
 
                 Text {
-                    // Layout.fillWidth + elide here isn't just cosmetic
-                    // overflow handling - omitting it mis-positions the
-                    // icon column to this Text's left by a non-constant
-                    // offset (footguns.md #19). Always pair a dynamic-
-                    // width subtitle Text in one of these summary rows
-                    // with both properties.
+                    // fillWidth + elide is required, not cosmetic: without it the icon column
+                    // is mis-positioned by a varying offset (footguns.md #19).
                     Layout.fillWidth: true
                     text: root.summaryText
                     color: Theme.subtext1
@@ -96,10 +90,7 @@ ColumnLayout {
         }
     }
 
-    // Same reserve-then-fade sequencing as SystemResourcesRow.qml/
-    // WeatherRow.qml - see either file's comment for why this two-step
-    // (grow box, then fade content in) is needed instead of a plain
-    // opacity Behavior.
+    // Reserve-then-fade sequencing as in SystemResourcesRow.qml.
     property bool reserved: false
 
     onExpandedChanged: {

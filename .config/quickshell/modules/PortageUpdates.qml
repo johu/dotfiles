@@ -3,27 +3,23 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Polls `emerge -pvuDN @world` on a long interval and exposes the
-// "Total: N packages" count from its summary line for Logo.qml's badge.
-// Skipped while game mode is active (see NightLight.qml's identical
-// ~/.cache/gamemode check) since the dependency resolution is too heavy
-// to run alongside a game.
+// Polls `emerge -pvuDN @world` on a long interval and exposes the "Total: N
+// packages" count for Logo.qml's badge. Skipped in game mode (see
+// NightLight.qml), as dependency resolution is too heavy.
 Singleton {
     id: root
 
     readonly property int pollInterval: 4 * 60 * 60 * 1000
     property int pendingCount: 0
     property bool gameModeActive: false
-    // Set when the pretend run can't produce a "Total: N packages" line
-    // at all - a blocked/masked dependency or a USE flag conflict, not
-    // just "zero updates". conflictSummary holds the first "!!!" line
-    // emerge printed, for the tooltip.
+    // Set when the pretend run yields no "Total" line (blocked/masked dep or
+    // USE conflict, not just zero updates). conflictSummary is the first "!!!"
+    // line, for the tooltip.
     property bool hasConflict: false
     property string conflictSummary: ""
 
-    // Live build state, refreshed every statusInterval regardless of
-    // gameModeActive (cheap: pgrep + a stat + an awk pass over emerge.log,
-    // not a dependency resolution).
+    // Live build state, polled every statusInterval (cheap: pgrep, a stat and
+    // an awk pass over emerge.log).
     readonly property int statusInterval: 5000
     property bool emergeRunning: false
     property int lastSyncEpoch: 0
@@ -31,40 +27,28 @@ Singleton {
     property int emergeTotal: 0
     property string emergeAtom: ""
     property int emergeEtaSeconds: 0
-    // Tracks emergeRunning's previous value to fire a one-off recheck the
-    // moment a build ends, instead of waiting up to pollInterval (4h) for
-    // the badge count to reflect the packages that just got merged.
+    // Fires a recheck when a build ends instead of waiting up to pollInterval
+    // (4h) for the badge to catch up.
     property bool wasEmergeRunning: false
-    // True once the current emerge process was seen merging packages
-    // (a "(N of M)" progress line). An `emerge --sync`/eix-sync process
-    // also counts as emergeRunning but never produces one, so this is
-    // what separates a real build from a sync for the done-notification.
+    // True once the current emerge was seen merging ("(N of M)" line). A sync
+    // also counts as emergeRunning but never merges, which tells them apart.
     property bool sawRealBuild: false
-    // Running emerge with no merge progress: a sync, or a real run still
-    // resolving/fetching before its first merge line.
+    // emerge running without merge progress: a sync, or a build still fetching.
     readonly property bool syncOrIdle: emergeRunning && emergeTotal === 0
 
-    // PORT_LOGDIR is configurable in /etc/portage/make.conf (set here to
-    // ~/.local/share/logs, not the distro default /var/log) - ask portage
-    // itself instead of hardcoding a path, resolved once at startup since
-    // it never changes at runtime.
+    // PORT_LOGDIR is set in make.conf (not the distro default); ask portage
+    // once at startup instead of hardcoding.
     property string emergeLogPath: ""
 
     readonly property string resolveLogPathScript: "portageq envvar PORT_LOGDIR 2>/dev/null || echo /var/log"
 
-    // pgrep -x emerge also matches checkProc's own `emerge -pvuDN @world`
-    // pretend-only check below (same process comm name), so a real build
-    // is anything left after excluding that exact invocation - otherwise
-    // the badge would flash "running" every statusInterval poll.
+    // pgrep -x emerge also matches our own pretend check, so exclude that exact
+    // invocation or the badge flashes "running" on every poll.
     //
-    // Progress is scoped to the *current* (still-open) emerge.log session:
-    // naively grepping the whole log for the latest "(N of M)" line finds
-    // stale progress from an already-terminated session (e.g. the last
-    // real build finished hours ago, then a later eix-sync session opened
-    // and closed with no merge lines of its own) - that showed a fake
-    // "Emerging" state in the tooltip even with nothing building. The awk
-    // state machine resets on each "Started emerge on:" and only keeps
-    // `prog` if that session hasn't hit a terminating marker yet.
+    // Progress is scoped to the current emerge.log session: the latest
+    // "(N of M)" in the whole log can be stale from a finished build and showed
+    // a fake "Emerging" state. The awk resets on each "Started emerge on:" and
+    // keeps `prog` only while the session is still open.
     readonly property string statusScript: "
         emerge_log=\"$1\"
         running=$(pgrep -x emerge -a 2>/dev/null | grep -v -- '-pvuDN @world' | grep -q . && echo 1 || echo 0)
@@ -135,9 +119,8 @@ Singleton {
 
     Process {
         id: checkProc
-        // Combine stderr into stdout: emerge reports blockers/USE-flag
-        // conflicts as "!!!" lines, and those need to be seen to tell a
-        // real conflict apart from a plain "0 updates" run.
+        // Merge stderr: blockers and USE conflicts print as "!!!" lines, needed to
+        // tell a conflict from "0 updates".
         command: ["sh", "-c", "emerge -pvuDN @world 2>&1"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -156,8 +139,7 @@ Singleton {
         }
     }
 
-    // Desktop notification (lands in NotificationHistory via our own
-    // notification server) when an emerge run ends.
+    // Desktop notification when an emerge run ends.
     Process {
         id: notifyDone
         command: ["notify-send", "-a", "Portage", "-i", Quickshell.shellPath("assets/gentoo-logo.svg"),
@@ -177,9 +159,8 @@ Singleton {
             onStreamFinished: {
                 const parts = this.text.split("\u001f");
                 root.emergeRunning = parts[0] === "1";
-                // The eix cache mtime moves when a sync finishes (eix-update
-                // runs last), so a bump over a known previous value means
-                // a sync completed. Skip the first poll (previous == 0).
+                // The eix cache mtime moves when a sync finishes (eix-update runs last).
+                // Skip the first poll (previous == 0).
                 const newSyncEpoch = parseInt(parts[1], 10) || 0;
                 if (root.lastSyncEpoch > 0 && newSyncEpoch > root.lastSyncEpoch)
                     notifySyncDone.running = true;
@@ -191,10 +172,8 @@ Singleton {
                 root.emergeCurrent = match ? parseInt(match[1], 10) : 0;
                 root.emergeTotal = match ? parseInt(match[2], 10) : 0;
                 root.emergeAtom = match ? match[3] : "";
-                // qlop -rp predicts from past merge history for this exact
-                // package - 0 (or absent) when it's never been built
-                // before, negative when the build already overran its own
-                // average; either way there's nothing sane to show.
+                // qlop -rp predicts from past merges: 0 or absent if never built, negative
+                // if already overrun; nothing sensible to show either way.
                 const etaSeconds = root.emergeRunning ? parseInt(parts[3], 10) || 0 : 0;
                 root.emergeEtaSeconds = etaSeconds > 0 ? etaSeconds : 0;
 

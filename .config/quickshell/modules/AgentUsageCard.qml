@@ -1,10 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Card for Dashboard.qml's expanded detail view. Purely presentational -
-// backed by an invisible AgentUsage {} logic instance owned by
-// Dashboard.qml (via AgentUsageRow.qml). Mirrors
-// SystemResourcesCard.qml's ResourceRow layout.
+// Detail card; presentational, backed by the AgentUsage {} instance owned
+// via AgentUsageRow.qml. Mirrors SystemResourcesCard.qml's layout.
 Rectangle {
     id: root
 

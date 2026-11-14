@@ -21,9 +21,8 @@ Text {
     font.bold: true
     verticalAlignment: Text.AlignVCenter
 
-    // Match the Pill's full height, not just the text's own glyph height,
-    // so the calendar popup (anchored to this item's bottom edge) clears
-    // the whole pill instead of overlapping it.
+    // Match the Pill's full height so the calendar popup, anchored to the
+    // bottom edge, clears the pill.
     Layout.preferredHeight: Theme.moduleHeight
 
     MouseArea {

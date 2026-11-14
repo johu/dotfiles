@@ -2,10 +2,9 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Single choke point for "which app opens X". Resolution is deferred to a
-// small sh wrapper at launch time (PATH checks need no synchronous Process
-// here, and the bar's environment - started from Hyprland autostart, not a
-// login shell - may lack $TERMINAL, hence the PATH-scan fallback).
+// Single choke point for "which app opens X". Resolved in an sh wrapper at
+// launch: PATH checks need no synchronous Process, and the bar (started
+// from Hyprland autostart) may lack $TERMINAL.
 QtObject {
     // $TERMINAL (word-split, first word must be on PATH), else the first
     // terminal found on PATH. gnome-terminal/kgx/ptyxis take "--" as the
@@ -27,7 +26,6 @@ QtObject {
         'exec $t $sep "$@"'
     ].join("\n")
 
-    // Full argv that runs `argv` inside the user's terminal.
     function terminalCommand(argv) {
         return ["sh", "-c", _terminalScript, "sh", ...argv];
     }

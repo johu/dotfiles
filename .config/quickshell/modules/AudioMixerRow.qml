@@ -1,10 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Always-visible per-app audio summary for Dashboard.qml; click toggles
-// the detailed AudioMixerCard (per-app volume sliders) below it. Backed
-// by an invisible AudioMixer {} logic instance owned by the caller.
-// Mirrors SystemResourcesRow.qml's summary/expand/fade shape.
+// Per-app audio summary; click expands the AudioMixerCard. Backed by an
+// invisible AudioMixer {} owned by the caller. Same shape as
+// SystemResourcesRow.qml.
 ColumnLayout {
     id: root
 
@@ -16,7 +15,6 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        // Matches the other dashboard card rows' background.
         color: Qt.lighter(Theme.surface1, 1.3)
         radius: Theme.radius
         implicitHeight: summaryRow.implicitHeight + 16
@@ -72,8 +70,7 @@ ColumnLayout {
         }
     }
 
-    // See SystemResourcesRow.qml for why expand/collapse is split into a
-    // grow-then-fade-in / fade-out-then-shrink sequence via `reserved`.
+    // Expand/collapse sequencing via `reserved`: see SystemResourcesRow.qml.
     property bool reserved: false
 
     onExpandedChanged: {
@@ -90,8 +87,8 @@ ColumnLayout {
 
     Timer {
         id: growDelay
-        // Matches Dashboard.qml's card height Behavior duration, so the
-        // box has finished growing before content starts fading in.
+        // Matches Dashboard's card height Behavior, so the box finishes growing
+        // before the content fades in.
         interval: 180
         onTriggered: fadeIn.restart()
     }

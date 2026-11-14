@@ -2,9 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Bluetooth
 
-// Detail content for BluetoothRow.qml's expand section. Mirrors
-// NetworkCard.qml - no Rectangle background of its own, sits directly on
-// the dashboard's own card color.
+// Detail content for BluetoothRow.qml. Like NetworkCard.qml, no background
+// of its own.
 ColumnLayout {
     id: root
 
@@ -12,9 +11,8 @@ ColumnLayout {
 
     readonly property var adapter: Bluetooth.defaultAdapter
 
-    // Already-known/paired devices only - pairing a brand-new device needs
-    // a BlueZ pairing agent (PIN/passkey confirmation) that Quickshell
-    // doesn't register (see docs/ideas/bluetooth.md). Connected devices
+    // Paired devices only: pairing a new one needs a BlueZ pairing agent that
+    // Quickshell doesn't register (see docs/ideas/bluetooth.md). Connected
     // first, then alphabetical.
     readonly property var pairedDevices: root.adapter ? [...root.adapter.devices.values].filter(d => d.paired).sort((a, b) => (b.connected - a.connected) || a.name.localeCompare(b.name)) : []
 

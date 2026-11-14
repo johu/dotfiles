@@ -4,18 +4,12 @@ import Quickshell.Io
 Item {
     id: root
 
-    // Backend is detected at runtime rather than hardcoded: laptops with
-    // a real backlight device use brightnessctl (direct kernel sysfs
-    // write, fast, no debounce needed); this desktop's external DP
-    // monitor has no backlight device, so it falls back to DDC/CI via
-    // ddcutil (VCP feature 0x10, 0-100 scale). See
+    // Backend detected at runtime: brightnessctl for a real backlight device
+    // (fast, no debounce), else DDC/CI via ddcutil (VCP 0x10, 0-100). See
     // docs/ideas/brightness-laptop-backend.md.
     //
-    // ddcutil calls take ~700ms each (I2C retry overhead), too slow to
-    // run once per wheel tick, so scroll adjustments are debounced: the
-    // local value and OSD update immediately for responsiveness, and the
-    // actual hardware write only fires once scrolling settles.
-    // brightnessctl needs no such debounce.
+    // ddcutil takes ~700ms per call, so scroll is debounced: value and OSD
+    // update at once, the hardware write waits for scrolling to settle.
     property real brightness: 1.0
     property bool dimmed: false
     property real priorBrightness: 1.0
@@ -78,11 +72,8 @@ Item {
         id: setProcess
     }
 
-    // No Quickshell IPC in this Quickshell version to push a change
-    // notification when the XF86MonBrightness keys or the monitor's own
-    // OSD adjust brightness outside this pill, so this pill polls to stay
-    // in sync. ddcutil is slow (~700ms/call), so it polls rarely;
-    // brightnessctl is a cheap sysfs read, so it can poll more often.
+    // Nothing pushes external changes (brightness keys, monitor OSD), so poll:
+    // rarely for slow ddcutil, more often for cheap sysfs reads.
     Timer {
         id: pollTimer
         interval: root.backend === "brightnessctl" ? 3000 : 15000

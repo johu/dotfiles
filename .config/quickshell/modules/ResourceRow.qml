@@ -1,27 +1,22 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Single icon+bar+value row for SystemResourcesCard.qml. Static explicit
-// instances (not a Repeater over an inline array literal) - an array
-// literal referencing polled properties gets a new identity on every poll
-// tick, which made the Repeater destroy and recreate every delegate each
-// time and flicker continuously while visible.
+// Icon+bar+value row for SystemResourcesCard.qml. Static instances, not a
+// Repeater over an array literal: that gets a new identity every poll and
+// recreates every delegate, flickering.
 //
-// Root is a plain Item (not a RowLayout) so a full-row MouseArea can sit
-// on top for the optional hover tooltip without becoming a layout child
-// itself and stealing a column slot.
+// Root is a plain Item so a full-row MouseArea (hover tooltip) isn't a
+// layout child stealing a column slot.
 Item {
     id: root
 
     property string icon: ""
-    // When set, rendered instead of `icon` as an image (e.g. a custom SVG
-    // asset for a glyph the font doesn't provide, like RAM) - same pattern
-    // as ToggleTile's iconSource. Empty string falls back to the `icon` glyph.
+    // Shown instead of `icon` when set (e.g. an SVG for RAM, which the font
+    // lacks). Empty falls back to the glyph.
     property string iconSource: ""
     property string value: ""
-    // Optional longer-form text shown in a hover tooltip above the row
-    // (e.g. disk's "213G / 437G") - keeps `value` itself short so the bar
-    // next to it can stay wide. Empty string disables the tooltip.
+    // Longer text for a hover tooltip (e.g. disk "213G / 437G"), keeping `value`
+    // short so the bar stays wide. Empty disables it.
     property string tooltip: ""
     property real percent: -1
     property color accentColor: Theme.text
@@ -36,11 +31,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 10
 
-        // Fixed-size slot the icon is centered inside, instead of relying
-        // on Layout.alignment against the Text/Image's own implicit size -
-        // same pattern as AppVolumeRow.qml's iconArea (that row's icons are
-        // correctly centered; this one wasn't, with icon glyphs and the
-        // thin bar landing at slightly different vertical centers).
+        // Fixed-size slot to center the icon; Layout.alignment on the implicit
+        // size left glyph and bar at slightly different vertical centers.
         Item {
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: 20
@@ -70,8 +62,7 @@ Item {
         }
 
         Rectangle {
-            // Matches SliderRow.qml's track exactly (height 8, radius 4) so
-            // these bars read as the same length/weight as the volume sliders.
+            // Matches SliderRow's track (height 8, radius 4).
             visible: root.percent >= 0
             Layout.fillWidth: true
             Layout.preferredWidth: 100
@@ -79,9 +70,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             height: 8
             radius: 4
-            // Theme.surface1, not surface2 like SliderRow's track - this
-            // card's own background is surface2, so surface2 here made the
-            // empty portion invisible against it.
+            // surface1, not surface2: the card itself is surface2, which hid the empty
+            // part.
             color: Theme.surface1
 
             Rectangle {
@@ -101,7 +91,6 @@ Item {
         }
 
         Text {
-            // Matches SliderRow.qml's value column width.
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: 36
             Layout.minimumWidth: 36
@@ -128,15 +117,11 @@ Item {
         z: 10
         anchors.bottom: parent.top
         anchors.bottomMargin: 4
-        // Left-aligned to the row rather than right - right-aligned grew the
-        // box leftward, which clipped long text (the CPU tooltip's model
-        // name) past the card's left edge. Same reasoning as AppVolumeRow's
-        // icon tooltip: there's always room to grow right, never much room
-        // to grow left this close to the card's own left margin.
+        // Left-aligned: right-aligned grew leftward and clipped long text (CPU
+        // model) past the card edge.
         anchors.left: parent.left
         radius: 6
-        // Lighter than the detail card (Theme.surface2) it sits on top of,
-        // so the popover reads as elevated instead of blending in.
+        // Lighter than the detail card so the popover reads as elevated.
         color: Qt.lighter(Theme.surface2, 1.4)
         implicitWidth: tooltipText.implicitWidth + 16
         implicitHeight: tooltipText.implicitHeight + 8

@@ -5,31 +5,24 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 
-// Native org.freedesktop.Notifications daemon, replacing swaync. Owns DND
-// state and notification history directly instead of polling an external
-// process (see docs/ideas/native-notifications.md).
+// Native notification daemon (replaces swaync); owns DND state and history.
+// See docs/ideas/native-notifications.md.
 Singleton {
     id: root
 
-    // Newest first. Each entry is a plain-data snapshot, not the live
-    // Notification object (which is destroyed once closed) - see
-    // liveById below for the object needed to invoke actions/dismiss
-    // while a notification is still tracked by the server.
+    // Newest first. Plain-data snapshots: the live Notification is destroyed on
+    // close (see liveById).
     property var notifications: []
     readonly property var popups: root.notifications.filter(n => n.popup)
     readonly property var history: root.notifications.filter(n => n.closed)
 
-    // New arrivals beyond this many simultaneously visible popups wait in
-    // a FIFO queue (promoteQueued()) instead of stacking the popup column
-    // past the bottom of the screen. Critical notifications bypass the cap
-    // entirely, same as they bypass DND/fullscreen suppression.
+    // Popups beyond this wait in a FIFO queue (promoteQueued()). Critical
+    // notifications bypass the cap.
     property int maxVisiblePopups: 3
 
     property bool dnd: false
-    // Set by setDndSilently() for the duration of its own assignment, so
-    // the Dashboard tile (which already shows the toggled state visually)
-    // doesn't also pop a redundant toast - the bar bell's right-click
-    // still assigns `dnd` directly and keeps the toast.
+    // Set while setDndSilently() assigns dnd, so the dashboard tile doesn't
+    // also toast.
     property bool suppressDndToast: false
     onDndChanged: {
         adapter.dnd = root.dnd;
@@ -49,7 +42,7 @@ Singleton {
     }
 
     // Debug: `qs ipc call notifmock set 5` fakes the unread badge count
-    // (`... set 12` shows "9+", `... set 0` clears it). DND hides the badge.
+    // (`set 12` shows "9+", `set 0` clears it). DND hides the badge.
     IpcHandler {
         target: "notifmock"
         function set(count: int): void {
@@ -83,20 +76,10 @@ Singleton {
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
 
-    // A spec-compliant app (bodyMarkupSupported) sends its body pre-escaped,
-    // using only a small set of real tags (we allow b/i/u, same whitelist
-    // swaync uses) - e.g. Discord already escapes literal '<'/'&' in
-    // message text, hyprshot wraps its path in <i>. Escaping the body
-    // again on our end would double-escape those and show literal
-    // "&lt;"/"&amp;" text. So: if the only angle brackets left after
-    // stripping our whitelisted tags are none, and every '&' starts a
-    // real entity, trust the body as already-safe markup. Otherwise an
-    // app sent raw unescaped text (a bare '<'/'&' that would break
-    // Text.StyledText parsing) and we fall back to escaping everything,
-    // then restoring just the whitelist - same defensive two-path
-    // strategy swaync's set_body() uses (try raw parse, escape+whitelist
-    // on failure), just decided up front since QML gives no parse-error
-    // signal to catch.
+    // Spec-compliant apps send an already-escaped body with only b/i/u tags;
+    // escaping again would show literal "&lt;". Trust the body if no stray '<'
+    // remains and every '&' starts an entity. Otherwise escape everything and
+    // restore the whitelist.
     function looksLikeSafeMarkup(body) {
         const stripped = body.replace(/<\/?(?:b|i|u)>/gi, "");
         if (/</.test(stripped))
@@ -106,8 +89,7 @@ Singleton {
         return true;
     }
 
-    // Bare URLs get wrapped in an <a href> so the StyledText body in
-    // NotificationCard/NotificationHistory can render and open them.
+    // Wrap bare URLs in <a href> so StyledText can render and open them.
     function linkify(body) {
         if (!body)
             return "";
@@ -124,29 +106,16 @@ Singleton {
         return /\.(png|jpe?g|gif|webp|bmp)$/i.test(path || "");
     }
 
-    // hyprshot (and anything else using notify-send -i <path>) passes a
-    // path relative to $HOME, not the shell's cwd - QPixmap(path), which
-    // Quickshell's image providers fall back to, resolves relative paths
-    // against the process's own cwd and silently fails to load it.
+    // notify-send -i paths are relative to $HOME, but Quickshell resolves them
+    // against the cwd and fails to load them.
     function resolveImagePath(path) {
         return path.startsWith("/") ? path : root.homeDir + "/" + path;
     }
 
-    // notify-send -i accepts an arbitrary file path, not just a themed icon
-    // name - hyprshot uses it to pass the screenshot it just took. Treat an
-    // appIcon that looks like a path to an image file as a preview image
-    // rather than just a small status icon. Quickshell itself also mirrors
-    // a path-like appIcon into `image` as "image://icon/<path>" - that
-    // carries the same unresolved-relative-path problem, so unwrap it too.
-    // Only ever resolves to a file:// path, never a provider URL
-    // (image://qsimage/..., image://icon/<theme-name>) - those back onto
-    // the live Notification object's own pixel buffer/theme lookup and
-    // silently fail to decode once the notification closes and only this
-    // persisted snapshot remains, leaving a blank reserved-height gap
-    // where the preview Rectangle sits. A real screenshot on disk doesn't
-    // have that problem, so only file-path-looking sources get the big
-    // preview; everything else still gets the small header icon via
-    // ResolvedIcon.
+    // A path-like appIcon (e.g. hyprshot's screenshot) becomes the big preview.
+    // Quickshell mirrors it into `image` as image://icon/<path>, so unwrap
+    // that too. Provider URLs die with the live notification, so only file://
+    // paths qualify.
     function previewImageFor(notif) {
         if (root.isImagePath(notif.appIcon))
             return "file://" + root.resolveImagePath(notif.appIcon);
@@ -156,33 +125,19 @@ Singleton {
         return "";
     }
 
-    // The small header/list icon. appIcon (the real app_icon D-Bus
-    // parameter) is the normal case - Discord sets it to "discord", etc.
-    // But notify-send's own -i/--icon flag populates the "icon" hint
-    // instead (landing in `image`, not `appIcon`) - hyprshot and this
-    // Firefox download example both go through that path, so without this
-    // fallback they'd show no icon at all. A themed-icon-name `image` is
-    // safe to keep indefinitely (icon-theme lookups don't go stale), but
-    // skip image://qsimage/... - like previewImageFor, that's the live
-    // notification's own embedded pixel buffer and won't resolve once the
-    // notification closes into history.
+    // Small header icon. notify-send -i fills `image` instead of appIcon, so
+    // fall back to it. Skip image://qsimage/..., which doesn't outlive the
+    // live notification.
     function iconSourceFor(notif) {
-        // A cached-to-disk avatar (see cacheLiveImage()) takes priority
-        // over the generic app icon - e.g. Discord's per-sender avatar
-        // over the generic Discord logo.
+        // A cached avatar wins over the generic app icon.
         if (notif.cachedImage)
             return notif.cachedImage;
         if (notif.appIcon)
             return "image://icon/" + notif.appIcon;
         if (!notif.image || notif.image.startsWith("image://qsimage/"))
             return "";
-        // A path-like `image` value (e.g. hyprshot's screenshot path, via
-        // notify-send -i) is already shown as the big preview image via
-        // previewImageFor() - showing it again as a tiny icon just renders
-        // Quickshell's checkerboard "missing icon" placeholder, since
-        // image://icon/ never reports a load failure for an unresolved
-        // relative path (it only works for real file:// URIs or themed
-        // icon names). Skip the icon entirely in that case.
+        // A path-like `image` is already the big preview; as an icon it would
+        // render a missing-icon checkerboard.
         const wrapped = notif.image.match(/^image:\/\/icon\/(.+)$/);
         if (wrapped && root.isImagePath(wrapped[1]))
             return "";
@@ -216,13 +171,8 @@ Singleton {
         };
     }
 
-    // image://qsimage/<id>/<generation> is Quickshell's own live pixmap
-    // buffer for an embedded notification image (app_icon/icon_data hints,
-    // e.g. Discord's per-message avatar) - it dies with the Notification
-    // object once closed. Rasterize it to a real file now, while it's
-    // still alive, so the avatar survives into history/restarts instead of
-    // going blank (iconSourceFor/previewImageFor otherwise refuse to use
-    // it at all, for exactly that reason).
+    // image://qsimage/... dies with the live Notification. Rasterize it to a
+    // file while alive so avatars survive into history.
     function cacheLiveImage(key, source) {
         imageCache.cache(key, source, root.imageCacheDir, path => {
             if (path)
@@ -275,9 +225,8 @@ Singleton {
         entry.durationMs = root.expiryMsFor(notif);
 
         if (suppressed) {
-            // Not shown, but still counts down toward history on its own -
-            // the cap/queue below only applies to notifications that would
-            // otherwise be visible right now.
+            // Hidden, but still counts down to history; the cap/queue only applies to
+            // visible popups.
             entry.expiresAt = entry.durationMs > 0 ? Date.now() + entry.durationMs : 0;
         } else if (!critical && visibleCount >= root.maxVisiblePopups) {
             entry.queued = true;
@@ -306,8 +255,7 @@ Singleton {
         root.promoteQueued();
     }
 
-    // Promotes the oldest still-queued notification into a visible popup
-    // slot once one frees up (called after any popup closes).
+    // Promote the oldest queued notification when a popup slot frees up.
     function promoteQueued() {
         const visible = root.notifications.filter(n => n.popup).length;
         if (visible >= root.maxVisiblePopups)

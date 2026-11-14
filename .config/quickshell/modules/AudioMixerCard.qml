@@ -1,9 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Card for Dashboard.qml's expanded detail view. Purely presentational -
-// backed by an invisible AudioMixer {} logic instance owned by
-// Dashboard.qml (via AudioMixerRow.qml).
+// Detail card for the mixer; presentational, backed by the AudioMixer {}
+// instance owned via AudioMixerRow.qml.
 Rectangle {
     id: root
 
@@ -11,12 +10,8 @@ Rectangle {
 
     radius: Theme.radius
     color: Theme.surface2
-    // Layout.fillWidth (set by the caller, AudioMixerRow.qml) is what's
-    // supposed to stretch this to the full card width - but with few or
-    // no streams playing, rows.implicitWidth is small, and relying on
-    // fillWidth alone to override it was observed coming out narrower
-    // than WeatherCard/SystemResourcesCard's own equivalents. Floor it at
-    // the parent column's width directly instead of trusting that.
+    // Floor at the parent column's width: with few streams, fillWidth alone
+    // came out narrower than the other cards.
     implicitWidth: Math.max(rows.implicitWidth + 24, root.parent ? root.parent.width : 0)
     implicitHeight: rows.implicitHeight + 20
 

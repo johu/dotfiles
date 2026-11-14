@@ -13,9 +13,8 @@ PopupWindow {
     implicitWidth: 400
     implicitHeight: 440
 
-    // Date.now()-based relative-time text doesn't re-evaluate on its own -
-    // this tick forces the bindings below to recompute while the popup
-    // is open. Only runs while visible, so it's free the rest of the time.
+    // Date.now()-based text doesn't re-evaluate on its own; this tick
+    // refreshes it while open.
     property int clockTick: 0
 
     Timer {
@@ -25,12 +24,8 @@ PopupWindow {
         onTriggered: root.clockTick++
     }
 
-    // A single noisy app (Discord sent 55 notifications in one capture
-    // window vs. single digits for everything else) would otherwise bury
-    // every other app's notifications in a flat list - collapse runs of
-    // consecutive same-app entries beyond the preview count into a single
-    // "+N more" row, expandable per-group. Matches the grouping pattern
-    // Caelestia/noctalia/serpantinum all use for the same problem.
+    // Collapse runs of same-app entries beyond the preview count into an
+    // expandable "+N more" row, so one noisy app doesn't bury the rest.
     property int groupPreviewNum: 3
     property var expandedGroups: ({})
 
@@ -136,18 +131,11 @@ PopupWindow {
                 }
 
                 delegate: Rectangle {
-                    // Explicit height (not just implicitHeight) and a
-                    // top anchor on the content below, not verticalCenter -
-                    // a ListView delegate with dynamic (wrap-driven)
-                    // content height settles its real size a layout pass
-                    // after first paint, and centering content in a
-                    // not-yet-settled 0-height Rectangle clipped the first
-                    // row's text in half until the second pass caught up.
+                    // Explicit height and top anchor, not verticalCenter: the delegate's
+                    // wrapped content settles a layout pass late, and centering in the
+                    // 0-height rect clipped the first row.
                     //
-                    // Delegate width follows the ListView's rightMargin (not
-                    // the raw view width) so the card doesn't extend under
-                    // the scrollbar track - without this the scrollbar sat
-                    // flush against (overlapping) the card's right edge.
+                    // Width follows the ListView's rightMargin to stay clear of the scrollbar.
                     width: ListView.view.width - list.rightMargin
                     height: (modelData.type === "group" ? groupRow.implicitHeight : entryRow.implicitHeight) + 20
                     radius: Theme.radius / 2
@@ -207,15 +195,8 @@ PopupWindow {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        // Delegates are the same fill color as the card
-                        // itself (no visible border between them), so the
-                        // outer ColumnLayout's own 12px margin (shared
-                        // with the title/Clear-all rows) reads as part of
-                        // the same visible gap before the icon - stacking
-                        // a full 10px margin here on top of that made the
-                        // card-edge-to-icon gap roughly double the
-                        // icon-to-text gap. Drop the left margin to 0 here
-                        // so the visible padding ends up close to even.
+                        // Zero left margin: the outer layout's 12px margin already pads the icon,
+                        // and another 10px doubled the gap.
                         anchors.topMargin: 10
                         anchors.rightMargin: 10
                         anchors.bottomMargin: 10
@@ -223,8 +204,7 @@ PopupWindow {
                         spacing: 8
 
                         Item {
-                            // Fixed-width gutter wider than the icon - see
-                            // NotificationCard.qml for why.
+                            // Fixed-width gutter wider than the icon; see NotificationCard.qml.
                             Layout.alignment: Qt.AlignVCenter
                             Layout.preferredWidth: 34
                             Layout.preferredHeight: 28
@@ -346,11 +326,8 @@ PopupWindow {
             }
 
             Item {
-                // A plain Item (not layout-managed) wraps the row + click
-                // target, so the MouseArea's anchors.fill is safe - giving
-                // anchors to a RowLayout's own direct child conflicts with
-                // the layout positioning it (Qt warns "Detected anchors
-                // on an item that is managed by a layout").
+                // Plain Item wrapper: anchoring a child of a RowLayout conflicts with
+                // the layout.
                 visible: Notifications.history.length > 0
                 Layout.alignment: Qt.AlignHCenter
                 implicitWidth: clearRow.implicitWidth

@@ -6,8 +6,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Location lives in the same untracked secrets.json as icalUrls - not
-    // strictly a secret, but keeps all user-specific config in one place:
+    // Location is read from the untracked secrets.json (not a secret, but keeps
+    // user config in one place):
     // { "weatherLocation": { "lat": 53.0793, "lon": 8.8017 } }
     readonly property string secretsPath: Quickshell.shellPath("secrets.json")
 
@@ -75,10 +75,8 @@ Singleton {
                     root.currentHumidity = Math.round(data.current.relative_humidity_2m);
                     root.currentWindSpeed = Math.round(data.current.wind_speed_10m);
 
-                    // Hourly arrays are only ever on the hour, while
-                    // current.time carries minutes - round to the nearest
-                    // hour (not just floor) so the trend's start lines up
-                    // with whichever hourly reading is actually closest.
+                    // Hourly data is on the hour but current.time has minutes; round (not
+                    // floor) so the trend starts at the closest reading.
                     const hourKey = iso => iso.slice(0, 13);
                     const curDate = new Date(data.current.time);
                     curDate.setMinutes(curDate.getMinutes() + 30, 0, 0);
@@ -123,10 +121,8 @@ Singleton {
         }
     }
 
-    // Hand-drawn flat SVGs in the tokyonight palette (own assets dir,
-    // tracked in dotfiles) instead of Quickshell's image://icon/ provider
-    // (QIcon::fromTheme() + flat QPixmap only, no real hicolor walk - see
-    // ResolvedIcon.qml's workaround) or a third-party icon theme.
+    // Hand-drawn flat SVGs in the tokyonight palette rather than
+    // image://icon/, which does no real hicolor lookup (see ResolvedIcon.qml).
     readonly property string assetsDir: Quickshell.shellPath("assets/weather")
 
     function imageForCode(code, isDay) {

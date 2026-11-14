@@ -9,20 +9,15 @@ Item {
 
     readonly property int pendingUpdates: PortageUpdates.pendingCount
     readonly property bool hasConflict: PortageUpdates.hasConflict
-    // Gates the hover-tooltip only - stays true once synced at least once
-    // so "last synced Xh ago" is always checkable, even at 0 pending.
+    // Gates the hover tooltip; stays true after the first sync.
     readonly property bool tooltipAvailable: root.pendingUpdates > 0 || root.hasConflict || PortageUpdates.emergeRunning || PortageUpdates.lastSyncEpoch > 0
-    // Gates the badge icon itself - only when there's actually something
-    // to flag, not just "synced before" (that would make it permanently
-    // visible once synced, even with 0 pending updates).
+    // Gates the badge icon: only when there's something to flag.
     readonly property bool hasUpdates: root.pendingUpdates > 0
-    // emergeRunning alone also covers an emerge sitting idle at a
-    // confirmation prompt (see PortageUpdates.qml) - only switch to the
-    // spinner once there's an actual open Compiling/Merging session.
+    // emerge alone also covers one idling at a prompt (see PortageUpdates.qml);
+    // spin only for an open Compiling/Merging session.
     readonly property bool buildingActive: PortageUpdates.emergeRunning && PortageUpdates.emergeTotal > 0
-    // An emerge process is open but hasn't started compiling yet (still
-    // resolving deps, or idling at a confirmation prompt) - distinct from
-    // buildingActive, which gets the spinning glyph instead of a badge.
+    // emerge open but not compiling yet (resolving, or at a prompt); unlike
+    // buildingActive, it gets a badge, not the spinner.
     readonly property bool idleEmerge: PortageUpdates.emergeRunning && !root.buildingActive
 
     Image {
@@ -45,9 +40,7 @@ Item {
             loops: Animation.Infinite
         }
 
-        // Stopping spinAnim mid-loop just freezes `rotation` at whatever
-        // angle it happened to be at - finish the current revolution back
-        // to upright instead of leaving the glyph stuck tilted.
+        // Stopping spinAnim mid-loop freezes the tilt; finish the revolution.
         RotationAnimation {
             id: settleAnim
             target: label
@@ -69,15 +62,12 @@ Item {
         }
     }
 
-    // onBuildingActiveChanged only fires on change, not the initial
-    // binding evaluation - cover the bar starting mid-build.
+    // Fires on change only, so cover the bar starting mid-build.
     Component.onCompleted: if (root.buildingActive) spinAnim.start()
 
     Image {
         visible: (root.hasUpdates || root.hasConflict || root.idleEmerge) && !root.buildingActive
-        // Priority when multiple states are true at once: a conflict is
-        // the most actionable, then an open-but-idle emerge session,
-        // then a plain pending-update count.
+        // Priority: conflict, then an open-but-idle emerge, then the update count.
         source: root.hasConflict
             ? Quickshell.shellPath("assets/conflict.svg")
             : root.idleEmerge
@@ -108,10 +98,8 @@ Item {
         id: tooltip
     }
 
-    // w3/t1 are herdr's own workspace/tab ids for the "gentoo" workspace's
-    // "emerge" tab (see `herdr workspace list` / `herdr tab list`) - fixed
-    // ids, not names, so they'd need updating if that herdr session is
-    // ever recreated from scratch.
+    // w3/t1 are herdr's ids for the "gentoo" workspace's "emerge" tab (see
+    // `herdr workspace list`); update them if that session is recreated.
     Process {
         id: focusGentooWorkspace
         command: ["sh", "-c", "hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })' && herdr workspace focus w3 && herdr tab focus w3:t1"]

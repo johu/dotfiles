@@ -1,68 +1,44 @@
 import QtQuick
 import Quickshell.Services.Pipewire
 
-// Logic-only: exposes currently-playing Pipewire app streams for the
-// inline mixer. No visual representation of its own — see
-// AudioMixerCard.qml, embedded in Dashboard.qml's expand section.
+// Logic-only: exposes playing Pipewire app streams for the inline mixer
+// (see AudioMixerCard.qml).
 Item {
     id: root
 
     property list<var> streams: []
 
-    // Not a `readonly property: root.streams.map(n => n.properties...)`
-    // binding - same reasoning as AppVolumeRow.qml's appName: reading
-    // .properties inside a binding subscribes it to every stream's
-    // propertiesChanged, which churns ~2x/sec during a Discord voice call.
-    // Computed imperatively in refreshStreams() below instead, only when
-    // the stream set actually changes.
+    // Computed in refreshStreams(), not a binding: reading .properties
+    // subscribes to every stream's propertiesChanged, which churns ~2x/sec
+    // during a Discord call.
     property string summaryText: "No apps playing"
 
-    // Mirrors caelestia/shell's Audio.qml refreshNodes(): reading
-    // Pipewire.nodes.values inside a plain property binding only captures
-    // whatever nodes exist at binding-evaluation time and does not
-    // re-evaluate when apps open/close later - nodes.values changing
-    // needs an explicit Connections/onValuesChanged to recompute the list.
+    // Pipewire.nodes.values in a plain binding isn't re-evaluated when apps
+    // open or close; recompute on onValuesChanged (as caelestia's Audio.qml).
     function refreshStreams() {
         const apps = [];
         for (const node of Pipewire.nodes.values) {
-            // isStream alone covers both directions - an app sending audio
-            // out (Stream/Output/Audio) *and* an app capturing input, e.g.
-            // Discord's mic capture (Stream/Input/Audio) - both pass
-            // isStream+audio and both resolved to the same app name,
-            // showing as a duplicate (confirmed via pw-dump: Discord's
-            // "playStream" and "recStream" nodes). Scoped to playback only,
-            // matching pavucontrol's "Playback" tab per the idea doc.
+            // Playback only, like pavucontrol's tab: mic capture (Stream/Input/Audio)
+            // also passes isStream and showed up as a duplicate app.
             if (node.isStream && node.audio && node.properties?.["media.class"] === "Stream/Output/Audio")
                 apps.push(node);
         }
-        // A stream's `properties` churn far more often than its membership
-        // in this list actually changes - Discord's voice stream flips its
-        // own `pulse.corked` property roughly twice a second on voice
-        // activity (confirmed via pw-dump), firing propertiesChanged on
-        // every flip. Reassigning root.streams unconditionally would give
-        // it a new array identity each time, rebuilding every
-        // AudioMixerCard delegate mid-animation (same flicker class
-        // ResourceRow.qml's own comment warns about for a poll-driven
-        // array literal) - only reassign when the actual node set changed.
+        // Properties churn far more than membership (Discord flips pulse.corked
+        // ~2x/sec). Reassigning streams would rebuild every delegate mid-animation,
+        // so only do it when the node set changed.
         const unchanged = apps.length === root.streams.length && apps.every((n, i) => n === root.streams[i]);
         if (!unchanged)
             root.streams = apps;
         root.refreshSummaryText();
     }
 
-    // Split out from refreshStreams() - SteamGameIcon's process-tree
-    // lookup (see its own comment) resolves asynchronously, so a Proton
-    // game's title ("Diablo II: Resurrected") isn't available on the
-    // first pass, only once that lookup's Process finishes and bumps
-    // SteamGameIcon.cache. The stream node set itself hasn't changed at
-    // that point, so this needs to be callable on its own, not gated
-    // behind refreshStreams()'s unchanged-node-set early-out above.
+    // Separate from refreshStreams(): a Proton game's title resolves
+    // asynchronously (SteamGameIcon), after the node set is unchanged, so this
+    // must not sit behind the unchanged-set early-out.
     function refreshSummaryText() {
         const apps = root.streams;
-        // See AppVolumeRow.qml's appName for why process.binary wins over
-        // application.name - and its steamGameName for why a Proton
-        // game's resolved title wins over that binary name
-        // ("wine64-preloader") when available.
+        // process.binary beats application.name, and a resolved Proton title beats
+        // the binary ("wine64-preloader"); see AppVolumeRow.qml.
         root.summaryText = apps.length === 0 ? "No apps playing" : apps.map(n => {
             const pid = n.properties?.["application.process.id"];
             const steamName = pid ? SteamGameIcon.gameNameForPid(pid) : "";
@@ -86,16 +62,10 @@ Item {
         }
     }
 
-    // Pipewire.nodes.values firing onValuesChanged only covers nodes being
-    // added/removed - it does NOT fire again for a node that already
-    // existed at startup (e.g. joining a Discord voice call before this
-    // dashboard/mixer instance loaded) once that node's .properties (read
-    // by refreshStreams() above) transitions from invalid to valid. Without
-    // this, such a pre-existing stream's media.class reads empty forever
-    // and refreshStreams() permanently filters it out, even though
-    // Pipewire genuinely has an active Stream/Output/Audio node for it
-    // (confirmed via pw-dump). Re-run the filter whenever any node
-    // becomes ready or its properties update.
+    // onValuesChanged only covers added/removed nodes. A node present at
+    // startup whose .properties turns valid later never re-fires it, so its
+    // media.class would read empty and be filtered out forever. Re-run the
+    // filter when any node becomes ready or its properties update.
     Instantiator {
         model: Pipewire.nodes.values
         delegate: Item {
@@ -113,9 +83,8 @@ Item {
         }
     }
 
-    // PwNode.audio/.properties are only valid once bound via
-    // PwObjectTracker - track every node (not just the already-filtered
-    // subset) so the media.class filter itself can read valid properties.
+    // PwNode.audio/.properties need a PwObjectTracker; track every node so the
+    // media.class filter can read valid properties.
     PwObjectTracker {
         objects: Pipewire.nodes.values
     }

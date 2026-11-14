@@ -5,19 +5,16 @@ import Quickshell.Io
 Text {
     id: root
 
-    // hyprsunset runs its own sunset/sunrise schedule from
-    // hyprsunset.conf; this toggle is a manual override layered on top via
-    // its control socket, not a replacement scheduler. Since the socket
-    // has no state-readback, `active` is kept in sync with that schedule
-    // by re-deriving it from the parsed profile times rather than trusting
-    // stale click state once a scheduled transition has passed.
+    // hyprsunset follows hyprsunset.conf; this toggle is a manual override via
+    // its control socket. The socket can't report state, so `active` is
+    // re-derived from the profile times once a scheduled transition passes.
     property bool active: false
     property bool present: false
     property bool gameModeActive: false
     property string pendingCommand: ""
     property var profiles: []
-    // Epoch-minute deadline of the next scheduled transition after the
-    // last manual click; -1 means "no override in flight, follow schedule".
+    // Epoch-minute of the next scheduled transition after the last manual
+    // click; -1 means follow the schedule.
     property real overrideUntil: -1
 
     readonly property string socketPath: Quickshell.env("XDG_RUNTIME_DIR") + "/hypr/" + Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") + "/.hyprsunset.sock"
@@ -27,13 +24,9 @@ Text {
         sock.connected = true;
     }
 
-    // `present` otherwise only updates as a side effect of a connection
-    // attempt (startup or a click), and the socket is disconnected right
-    // after each send rather than held open - so it never notices
-    // hyprsunset going away or coming back on its own. Pinging the socket
-    // with no pendingCommand (connect, let onConnectionStateChanged mark
-    // `present` true and disconnect without writing anything) keeps
-    // `present` live without re-sending gamma/temperature each poll.
+    // `present` only updates on a connection attempt and the socket closes
+    // after each send, so hyprsunset coming or going goes unnoticed. Ping with
+    // no pendingCommand: connect and disconnect without re-sending gamma.
     function checkPresence() {
         sock.connected = true;
     }
@@ -42,10 +35,8 @@ Text {
         return date.getHours() * 60 + date.getMinutes();
     }
 
-    // Active state the schedule itself would currently be enforcing,
-    // derived from the most recent profile time at or before `nowMinutes`
-    // (wrapping to the last profile of the previous day before the first
-    // profile of today has fired yet).
+    // Active state the schedule enforces now: the latest profile at or before
+    // `nowMinutes`, wrapping to the previous day's last profile.
     function scheduleActiveAt(nowMinutes) {
         if (profiles.length === 0)
             return false;
@@ -96,9 +87,8 @@ Text {
         onTriggered: root.resync()
     }
 
-    // Game mode (SUPER + F2, see hypr/keybinds.lua) touches/removes this
-    // file; night light must never run while it's gaming, so poll for it
-    // rather than relying on any push notification hyprsunset can't give us.
+    // Game mode (SUPER + F2, see hypr/keybinds.lua) touches/removes this file.
+    // Night light must not run then; poll since hyprsunset can't push.
     Timer {
         interval: 2000
         running: true
