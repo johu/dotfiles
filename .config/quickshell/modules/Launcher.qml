@@ -100,6 +100,42 @@ PanelWindow {
         return score;
     }
 
+    // Row of key-cap chips: spelled-out keys, no macOS symbols.
+    component KeyCaps: Row {
+        id: caps
+
+        property var keys: []
+        property int fontSize: Theme.fontSize
+        spacing: 4
+
+        Repeater {
+            model: caps.keys
+
+            Rectangle {
+                id: cap
+
+                required property string modelData
+                height: capLabel.implicitHeight + 8
+                width: Math.max(height, capLabel.implicitWidth + 14)
+                radius: 6
+                color: Theme.surface2
+                border.width: 1
+                border.color: Theme.surface1
+
+                Text {
+                    id: capLabel
+
+                    anchors.centerIn: parent
+                    text: cap.modelData
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: caps.fontSize
+                    renderType: Text.NativeRendering
+                }
+            }
+        }
+    }
+
     // ---- Frecency + learned search terms (ideas/app-launcher-omacast.md 1, 2) ----
     // visits: { [desktopId]: { anchor: <epoch s>, terms: [{ term, at: <epoch s> }] } }
     // Frecency ported from oma-cast core/Frecency.js: score decays with a
@@ -330,6 +366,7 @@ PanelWindow {
         searchInput.text = "";
         root.selectedIndex = 0;
         root.showHidden = false;
+        root.actionsOpen = false;
         root.historyIndex = -1;
         root.ctrlHeld = false;
         // lastIpcObject is empty until refreshed; needed for window matching.
@@ -563,13 +600,32 @@ PanelWindow {
                         root.historyIndex = -1;
                 }
 
-                Keys.onEscapePressed: root.close()
+                // All keys are handled in onPressed: Qt emits the specific
+                // handlers (onUpPressed, onReturnPressed, ...) first and they
+                // would shadow the action panel and Ctrl+Alt+arrow combos.
                 Keys.onPressed: event => {
                     const ctrl = event.modifiers & Qt.ControlModifier;
                     const alt = event.modifiers & Qt.AltModifier;
                     const shift = event.modifiers & Qt.ShiftModifier;
                     if (event.key === Qt.Key_Control)
                         root.ctrlHeld = true;
+                    if (root.actionsOpen) {
+                        if (event.key === Qt.Key_Escape || (ctrl && event.key === Qt.Key_K))
+                            root.actionsOpen = false;
+                        else if (event.key === Qt.Key_Down || (ctrl && event.key === Qt.Key_N))
+                            root.actionIndex = Math.min(root.actionIndex + 1, root.actions.length - 1);
+                        else if (event.key === Qt.Key_Up || (ctrl && event.key === Qt.Key_P))
+                            root.actionIndex = Math.max(root.actionIndex - 1, 0);
+                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                            root.runAction(root.actionIndex);
+                        event.accepted = true;
+                        return;
+                    }
+                    if (ctrl && !alt && !shift && event.key === Qt.Key_K) {
+                        root.openActions();
+                        event.accepted = true;
+                        return;
+                    }
                     if (ctrl && !alt && !shift && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
                         root.launch(event.key - Qt.Key_1, false);
                     } else if (ctrl && !alt && !shift && event.key === Qt.Key_N) {
@@ -585,6 +641,22 @@ PanelWindow {
                         root.selectedIndex = 0;
                     } else if (ctrl && alt && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
                         root.moveFavorite(event.key === Qt.Key_Left ? -1 : 1);
+                    } else if (event.key === Qt.Key_Escape) {
+                        root.close();
+                    } else if (event.key === Qt.Key_Right) {
+                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1);
+                    } else if (event.key === Qt.Key_Left) {
+                        root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
+                    } else if (event.key === Qt.Key_Down) {
+                        root.selectedIndex = Math.min(root.selectedIndex + root.resultColumns, root.filtered.length - 1);
+                    } else if (event.key === Qt.Key_Up) {
+                        const browsing = root.historyIndex >= 0 && root.selectedIndex < root.resultColumns;
+                        if (!root.showHidden && (searchInput.text === "" || browsing))
+                            root.historyStep();
+                        else
+                            root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
+                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        root.launch(root.selectedIndex, shift !== 0);
                     } else {
                         return;
                     }
@@ -594,17 +666,6 @@ PanelWindow {
                     if (event.key === Qt.Key_Control)
                         root.ctrlHeld = false;
                 }
-                Keys.onRightPressed: root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1)
-                Keys.onLeftPressed: root.selectedIndex = Math.max(root.selectedIndex - 1, 0)
-                Keys.onDownPressed: root.selectedIndex = Math.min(root.selectedIndex + root.resultColumns, root.filtered.length - 1)
-                Keys.onUpPressed: {
-                    const browsing = root.historyIndex >= 0 && root.selectedIndex < root.resultColumns;
-                    if (!root.showHidden && (searchInput.text === "" || browsing))
-                        root.historyStep();
-                    else
-                        root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
-                }
-                Keys.onReturnPressed: event => root.launch(root.selectedIndex, (event.modifiers & Qt.ShiftModifier) !== 0)
             }
 
             Text {
@@ -622,7 +683,7 @@ PanelWindow {
     Text {
         id: focusedDescription
 
-        visible: root.selectedDescription.length > 0
+        visible: root.selectedDescription.length > 0 && !root.actionsOpen
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: pill.bottom
         anchors.topMargin: 10
@@ -641,6 +702,67 @@ PanelWindow {
         renderType: Text.NativeRendering
     }
 
+    // ---- Action panel on Ctrl+K (omacast row 10) ----
+    property bool actionsOpen: false
+    property int actionIndex: 0
+
+    function copyText(text) {
+        // Via stdin, not argv-built shell text.
+        Quickshell.execDetached(["sh", "-c", "printf %s \"$1\" | wl-copy", "sh", text]);
+    }
+
+    readonly property var actions: {
+        const e = root.selectedEntry;
+        if (!e)
+            return [];
+        const hasWindow = !!root.findWindow(e);
+        const idx = root.selectedIndex;
+        const list = [];
+        list.push({ title: hasWindow ? "Focus window" : "Open", keys: ["\u21b5"], run: () => root.launch(idx, false) });
+        if (hasWindow)
+            list.push({ title: "New window", keys: ["Shift", "\u21b5"], run: () => root.launch(idx, true) });
+        for (const a of (e.actions || [])) {
+            list.push({ title: a.name, keys: [], run: () => {
+                root.recordVisit(e, root.query);
+                a.execute();
+                root.close();
+            } });
+        }
+        if (!e.runInTerminal && e.command && e.command.length)
+            list.push({ title: "Run in terminal", keys: [], run: () => {
+                root.recordVisit(e, root.query);
+                Apps.runInTerminal(e.command);
+                root.close();
+            } });
+        if (e.command && e.command.length)
+            list.push({ title: "Copy command", keys: [], run: () => {
+                root.copyText(e.command.join(" "));
+                root.close();
+            } });
+        if (!root.showHidden)
+            list.push({ title: root.favorites.includes(e.id) ? "Unpin" : "Pin", keys: ["Ctrl", "Shift", "F"], run: () => root.toggleFavorite() });
+        list.push({ title: root.showHidden ? "Restore" : "Hide", keys: ["Alt", "Shift", "D"], run: () => root.toggleHidden() });
+        list.push({ title: root.showHidden ? "Back to apps" : "Show hidden apps", keys: ["Alt", "Shift", "H"], run: () => {
+            root.showHidden = !root.showHidden;
+            root.selectedIndex = 0;
+        } });
+        return list;
+    }
+
+    function openActions() {
+        if (!root.selectedEntry)
+            return;
+        root.actionIndex = 0;
+        root.actionsOpen = true;
+    }
+
+    function runAction(i) {
+        const a = root.actions[i];
+        root.actionsOpen = false;
+        if (a)
+            a.run();
+    }
+
     // Context-sensitive key hints under the results (omacast row 21): rows of
     // { keys: [...], text } rendered as key-cap chips.
     readonly property int hintFontSize: Theme.fontSize + 2
@@ -651,18 +773,11 @@ PanelWindow {
         const open = root.findWindow(e)
             ? [{ keys: ["\u21b5"], text: "focus window" }, { keys: ["Shift", "\u21b5"], text: "new window" }]
             : [{ keys: ["\u21b5"], text: "open" }];
-        // Only the open/focus hints until the Ctrl+K action panel exists to
-        // list the rest (pin, hide, hidden apps, quick picks).
-        if (root.showHidden)
-            return [open.concat([
-                { keys: ["Alt", "Shift", "D"], text: "restore" },
-                { keys: ["Alt", "Shift", "H"], text: "back" }
-            ])];
-        return [open];
+        return [open.concat([{ keys: ["Ctrl", "K"], text: "actions" }])];
     }
 
     Column {
-        visible: resultsPanel.visible
+        visible: resultsPanel.visible && !root.actionsOpen
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: resultsPanel.bottom
         anchors.topMargin: 14
@@ -688,36 +803,10 @@ PanelWindow {
                         required property var modelData
                         spacing: 8
 
-                        Row {
+                        KeyCaps {
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
-
-                            Repeater {
-                                model: hintItem.modelData.keys
-
-                                Rectangle {
-                                    id: cap
-
-                                    required property string modelData
-                                    height: capLabel.implicitHeight + 8
-                                    width: Math.max(height, capLabel.implicitWidth + 14)
-                                    radius: 6
-                                    color: Theme.surface2
-                                    border.width: 1
-                                    border.color: Theme.surface1
-
-                                    Text {
-                                        id: capLabel
-
-                                        anchors.centerIn: parent
-                                        text: cap.modelData
-                                        color: Theme.text
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: root.hintFontSize
-                                        renderType: Text.NativeRendering
-                                    }
-                                }
-                            }
+                            keys: hintItem.modelData.keys
+                            fontSize: root.hintFontSize
                         }
 
                         Text {
@@ -806,7 +895,7 @@ PanelWindow {
                 }
 
                 Text {
-                    visible: root.ctrlHeld && delegateRoot.index < 9
+                    visible: root.ctrlHeld && !root.actionsOpen && delegateRoot.index < 9
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.margins: 16
@@ -831,8 +920,100 @@ PanelWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: root.selectedIndex = delegateRoot.index
+                    onEntered: if (!root.actionsOpen) root.selectedIndex = delegateRoot.index
                     onClicked: mouse => root.launch(delegateRoot.index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
+                }
+            }
+        }
+    }
+
+    // Scrim: clicking outside the panel dismisses it.
+    MouseArea {
+        visible: root.actionsOpen
+        anchors.fill: parent
+        onClicked: root.actionsOpen = false
+    }
+
+    Rectangle {
+        id: actionPanel
+
+        visible: root.actionsOpen
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: pill.bottom
+        anchors.topMargin: 12
+        width: 440
+        height: actionColumn.implicitHeight + 16
+        radius: Theme.radius
+        color: Theme.surface1
+        border.width: 1
+        border.color: Theme.surface2
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        Column {
+            id: actionColumn
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 8
+
+            Text {
+                width: parent.width
+                leftPadding: 12
+                topPadding: 4
+                bottomPadding: 6
+                text: root.selectedEntry ? root.selectedEntry.name : ""
+                elide: Text.ElideRight
+                color: Theme.subtext1
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize
+                font.italic: true
+                renderType: Text.NativeRendering
+            }
+
+            Repeater {
+                model: root.actions
+
+                Rectangle {
+                    id: actionRow
+
+                    required property var modelData
+                    required property int index
+
+                    width: actionColumn.width
+                    height: 38
+                    radius: Theme.radius / 2
+                    color: actionRow.index === root.actionIndex ? Theme.surface2 : "transparent"
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: actionRow.modelData.title
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 1
+                        renderType: Text.NativeRendering
+                    }
+
+                    KeyCaps {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        keys: actionRow.modelData.keys
+                        fontSize: Theme.fontSize - 1
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: root.actionIndex = actionRow.index
+                        onClicked: root.runAction(actionRow.index)
+                    }
                 }
             }
         }
