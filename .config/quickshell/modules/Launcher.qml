@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
@@ -225,6 +226,8 @@ PanelWindow {
         // stale query lingers on reopen.
         searchInput.text = "";
         root.selectedIndex = 0;
+        // lastIpcObject is empty until refreshed; needed for window matching.
+        Hyprland.refreshToplevels();
         root.visible = true;
     }
 
@@ -256,11 +259,51 @@ PanelWindow {
 
     // DesktopEntry.execute() ignores runInTerminal, so wrap Terminal=true apps
     // in $TERMINAL (differs per machine).
-    function launch(index) {
+    // Window classes this entry may map to (lowercase): startupClass, desktop
+    // id, and the Exec binary name. Windows rarely expose the desktop id.
+    function entryClasses(entry) {
+        const set = new Set();
+        if (entry.startupClass)
+            set.add(entry.startupClass.toLowerCase());
+        if (entry.id)
+            set.add(entry.id.replace(/\.desktop$/, "").toLowerCase());
+        const exe = (entry.command && entry.command.length) ? entry.command[0].split("/").pop().toLowerCase() : "";
+        if (exe)
+            set.add(exe);
+        return set;
+    }
+
+    // Address of the most recently focused open window of this app, or "".
+    function findWindow(entry) {
+        const classes = root.entryClasses(entry);
+        let best = null;
+        for (const t of Hyprland.toplevels.values) {
+            const o = t.lastIpcObject;
+            if (!o || !o.address || !o.mapped)
+                continue;
+            const cls = (o.class || "").toLowerCase();
+            const init = (o.initialClass || "").toLowerCase();
+            if (!classes.has(cls) && !classes.has(init))
+                continue;
+            if (!best || (o.focusHistoryID ?? 1e9) < (best.focusHistoryID ?? 1e9))
+                best = o;
+        }
+        return best ? best.address : "";
+    }
+
+    // Enter focuses an already-open window of the app; Shift+Enter (or
+    // forceNew) always starts a new instance.
+    function launch(index, forceNew) {
         const entry = root.filtered[index];
         if (!entry)
             return;
         root.recordVisit(entry, root.query);
+        const addr = forceNew ? "" : root.findWindow(entry);
+        if (addr) {
+            Quickshell.execDetached(["hyprctl", "dispatch", `hl.dsp.focus({ window = "address:${addr}" })`]);
+            root.close();
+            return;
+        }
         if (entry.runInTerminal) {
             Apps.runInTerminal(entry.command);
         } else {
@@ -409,7 +452,7 @@ PanelWindow {
                 Keys.onLeftPressed: root.selectedIndex = Math.max(root.selectedIndex - 1, 0)
                 Keys.onDownPressed: root.selectedIndex = Math.min(root.selectedIndex + root.resultColumns, root.filtered.length - 1)
                 Keys.onUpPressed: root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0)
-                Keys.onReturnPressed: root.launch(root.selectedIndex)
+                Keys.onReturnPressed: event => root.launch(root.selectedIndex, (event.modifiers & Qt.ShiftModifier) !== 0)
             }
         }
     }
@@ -512,7 +555,7 @@ PanelWindow {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onEntered: root.selectedIndex = delegateRoot.index
-                    onClicked: root.launch(delegateRoot.index)
+                    onClicked: mouse => root.launch(delegateRoot.index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
                 }
             }
         }
