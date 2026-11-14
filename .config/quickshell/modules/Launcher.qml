@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import "Calculator.js" as Calculator
+import "Locations.js" as Locations
 import "WebSearch.js" as WebSearch
 import Quickshell
 import Quickshell.Hyprland
@@ -316,6 +317,81 @@ PanelWindow {
 
     // "yt cats": a provider prefix searches that provider directly and, like
     // a calculation, replaces the app results.
+    // URLs and existing paths (omacast row 15). Existence of a typed path is
+    // checked asynchronously; a row appears only once it is known to exist.
+    readonly property string homeDir: Quickshell.env("HOME")
+    property var pathInfo: ({ path: "", kind: "" })
+
+    readonly property var loc: {
+        if (root.showHidden || root.webLocked || root.calc)
+            return null;
+        const q = root.query.trim();
+        const u = Locations.classifyUrl(q);
+        if (u)
+            return u;
+        if (Locations.isPathLike(q)) {
+            const p = Locations.expand(q, root.homeDir);
+            if (root.pathInfo.path === p && root.pathInfo.kind)
+                return { kind: root.pathInfo.kind, path: p, text: Locations.display(p, root.homeDir) };
+        }
+        return null;
+    }
+
+    onQueryChanged: {
+        if (Locations.isPathLike(root.query.trim()))
+            pathTimer.restart();
+    }
+
+    Timer {
+        id: pathTimer
+
+        interval: 100
+        onTriggered: {
+            if (pathProc.running) {
+                pathTimer.restart();
+                return;
+            }
+            pathProc.target = Locations.expand(root.query.trim(), root.homeDir);
+            pathProc.running = true;
+        }
+    }
+
+    Process {
+        id: pathProc
+
+        property string target: ""
+
+        command: ["sh", "-c", 'if [ -d "$1" ]; then echo dir; elif [ -e "$1" ]; then echo file; else echo none; fi', "sh", pathProc.target]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const k = text.trim();
+                root.pathInfo = { path: pathProc.target, kind: k === "none" ? "" : k };
+            }
+        }
+    }
+
+    function openLoc() {
+        const l = root.loc;
+        if (!l)
+            return;
+        root.recordHistory(root.query);
+        root.save();
+        if (l.kind === "url")
+            Apps.openUrl(l.url);
+        else
+            Apps.openFile(l.path);
+        root.close();
+    }
+
+    function activateInline() {
+        if (root.calc)
+            root.copyCalc();
+        else if (root.loc)
+            root.openLoc();
+        else if (root.web)
+            root.openSearch(root.web.provider, root.web.text);
+    }
+
     // While the provider list is open the typed text is a web search term:
     // editing it must not switch to app results or the calculator.
     property bool webLocked: false
@@ -329,10 +405,12 @@ PanelWindow {
         const q = root.query.trim();
         if (root.webLocked)
             return { provider: root.lockedProvider, text: q, fallback: true };
-        if (!q || root.showHidden || root.calc)
+        if (!q || root.showHidden || root.calc || root.loc)
             return null;
         if (root.webPrefix)
             return root.webPrefix;
+        if (Locations.isPathLike(q))
+            return null;
         return root.filtered.length === 0 ? { provider: WebSearch.defaultProvider(), text: q, fallback: true } : null;
     }
 
@@ -340,6 +418,12 @@ PanelWindow {
     readonly property var inlineRow: {
         if (root.calc)
             return { title: root.calc.expr, text: "= " + root.calc.text, hint: "copy" };
+        if (root.loc)
+            return {
+                title: root.loc.kind === "url" ? "Open in browser" : (root.loc.kind === "dir" ? "Open folder" : "Open file"),
+                text: root.loc.text,
+                hint: "open"
+            };
         if (root.web)
             return {
                 title: root.web.fallback ? root.web.provider.name + "  \u00b7  Ctrl+K for others" : "Search " + root.web.provider.name,
@@ -360,7 +444,7 @@ PanelWindow {
 
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
-        if ((!q && !root.showHidden) || root.calc || root.webPrefix || root.webLocked)
+        if ((!q && !root.showHidden) || root.calc || root.loc || root.webPrefix || root.webLocked)
             return [];
 
         const now = Date.now() / 1000;
@@ -732,12 +816,10 @@ PanelWindow {
                         else
                             root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (ctrl && root.query.trim() !== "")
+                        if (ctrl && !root.loc && root.query.trim() !== "")
                             root.openSearch(WebSearch.defaultProvider(), root.query.trim());
-                        else if (root.calc)
-                            root.copyCalc();
-                        else if (root.web)
-                            root.openSearch(root.web.provider, root.web.text);
+                        else if (root.calc || root.loc || root.web)
+                            root.activateInline();
                         else
                             root.launch(root.selectedIndex, shift !== 0);
                     } else {
@@ -790,7 +872,7 @@ PanelWindow {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.calc ? root.copyCalc() : root.openSearch(root.web.provider, root.web.text)
+            onClicked: root.activateInline()
         }
 
         RowLayout {
@@ -884,6 +966,20 @@ PanelWindow {
                 run: () => root.openSearch(p, text)
             }));
         }
+        if (root.loc) {
+            const l = root.loc;
+            const list = [{ title: l.kind === "url" ? "Open in browser" : (l.kind === "dir" ? "Open folder" : "Open file"), keys: ["\u21b5"], run: () => root.openLoc() }];
+            if (l.kind !== "url")
+                list.push({ title: "Reveal in file manager", keys: [], run: () => {
+                    Apps.revealInFileManager(l.path);
+                    root.close();
+                } });
+            list.push({ title: l.kind === "url" ? "Copy URL" : "Copy path", keys: [], run: () => {
+                root.copyText(l.kind === "url" ? l.url : l.path);
+                root.close();
+            } });
+            return list;
+        }
         const e = root.selectedEntry;
         if (!e)
             return [];
@@ -922,7 +1018,7 @@ PanelWindow {
     }
 
     function openActions() {
-        if (!root.selectedEntry && !root.web)
+        if (!root.selectedEntry && !root.web && !root.loc)
             return;
         root.actionIndex = 0;
         root.lockedProvider = root.web ? root.web.provider : null;
@@ -1161,7 +1257,7 @@ PanelWindow {
                 leftPadding: 12
                 topPadding: 4
                 bottomPadding: 6
-                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : "")
+                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : (root.loc ? root.loc.text : ""))
                 elide: Text.ElideRight
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
