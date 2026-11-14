@@ -1301,6 +1301,16 @@ PanelWindow {
         }
     }
 
+    Component {
+        id: notificationsView
+
+        LauncherNotificationsView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.closeView()
+        }
+    }
+
     // Everything except the blurred backdrop is scaled around the screen
     // centre (Ctrl +/-/0), so the launcher stays readable on small screens.
     Item {
@@ -1339,7 +1349,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewActive
-                sourceComponent: root.viewName === "calendar" ? calendarView : null
+                sourceComponent: root.viewName === "calendar" ? calendarView : (root.viewName === "notifications" ? notificationsView : null)
             }
         }
 
@@ -1646,6 +1656,9 @@ PanelWindow {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: hintItem.modelData.text
+                                // A fixed width keeps the row from shifting when an icon label changes.
+                                width: hintItem.modelData.width !== undefined ? hintItem.modelData.width : implicitWidth
+                                horizontalAlignment: Text.AlignHCenter
                                 color: Theme.subtext1
                                 font.family: Theme.fontFamily
                                 font.pixelSize: root.hintFontSize
