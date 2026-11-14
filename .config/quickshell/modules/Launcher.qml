@@ -474,23 +474,77 @@ PanelWindow {
     // Skips caches, VCS data and big app/game data that would drown results.
     // Sorted because fd's parallel output order would make ties between
     // equal-scoring results flip on every rebuild.
-    // Extra search roots besides $HOME (absolute paths are listed as such).
-    readonly property var fileExtraRoots: ["/etc"]
+    // File search settings, read from launcher-config.json next to shell.qml
+    // and applied live (the index is rebuilt when they change):
+    //   fileRoots          extra roots besides $HOME, absolute or ~/ paths
+    //                      outside $HOME (default ["/etc"]); roots inside
+    //                      $HOME are ignored, $HOME is always indexed
+    //   fileExcludes       replaces the default exclude list below
+    //   fileExtraExcludes  added to the (default or replaced) list
+    // Excludes are fd globs, relative to the searched root.
+    readonly property var defaultFileExcludes: [".git", ".cfg", "node_modules", ".cache", ".npm", ".cargo", ".rustup", ".var", ".wine", "Cache*", "GPUCache", "Code Cache", "__pycache__", ".local/share/Steam*", ".local/share/pnpm", ".local/share/mise", ".local/share/icons", ".local/share/pi", ".local/share/nvim*", ".local/share/copilot", ".local/share/Trash", ".local/share/flatpak", ".config/mozilla", ".config/zen", ".config/discord"]
 
+    // JsonAdapter lists are not real JS arrays (Array.isArray is false), so
+    // normalise through JSON first.
+    function strings(v) {
+        if (v === null || v === undefined)
+            return [];
+        const a = JSON.parse(JSON.stringify(v));
+        return Array.isArray(a) ? a.filter(x => typeof x === "string" && x !== "") : [];
+    }
+
+    readonly property var fileRoots: root.strings(filesCfg.fileRoots).map(r => r === "~" ? root.homeDir : (r.startsWith("~/") ? root.homeDir + r.slice(1) : r)).map(r => r.length > 1 ? r.replace(/\/+$/, "") : r).filter(r => r.startsWith("/") && r !== root.homeDir && !r.startsWith(root.homeDir + "/"))
+    readonly property var fileExcludes: (filesCfg.fileExcludes !== null && filesCfg.fileExcludes !== undefined ? root.strings(filesCfg.fileExcludes) : root.defaultFileExcludes).concat(root.strings(filesCfg.fileExtraExcludes))
+    property bool fileIndexDirty: false
+
+    onFileRootsChanged: root.reindexFiles()
+    onFileExcludesChanged: root.reindexFiles()
+
+    function reindexFiles() {
+        root.fileIndexAt = 0;
+        if (!root.fileMode)
+            return;
+        if (fileIndexProc.running)
+            root.fileIndexDirty = true;
+        else
+            fileIndexProc.running = true;
+    }
+
+    property var filesCfgFile: FileView {
+        path: Quickshell.shellPath("launcher-config.json")
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+
+        JsonAdapter {
+            id: filesCfg
+
+            property var fileRoots: ["/etc"]
+            property var fileExcludes: null
+            property var fileExtraExcludes: []
+        }
+    }
+
+    // Roots and excludes travel in the environment (newline separated), never
+    // inside the script text.
     readonly property string fileIndexScript: [
         'umask 077',
-        'home="$1"; out="$2"; shift 2',
+        'home="$1"; out="$2"',
         'tmp="$out.$$"',
         'cd "$home" || exit 1',
+        'set --',
+        'while IFS= read -r e; do [ -n "$e" ] && set -- "$@" --exclude "$e"; done <<EOF',
+        '$QS_EXCLUDES',
+        'EOF',
         'scan() {',
-        '  fd --hidden --max-results 1000000 \\',
-        '    --exclude .git --exclude .cfg --exclude node_modules --exclude .cache --exclude .npm --exclude .cargo --exclude .rustup --exclude .var --exclude .wine \\',
-        "    --exclude 'Cache*' --exclude GPUCache --exclude 'Code Cache' --exclude __pycache__ \\",
-        "    --exclude '.local/share/Steam*' --exclude '.local/share/pnpm' --exclude '.local/share/mise' --exclude '.local/share/icons' --exclude '.local/share/pi' \\",
-        "    --exclude '.local/share/nvim*' --exclude '.local/share/copilot' --exclude '.local/share/Trash' --exclude '.local/share/flatpak' \\",
-        "    --exclude '.config/mozilla' --exclude '.config/zen' --exclude '.config/discord' . \"$@\"",
+        '  if [ -n "$root" ]; then fd --hidden --max-results 1000000 "$@" . "$root"; else fd --hidden --max-results 1000000 "$@" .; fi',
         '}',
-        '{ scan; for r in "$@"; do scan "$r"; done; } 2>/dev/null | LC_ALL=C sort > "$tmp"',
+        '{',
+        '  root=""; scan "$@"',
+        '  while IFS= read -r root; do [ -n "$root" ] && scan "$@"; done <<EOF',
+        '$QS_ROOTS',
+        'EOF',
+        '} 2>/dev/null | LC_ALL=C sort > "$tmp"',
         'mv "$tmp" "$out"'
     ].join("\n")
 
@@ -511,10 +565,19 @@ PanelWindow {
     Process {
         id: fileIndexProc
 
-        command: ["sh", "-c", root.fileIndexScript, "sh", root.homeDir, root.filesPath].concat(root.fileExtraRoots)
+        command: ["sh", "-c", root.fileIndexScript, "sh", root.homeDir, root.filesPath]
+        environment: ({
+                QS_ROOTS: root.fileRoots.join("\n"),
+                QS_EXCLUDES: root.fileExcludes.join("\n")
+            })
         onExited: code => {
             root.fileIndexReady = code === 0;
             root.fileIndexAt = Date.now();
+            if (root.fileIndexDirty) {
+                root.fileIndexDirty = false;
+                root.reindexFiles();
+                return;
+            }
             if (root.fileMode)
                 fileTimer.restart();
         }
@@ -928,6 +991,11 @@ PanelWindow {
 
         function toggle(): void {
             root.toggle();
+        }
+
+        // Effective file search settings, for checking launcher-config.json.
+        function filesConfig(): string {
+            return JSON.stringify({ fileRoots: root.fileRoots, fileExcludes: root.fileExcludes });
         }
 
         function unhideAll(): void {

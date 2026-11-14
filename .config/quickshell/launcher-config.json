@@ -1,0 +1,32 @@
+{
+    "fileRoots": [
+        "/etc",
+        "/var/log",
+        "/usr/local",
+        "/opt",
+        "/mnt/nfs",
+        "/mnt/usb",
+        "/mnt/steam",
+        "/media/windows"
+    ],
+    "fileExtraExcludes": [
+        ".local/share/maven",
+        ".local/share/gradle",
+        ".local/share/cargo",
+        ".local/share/pipx",
+        ".local/share/zinit",
+        ".local/share/JetBrains",
+        ".config/BraveSoftware",
+        ".m2",
+        "src/keyboard/vial-qmk",
+        "src/keyboard/qmk-firmware",
+        "src/keyboard/qmk_firmware",
+        "target",
+        "dist",
+        "build",
+        ".venv",
+        ".pytest_cache",
+        "docs/private/old-websites",
+        "pics/bical"
+    ]
+}
