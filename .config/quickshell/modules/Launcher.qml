@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import "Calculator.js" as Calculator
+import "WebSearch.js" as WebSearch
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -313,9 +314,44 @@ PanelWindow {
         root.close();
     }
 
+    // "yt cats": a provider prefix searches that provider directly and, like
+    // a calculation, replaces the app results.
+    readonly property var webPrefix: (root.showHidden || root.calc) ? null : WebSearch.parsePrefix(root.query.trim())
+
+    // Web search row: a prefix query, or the default provider when nothing
+    // else matched.
+    readonly property var web: {
+        const q = root.query.trim();
+        if (!q || root.showHidden || root.calc)
+            return null;
+        if (root.webPrefix)
+            return root.webPrefix;
+        return root.filtered.length === 0 ? { provider: WebSearch.defaultProvider(), text: q, fallback: true } : null;
+    }
+
+    // What the row under the pill shows: calculation or web search.
+    readonly property var inlineRow: {
+        if (root.calc)
+            return { title: root.calc.expr, text: "= " + root.calc.text, hint: "copy" };
+        if (root.web)
+            return {
+                title: root.web.fallback ? root.web.provider.name + "  \u00b7  Ctrl+K for others" : "Search " + root.web.provider.name,
+                text: root.web.text,
+                hint: "search"
+            };
+        return null;
+    }
+
+    function openSearch(provider, text) {
+        root.recordHistory(root.query);
+        root.save();
+        Apps.openUrl(WebSearch.url(provider, text));
+        root.close();
+    }
+
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
-        if ((!q && !root.showHidden) || root.calc)
+        if ((!q && !root.showHidden) || root.calc || root.webPrefix)
             return [];
 
         const now = Date.now() / 1000;
@@ -684,8 +720,12 @@ PanelWindow {
                         else
                             root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (root.calc)
+                        if (ctrl && root.query.trim() !== "")
+                            root.openSearch(WebSearch.defaultProvider(), root.query.trim());
+                        else if (root.calc)
                             root.copyCalc();
+                        else if (root.web)
+                            root.openSearch(root.web.provider, root.web.text);
                         else
                             root.launch(root.selectedIndex, shift !== 0);
                     } else {
@@ -718,13 +758,13 @@ PanelWindow {
         anchors.top: pill.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         width: 1
-        height: root.calc ? calcRow.height + 12 : 0
+        height: root.inlineRow ? calcRow.height + 12 : 0
     }
 
     Rectangle {
         id: calcRow
 
-        visible: root.calc !== null
+        visible: root.inlineRow !== null
         anchors.top: pill.bottom
         anchors.topMargin: 12
         anchors.horizontalCenter: parent.horizontalCenter
@@ -738,7 +778,7 @@ PanelWindow {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.copyCalc()
+            onClicked: root.calc ? root.copyCalc() : root.openSearch(root.web.provider, root.web.text)
         }
 
         RowLayout {
@@ -754,7 +794,7 @@ PanelWindow {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.calc ? root.calc.expr : ""
+                    text: root.inlineRow ? root.inlineRow.title : ""
                     elide: Text.ElideRight
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
@@ -764,7 +804,7 @@ PanelWindow {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.calc ? "= " + root.calc.text : ""
+                    text: root.inlineRow ? root.inlineRow.text : ""
                     elide: Text.ElideRight
                     color: Theme.text
                     font.family: Theme.fontFamily
@@ -782,7 +822,7 @@ PanelWindow {
 
             Text {
                 Layout.alignment: Qt.AlignVCenter
-                text: "copy"
+                text: root.inlineRow ? root.inlineRow.hint : ""
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
                 font.pixelSize: root.hintFontSize
@@ -823,6 +863,13 @@ PanelWindow {
     }
 
     readonly property var actions: {
+        if (root.web) {
+            return WebSearch.ordered(root.web.provider.id).map(p => ({
+                title: p.name,
+                keys: [p.prefix],
+                run: () => root.openSearch(p, root.web.text)
+            }));
+        }
         const e = root.selectedEntry;
         if (!e)
             return [];
@@ -861,7 +908,7 @@ PanelWindow {
     }
 
     function openActions() {
-        if (!root.selectedEntry)
+        if (!root.selectedEntry && !root.web)
             return;
         root.actionIndex = 0;
         root.actionsOpen = true;
@@ -1093,7 +1140,7 @@ PanelWindow {
                 leftPadding: 12
                 topPadding: 4
                 bottomPadding: 6
-                text: root.selectedEntry ? root.selectedEntry.name : ""
+                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web" : "")
                 elide: Text.ElideRight
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
