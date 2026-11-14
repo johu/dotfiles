@@ -45,6 +45,54 @@ previous_workspace=$(hyprctl -j activeworkspace | jq -r '.id')
 
 hyprctl dispatch "hl.dsp.focus({ workspace = 1 })"
 
+# The herdr *server* keeps running after its terminal is closed, so the
+# pane lookup below can succeed with nobody watching. A client is any
+# herdr process whose cmdline lacks the "server" subcommand.
+herdr_client_running() {
+  local pid
+  for pid in $(pgrep -x herdr); do
+    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -qw server || return 0
+  done
+  return 1
+}
+
+# Terminal-agnostic: $TERMINAL (set by hypr/env.lua, but a systemd user
+# service may not inherit it), then the systemd user environment, then
+# hypr/globals.lua's `terminal = '...'` (the one place it is configured
+# per machine), then the first known terminal on PATH.
+resolve_terminal() {
+  local t="${TERMINAL:-}"
+  [ -n "$t" ] || t=$(systemctl --user show-environment 2>/dev/null \
+    | sed -n 's/^TERMINAL=//p')
+  [ -n "$t" ] || t=$(sed -n "s/^ *terminal *= *'\([^']*\)'.*/\1/p" \
+    "$HOME/.config/hypr/globals.lua" 2>/dev/null | head -n1)
+  if [ -z "$t" ] || ! command -v "$t" >/dev/null 2>&1; then
+    t=""
+    for c in ghostty kitty alacritty foot wezterm; do
+      command -v "$c" >/dev/null 2>&1 && { t=$c; break; }
+    done
+  fi
+  printf '%s' "$t"
+}
+
+# Focusing an empty workspace 1 makes workspace.lua spawn the herdr
+# terminal itself; give that a few seconds so we don't launch a second
+# one, then spawn our own if nothing attached.
+for _ in $(seq 1 8); do
+  herdr_client_running && break
+  sleep 1
+done
+if ! herdr_client_running; then
+  term=$(resolve_terminal)
+  if [ -z "$term" ]; then
+    hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
+    echo "portage-sync.sh: no herdr client and no terminal found to start one" >&2
+    exit 1
+  fi
+  echo "portage-sync.sh: no herdr client attached, launching $term" >&2
+  hyprctl dispatch "hl.dsp.exec_cmd('$term -e zsh -c herdr')"
+fi
+
 # Up to 90s: herdr's cold start (ghostty + zsh + herdr client attaching
 # and restoring its session) competes with the rest of autostart.lua at
 # session start and can genuinely take longer than a few seconds under
