@@ -366,11 +366,13 @@ PanelWindow {
                 scored.push({ entry: e, score: score, frec: f });
             }
         }
-        const favRank = id => {
-            const i = root.favorites.indexOf(id);
+        // Pins only outrank other results for real name matches (score >= 500);
+        // a weak fuzzy hit on a pinned app must not beat a better match.
+        const favRank = x => {
+            const i = x.score >= 500 ? root.favorites.indexOf(x.entry.id) : -1;
             return i < 0 ? Infinity : i;
         };
-        scored.sort((a, b) => (favRank(a.entry.id) - favRank(b.entry.id)) || b.score - a.score || b.frec - a.frec || a.entry.name.localeCompare(b.entry.name));
+        scored.sort((a, b) => (favRank(a) - favRank(b)) || b.score - a.score || b.frec - a.frec || a.entry.name.localeCompare(b.entry.name));
         return scored.map(s => s.entry);
     }
 
