@@ -444,35 +444,45 @@ PanelWindow {
         const isDir = rel.endsWith("/");
         const clean = isDir ? rel.slice(0, -1) : rel;
         const cut = clean.lastIndexOf("/");
+        const abs = clean.startsWith("/");
         return {
             kind: isDir ? "dir" : "file",
-            path: root.homeDir + "/" + clean,
-            text: "~/" + clean,
+            path: abs ? clean : root.homeDir + "/" + clean,
+            text: abs ? clean : "~/" + clean,
             name: clean.slice(cut + 1),
-            dir: cut < 0 ? "~" : "~/" + clean.slice(0, cut)
+            dir: abs ? (cut > 0 ? clean.slice(0, cut) : "/") : (cut < 0 ? "~" : "~/" + clean.slice(0, cut))
         };
     }
 
     // Skips caches, VCS data and big app/game data that would drown results.
     // Sorted because fd's parallel output order would make ties between
     // equal-scoring results flip on every rebuild.
+    // Extra search roots besides $HOME (absolute paths are listed as such).
+    readonly property var fileExtraRoots: ["/etc"]
+
     readonly property string fileIndexScript: [
         'umask 077',
-        'tmp="$2.$$"',
-        'cd "$1" || exit 1',
-        'fd --hidden --max-results 1000000 \\',
-        '  --exclude .git --exclude .cfg --exclude node_modules --exclude .cache --exclude .npm --exclude .cargo --exclude .rustup --exclude .var --exclude .wine \\',
-        "  --exclude 'Cache*' --exclude GPUCache --exclude 'Code Cache' --exclude __pycache__ \\",
-        "  --exclude '.local/share/Steam*' --exclude '.local/share/pnpm' --exclude '.local/share/mise' --exclude '.local/share/icons' --exclude '.local/share/pi' \\",
-        "  --exclude '.local/share/nvim*' --exclude '.local/share/copilot' --exclude '.local/share/Trash' --exclude '.local/share/flatpak' \\",
-        "  --exclude '.config/mozilla' --exclude '.config/zen' --exclude '.config/discord' . 2>/dev/null | LC_ALL=C sort > \"$tmp\"",
-        'mv "$tmp" "$2"'
+        'home="$1"; out="$2"; shift 2',
+        'tmp="$out.$$"',
+        'cd "$home" || exit 1',
+        'scan() {',
+        '  fd --hidden --max-results 1000000 \\',
+        '    --exclude .git --exclude .cfg --exclude node_modules --exclude .cache --exclude .npm --exclude .cargo --exclude .rustup --exclude .var --exclude .wine \\',
+        "    --exclude 'Cache*' --exclude GPUCache --exclude 'Code Cache' --exclude __pycache__ \\",
+        "    --exclude '.local/share/Steam*' --exclude '.local/share/pnpm' --exclude '.local/share/mise' --exclude '.local/share/icons' --exclude '.local/share/pi' \\",
+        "    --exclude '.local/share/nvim*' --exclude '.local/share/copilot' --exclude '.local/share/Trash' --exclude '.local/share/flatpak' \\",
+        "    --exclude '.config/mozilla' --exclude '.config/zen' --exclude '.config/discord' . \"$@\"",
+        '}',
+        '{ scan; for r in "$@"; do scan "$r"; done; } 2>/dev/null | LC_ALL=C sort > "$tmp"',
+        'mv "$tmp" "$out"'
     ].join("\n")
 
     onFileModeChanged: {
         if (root.fileMode && !fileIndexProc.running && Date.now() - root.fileIndexAt > 120000)
             fileIndexProc.running = true;
-        if (!root.fileMode)
+        if (root.fileMode)
+            fileTimer.restart();
+        else
             root.fileResults = [];
     }
 
@@ -482,7 +492,7 @@ PanelWindow {
     Process {
         id: fileIndexProc
 
-        command: ["sh", "-c", root.fileIndexScript, "sh", root.homeDir, root.filesPath]
+        command: ["sh", "-c", root.fileIndexScript, "sh", root.homeDir, root.filesPath].concat(root.fileExtraRoots)
         onExited: code => {
             root.fileIndexReady = code === 0;
             root.fileIndexAt = Date.now();
@@ -496,7 +506,11 @@ PanelWindow {
 
         interval: 60
         onTriggered: {
-            if (!root.fileMode || root.fileTerm === "" || !root.fileIndexReady) {
+            if (root.fileMode && root.fileTerm === "") {
+                root.fileResults = root.frecentFiles();
+                return;
+            }
+            if (!root.fileMode || !root.fileIndexReady) {
                 if (root.fileResults.length > 0)
                     root.fileResults = [];
                 return;
@@ -515,7 +529,7 @@ PanelWindow {
 
         command: ["sh", "-c", 'fzf --filter "$1" --scheme=path --tiebreak=pathname,length < "$2" | head -n 200', "sh", fileProc.target, root.filesPath]
         stdout: StdioCollector {
-            onStreamFinished: root.fileResults = text.split("\n").filter(l => l !== "")
+            onStreamFinished: root.fileResults = root.rankFiles(text.split("\n").filter(l => l !== ""))
         }
         onExited: {
             if (root.fileMode && fileProc.target !== root.fileTerm)
@@ -536,9 +550,13 @@ PanelWindow {
         '  sz=$(stat -c %s -- "$p" 2>/dev/null || echo 0)',
         '  case "$m" in',
         '    image/*) echo "#image";;',
+        '    application/pdf)',
+        '      d="${XDG_RUNTIME_DIR:-/tmp}"; rm -f "$d"/quickshell-preview-*.png; o="$d/quickshell-preview-$$"',
+        '      if command -v pdftoppm >/dev/null 2>&1 && pdftoppm -png -r 90 -f 1 -l 1 -singlefile -- "$p" "$o" 2>/dev/null; then echo "#imagefile"; echo "$o.png"',
+        '      else echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; fi;;',
         '    text/*|application/json|application/xml|application/javascript|inode/x-empty)',
         '      if [ "$sz" -gt 5000000 ]; then echo "#info"; file --brief -- "$p"; echo "Size: $sz bytes (too large to preview)"',
-        '      else echo "#text"; { bat --color=always --theme=ansi --style=numbers --paging=never --wrap=never --line-range :120 -- "$p" 2>/dev/null || head -n 120 -- "$p"; } | head -c 60000; fi;;',
+        '      else echo "#text"; { bat --color=always --theme=ansi --style=numbers --paging=never --wrap=never --line-range :300 -- "$p" 2>/dev/null || head -n 300 -- "$p"; } | head -c 60000; fi;;',
         '    *) echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; stat -c "Modified: %y" -- "$p";;',
         '  esac',
         'fi'
@@ -594,9 +612,34 @@ PanelWindow {
 
     readonly property bool fileSearching: fileProc.running || fileTimer.running || fileIndexProc.running
 
+    // Key of a file in the frecency store: its path relative to $HOME (or
+    // absolute outside it), with a trailing slash for folders like the index.
+    function fileKey(l) {
+        const h = root.homeDir + "/";
+        const rel = l.path.startsWith(h) ? l.path.slice(h.length) : l.path;
+        return "file:" + rel + (l.kind === "dir" ? "/" : "");
+    }
+
+    // fzf order, moved up by frecency: one recent open is worth ~80 places.
+    function rankFiles(list) {
+        const now = Date.now() / 1000;
+        return list.map((rel, i) => ({ rel: rel, score: i - 12 * Math.log2(root.frecency("file:" + rel, now)) })).sort((a, b) => a.score - b.score).map(x => x.rel);
+    }
+
+    // What "f " shows before typing: the most frecent files and folders.
+    function frecentFiles() {
+        const now = Date.now() / 1000;
+        return Object.keys(root.visits).filter(k => k.startsWith("file:")).map(k => ({ rel: k.slice(5), f: root.frecency(k, now) })).filter(x => x.f > 1.5).sort((a, b) => b.f - a.f).slice(0, 20).map(x => x.rel);
+    }
+
+    function scrollPreview(dir) {
+        const f = previewFlick;
+        f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, f.contentY + dir * f.height * 0.8));
+    }
+
     function openPath(l) {
         root.recordHistory(root.query);
-        root.save();
+        root.recordVisit({ id: root.fileKey(l), name: l.name ?? "" }, root.fileMode ? root.fileTerm : "");
         Apps.openFile(l.path);
         root.close();
     }
@@ -1055,6 +1098,8 @@ PanelWindow {
                         root.selectedIndex = 0;
                     } else if (ctrl && alt && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
                         root.moveFavorite(event.key === Qt.Key_Left ? -1 : 1);
+                    } else if (root.fileMode && (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp)) {
+                        root.scrollPreview(event.key === Qt.Key_PageDown ? 1 : -1);
                     } else if (event.key === Qt.Key_Escape) {
                         root.close();
                     } else if (event.key === Qt.Key_Right) {
@@ -1296,7 +1341,7 @@ PanelWindow {
     readonly property int hintFontSize: Theme.fontSize + 2
     readonly property var keyHints: {
         if (root.fileMode)
-            return root.fileResults.length > 0 ? [[{ keys: ["\u21b5"], text: "open" }, { keys: ["Ctrl", "K"], text: "actions" }]] : [];
+            return root.fileResults.length > 0 ? [[{ keys: ["\u21b5"], text: "open" }, { keys: ["PgUp", "PgDn"], text: "scroll" }, { keys: ["Ctrl", "K"], text: "actions" }]] : [];
         const e = root.selectedEntry;
         if (!e)
             return [];
@@ -1392,6 +1437,7 @@ PanelWindow {
                 readonly property string clean: fileRow.isDir ? fileRow.modelData.slice(0, -1) : fileRow.modelData
                 readonly property int cut: fileRow.clean.lastIndexOf("/")
                 readonly property var hl: FzfMatch.positions(root.fileTerm, fileRow.clean)
+                readonly property bool isAbs: fileRow.clean.charAt(0) === "/"
 
                 width: fileView.width
                 height: fileList.rowHeight
@@ -1434,7 +1480,7 @@ PanelWindow {
                         Text {
                             Layout.fillWidth: true
                             textFormat: Text.StyledText
-                            text: fileRow.cut < 0 ? "~" : FzfMatch.html("~/" + fileRow.clean.slice(0, fileRow.cut), fileRow.hl, -2, Theme.yellow)
+                            text: fileRow.isAbs ? FzfMatch.html(fileRow.cut > 0 ? fileRow.clean.slice(0, fileRow.cut) : "/", fileRow.hl, 0, Theme.yellow) : (fileRow.cut < 0 ? "~" : FzfMatch.html("~/" + fileRow.clean.slice(0, fileRow.cut), fileRow.hl, -2, Theme.yellow))
                             elide: Text.ElideLeft
                             color: Theme.subtext1
                             font.family: Theme.fontFamily
@@ -1475,38 +1521,44 @@ PanelWindow {
 
         readonly property bool current: root.previewShown === root.selectedFilePath
 
-        Text {
-            visible: previewPane.current && (root.previewKind === "text")
+        Flickable {
+            id: previewFlick
+
+            visible: previewPane.current && (root.previewKind === "text" || root.previewKind === "dir" || root.previewKind === "info")
             anchors.fill: parent
             anchors.margins: 10
-            textFormat: Text.RichText
-            wrapMode: Text.Wrap
-            text: root.previewBody
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize + 2
-            renderType: Text.NativeRendering
+            contentWidth: width
+            contentHeight: previewText.height
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Text {
+                id: previewText
+
+                width: previewFlick.width
+                textFormat: root.previewKind === "text" ? Text.RichText : Text.PlainText
+                wrapMode: root.previewKind === "dir" ? Text.NoWrap : Text.Wrap
+                text: root.previewBody
+                color: root.previewKind === "text" ? Theme.text : (root.previewKind === "dir" ? Theme.blue : Theme.subtext1)
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize + 2
+                renderType: Text.NativeRendering
+            }
         }
 
-        Text {
-            visible: previewPane.current && (root.previewKind === "dir" || root.previewKind === "info")
-            anchors.fill: parent
-            anchors.margins: 10
-            text: root.previewBody
-            wrapMode: root.previewKind === "info" ? Text.WordWrap : Text.NoWrap
-            color: root.previewKind === "dir" ? Theme.blue : Theme.subtext1
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize + 2
-            renderType: Text.NativeRendering
-            clip: true
+        Connections {
+            target: root
+
+            function onPreviewBodyChanged() {
+                previewFlick.contentY = 0;
+            }
         }
 
         Image {
-            visible: previewPane.current && root.previewKind === "image"
+            visible: previewPane.current && (root.previewKind === "image" || root.previewKind === "imagefile")
             anchors.fill: parent
             anchors.margins: 8
-            source: visible ? "file://" + root.selectedFilePath : ""
+            source: visible ? "file://" + (root.previewKind === "imagefile" ? root.previewBody.trim() : root.selectedFilePath) : ""
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             sourceSize.width: 1000
