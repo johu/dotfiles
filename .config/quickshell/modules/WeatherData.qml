@@ -121,6 +121,92 @@ Singleton {
         }
     }
 
+    // ---- Detailed forecast for the launcher's weather view ----
+    // Fetched on demand (loadDetail), not every 15 minutes like the card data:
+    // detail = { current, hourly[168], daily[7] }, all from one open-meteo call.
+    property bool detailLoaded: false
+    property bool detailLoading: false
+    property string detailError: ""
+    property var detail: ({ current: null, hourly: [], daily: [] })
+    property real detailAt: 0
+
+    function loadDetail(force) {
+        if (root.detailLoading)
+            return;
+        if (!force && root.detailLoaded && Date.now() - root.detailAt < 10 * 60 * 1000)
+            return;
+        if (root.lat === 0 && root.lon === 0) {
+            root.detailError = "No weatherLocation in secrets.json";
+            return;
+        }
+        root.detailError = "";
+        root.detailLoading = true;
+        detailProc.running = true;
+    }
+
+    Process {
+        id: detailProc
+
+        command: ["curl", "-sL", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,cloud_cover,precipitation&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.detailLoading = false;
+                try {
+                    const d = JSON.parse(this.text);
+                    const r = v => Math.round(v ?? 0);
+                    const h = d.hourly;
+                    const hourly = h.time.map((t, i) => ({
+                                time: new Date(t),
+                                temp: r(h.temperature_2m[i]),
+                                feels: r(h.apparent_temperature[i]),
+                                pop: r(h.precipitation_probability[i]),
+                                precip: h.precipitation[i] ?? 0,
+                                code: h.weather_code[i] ?? 0,
+                                wind: r(h.wind_speed_10m[i]),
+                                humidity: r(h.relative_humidity_2m[i]),
+                                isDay: h.is_day[i] === 1
+                            }));
+                    const y = d.daily;
+                    const daily = y.time.map((t, i) => ({
+                                date: new Date(t),
+                                code: y.weather_code[i] ?? 0,
+                                tMax: r(y.temperature_2m_max[i]),
+                                tMin: r(y.temperature_2m_min[i]),
+                                precipSum: y.precipitation_sum[i] ?? 0,
+                                popMax: r(y.precipitation_probability_max[i]),
+                                windMax: r(y.wind_speed_10m_max[i]),
+                                sunrise: new Date(y.sunrise[i]),
+                                sunset: new Date(y.sunset[i]),
+                                uvMax: Math.round((y.uv_index_max[i] ?? 0) * 10) / 10
+                            }));
+                    const c = d.current;
+                    root.detail = {
+                        current: {
+                            temp: r(c.temperature_2m),
+                            feels: r(c.apparent_temperature),
+                            code: c.weather_code ?? 0,
+                            isDay: c.is_day === 1,
+                            humidity: r(c.relative_humidity_2m),
+                            wind: r(c.wind_speed_10m),
+                            windDir: c.wind_direction_10m ?? 0,
+                            gusts: r(c.wind_gusts_10m),
+                            pressure: r(c.pressure_msl),
+                            clouds: r(c.cloud_cover),
+                            precip: c.precipitation ?? 0
+                        },
+                        hourly: hourly,
+                        daily: daily
+                    };
+                    root.detailAt = Date.now();
+                    root.detailLoaded = true;
+                    root.detailError = "";
+                } catch (e) {
+                    root.detailError = root.detailLoaded ? "" : "Could not load the forecast";
+                }
+            }
+        }
+    }
+
     // Hand-drawn flat SVGs in the tokyonight palette rather than
     // image://icon/, which does no real hicolor lookup (see ResolvedIcon.qml).
     readonly property string assetsDir: Quickshell.shellPath("assets/weather")
