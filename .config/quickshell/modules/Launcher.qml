@@ -146,10 +146,35 @@ PanelWindow {
     // can be restored with the same key that hides.
     property bool showHidden: false
 
+    // ---- Search history on Up (omacast row 9) ----
+    // history: most-recent-first queries that launched something.
+    property var history: []
+    property int historyIndex: -1
+    readonly property int historyMax: 20
+    property bool ctrlHeld: false
+
+    function recordHistory(q) {
+        const term = q.trim();
+        if (!term)
+            return;
+        root.history = [term].concat(root.history.filter(h => h !== term)).slice(0, root.historyMax);
+    }
+
+    // Up in an empty search (or on the first result row while browsing)
+    // steps to the next older query.
+    function historyStep() {
+        if (root.history.length === 0)
+            return;
+        root.historyIndex = Math.min(root.historyIndex + 1, root.history.length - 1);
+        searchInput.text = root.history[root.historyIndex];
+        searchInput.cursorPosition = searchInput.text.length;
+    }
+
     function save() {
         visitsAdapter.visits = root.visits;
         visitsAdapter.favorites = root.favorites;
         visitsAdapter.hidden = root.hidden;
+        visitsAdapter.history = root.history;
         visitsFile.writeAdapter();
         chmodProc.running = true;
     }
@@ -221,6 +246,7 @@ PanelWindow {
             root.visits = visitsAdapter.visits ?? ({});
             root.favorites = visitsAdapter.favorites ?? [];
             root.hidden = visitsAdapter.hidden ?? [];
+            root.history = visitsAdapter.history ?? [];
         }
 
         JsonAdapter {
@@ -228,6 +254,7 @@ PanelWindow {
             property var visits: ({})
             property var favorites: []
             property var hidden: []
+            property var history: []
         }
     }
 
@@ -303,6 +330,8 @@ PanelWindow {
         searchInput.text = "";
         root.selectedIndex = 0;
         root.showHidden = false;
+        root.historyIndex = -1;
+        root.ctrlHeld = false;
         // lastIpcObject is empty until refreshed; needed for window matching.
         Hyprland.refreshToplevels();
         root.visible = true;
@@ -379,6 +408,7 @@ PanelWindow {
         const entry = root.filtered[index];
         if (!entry)
             return;
+        root.recordHistory(root.query);
         root.recordVisit(entry, root.query);
         const addr = forceNew ? "" : root.findWindow(entry);
         if (addr) {
@@ -527,14 +557,26 @@ PanelWindow {
                 renderType: Text.NativeRendering
                 clip: true
 
-                onTextChanged: root.query = text
+                onTextChanged: {
+                    root.query = text;
+                    if (root.historyIndex >= 0 && text !== root.history[root.historyIndex])
+                        root.historyIndex = -1;
+                }
 
                 Keys.onEscapePressed: root.close()
                 Keys.onPressed: event => {
                     const ctrl = event.modifiers & Qt.ControlModifier;
                     const alt = event.modifiers & Qt.AltModifier;
                     const shift = event.modifiers & Qt.ShiftModifier;
-                    if (ctrl && shift && event.key === Qt.Key_F) {
+                    if (event.key === Qt.Key_Control)
+                        root.ctrlHeld = true;
+                    if (ctrl && !alt && !shift && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+                        root.launch(event.key - Qt.Key_1, false);
+                    } else if (ctrl && !alt && !shift && event.key === Qt.Key_N) {
+                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1);
+                    } else if (ctrl && !alt && !shift && event.key === Qt.Key_P) {
+                        root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
+                    } else if (ctrl && shift && event.key === Qt.Key_F) {
                         root.toggleFavorite();
                     } else if (alt && shift && event.key === Qt.Key_D) {
                         root.toggleHidden();
@@ -548,10 +590,20 @@ PanelWindow {
                     }
                     event.accepted = true;
                 }
+                Keys.onReleased: event => {
+                    if (event.key === Qt.Key_Control)
+                        root.ctrlHeld = false;
+                }
                 Keys.onRightPressed: root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1)
                 Keys.onLeftPressed: root.selectedIndex = Math.max(root.selectedIndex - 1, 0)
                 Keys.onDownPressed: root.selectedIndex = Math.min(root.selectedIndex + root.resultColumns, root.filtered.length - 1)
-                Keys.onUpPressed: root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0)
+                Keys.onUpPressed: {
+                    const browsing = root.historyIndex >= 0 && root.selectedIndex < root.resultColumns;
+                    if (!root.showHidden && (searchInput.text === "" || browsing))
+                        root.historyStep();
+                    else
+                        root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
+                }
                 Keys.onReturnPressed: event => root.launch(root.selectedIndex, (event.modifiers & Qt.ShiftModifier) !== 0)
             }
 
@@ -658,6 +710,18 @@ PanelWindow {
                         renderType: Text.NativeRendering
                         elide: Text.ElideRight
                     }
+                }
+
+                Text {
+                    visible: root.ctrlHeld && delegateRoot.index < 9
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.margins: 16
+                    text: delegateRoot.index + 1
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    font.bold: true
                 }
 
                 Text {
