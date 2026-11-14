@@ -121,8 +121,10 @@ Item {
         // model) past the card edge.
         anchors.left: parent.left
         radius: 6
-        // Lighter than the detail card so the popover reads as elevated.
-        color: Qt.lighter(Theme.surface2, 1.4)
+        // Same surface as the emerge tooltip; thin green outline, normal text.
+        color: Theme.surface1
+        border.width: 1
+        border.color: Theme.green
         implicitWidth: tooltipText.implicitWidth + 16
         implicitHeight: tooltipText.implicitHeight + 8
 
