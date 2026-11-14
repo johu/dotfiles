@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
+import "Calculator.js" as Calculator
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -294,9 +295,23 @@ PanelWindow {
         }
     }
 
+    // Inline calculator (omacast row 13). A clear calculation replaces the
+    // app results; Enter copies the result.
+    readonly property var calc: root.showHidden ? null : Calculator.evaluate(root.query)
+
+    function copyCalc() {
+        const c = root.calc;
+        if (!c)
+            return;
+        root.recordHistory(root.query);
+        root.copyText(c.copy);
+        ToastManager.show("Copied " + c.copy, "\uf0c5");
+        root.close();
+    }
+
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
-        if (!q && !root.showHidden)
+        if ((!q && !root.showHidden) || root.calc)
             return [];
 
         const now = Date.now() / 1000;
@@ -656,7 +671,10 @@ PanelWindow {
                         else
                             root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        root.launch(root.selectedIndex, shift !== 0);
+                        if (root.calc)
+                            root.copyCalc();
+                        else
+                            root.launch(root.selectedIndex, shift !== 0);
                     } else {
                         return;
                     }
@@ -680,12 +698,92 @@ PanelWindow {
         }
     }
 
+    // Reserves room under the pill for the calculator row.
+    Item {
+        id: belowPill
+
+        anchors.top: pill.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: 1
+        height: root.calc ? calcRow.height + 12 : 0
+    }
+
+    Rectangle {
+        id: calcRow
+
+        visible: root.calc !== null
+        anchors.top: pill.bottom
+        anchors.topMargin: 12
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: root.pillWidth
+        height: 84
+        radius: root.pillHeight / 2.5
+        color: Theme.surface1
+        border.width: 1
+        border.color: Theme.surface2
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.copyCalc()
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 24
+            anchors.rightMargin: 20
+            spacing: 14
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 2
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.calc ? root.calc.expr : ""
+                    elide: Text.ElideRight
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.calc ? "= " + root.calc.text : ""
+                    elide: Text.ElideRight
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize + 10
+                    font.bold: true
+                    renderType: Text.NativeRendering
+                }
+            }
+
+            KeyCaps {
+                Layout.alignment: Qt.AlignVCenter
+                keys: ["\u21b5"]
+                fontSize: root.hintFontSize
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                text: "copy"
+                color: Theme.subtext1
+                font.family: Theme.fontFamily
+                font.pixelSize: root.hintFontSize
+                renderType: Text.NativeRendering
+            }
+        }
+    }
+
     Text {
         id: focusedDescription
 
         visible: root.selectedDescription.length > 0 && !root.actionsOpen
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: pill.bottom
+        anchors.top: belowPill.bottom
         anchors.topMargin: 10
         width: root.resultsPanelWidth
         height: root.focusedDescHeight
