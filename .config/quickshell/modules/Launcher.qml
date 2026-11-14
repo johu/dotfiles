@@ -5,6 +5,7 @@ import "Ansi.js" as Ansi
 import "Calculator.js" as Calculator
 import "FzfMatch.js" as FzfMatch
 import "Locations.js" as Locations
+import "MediaInfo.js" as MediaInfo
 import "WebSearch.js" as WebSearch
 import Quickshell
 import Quickshell.Hyprland
@@ -567,12 +568,27 @@ PanelWindow {
         '  case "$m" in',
         '    image/*) echo "#image";;',
         '    application/pdf)',
-        '      d="${XDG_RUNTIME_DIR:-/tmp}"; rm -f "$d"/quickshell-preview-*.png; o="$d/quickshell-preview-$$"',
+        '      d="${XDG_RUNTIME_DIR:-/tmp}"; rm -f "$d"/quickshell-preview-*.png "$d"/quickshell-preview-*.jpg; o="$d/quickshell-preview-$$"',
         '      if command -v pdftoppm >/dev/null 2>&1 && pdftoppm -png -r 90 -f 1 -l 1 -singlefile -- "$p" "$o" 2>/dev/null; then echo "#imagefile"; echo "$o.png"',
         '      else echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; fi;;',
         '    text/*|application/json|application/xml|application/javascript|inode/x-empty)',
         '      if [ "$sz" -gt 5000000 ]; then echo "#info"; file --brief -- "$p"; echo "Size: $sz bytes (too large to preview)"',
         '      else echo "#text"; { bat --color=always --theme=ansi --style=numbers --paging=never --wrap=never --line-range :300 -- "$p" 2>/dev/null || head -n 300 -- "$p"; } | head -c 60000; fi;;',
+        '    audio/*|video/*|application/ogg)',
+        '      if ! command -v ffprobe >/dev/null 2>&1; then echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; else',
+        '        d="${XDG_RUNTIME_DIR:-/tmp}"; rm -f "$d"/quickshell-preview-*.png "$d"/quickshell-preview-*.jpg; o="$d/quickshell-preview-$$.jpg"',
+        '        case "$m" in',
+        '          video/*) dur=$(ffprobe -v error -show_entries format=duration -of csv=p=0 -- "$p" 2>/dev/null); dur=${dur%.*}; case "$dur" in "") dur=0;; *[!0-9]*) dur=0;; esac',
+        '            ffmpeg -v error -y -ss "$((dur / 10))" -i "$p" -frames:v 1 -vf scale=640:-2 "$o" </dev/null 2>/dev/null;;',
+        '          *) ffmpeg -v error -y -i "$p" -an -frames:v 1 -vf scale=640:-2 "$o" </dev/null 2>/dev/null;;',
+        '        esac',
+        '        echo "#media"; if [ -s "$o" ]; then echo "$o"; else echo; fi',
+        '        ffprobe -v error -show_entries format=duration,bit_rate,format_long_name:format_tags=title,artist,album,date,genre,track:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate -of default -- "$p" 2>/dev/null',
+        '      fi;;',
+        '    application/zip|application/x-tar|application/gzip|application/x-xz|application/x-bzip2|application/x-7z-compressed|application/vnd.rar|application/x-rar|application/zstd|application/x-lzma|application/java-archive|application/x-iso9660-image|application/x-cpio)',
+        '      l=$({ bsdtar -tf "$p" || unzip -Z1 "$p" || 7z l -ba "$p"; } 2>/dev/null | head -n 201)',
+        '      if [ -n "$l" ]; then echo "#archive"; file --brief -- "$p"; echo; printf "%s\\n" "$l" | head -n 200; [ "$(printf "%s\\n" "$l" | wc -l)" -gt 200 ] && echo "…"',
+        '      else echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; fi;;',
         '    *) echo "#info"; file --brief -- "$p"; stat -c "Size: %s bytes" -- "$p"; stat -c "Modified: %y" -- "$p";;',
         '  esac',
         'fi'
@@ -581,6 +597,7 @@ PanelWindow {
     readonly property string selectedFilePath: root.selectedFile ? root.selectedFile.path : ""
     property string previewKind: ""
     property string previewBody: ""
+    property string previewImage: ""
     property string previewShown: ""
 
     onSelectedFilePathChanged: {
@@ -617,7 +634,14 @@ PanelWindow {
                 const body = nl < 0 ? "" : text.slice(nl + 1);
                 root.previewShown = previewProc.target;
                 root.previewKind = kind.slice(1);
-                root.previewBody = kind === "#text" ? Ansi.toHtml(body) : body;
+                if (kind === "#media") {
+                    const n2 = body.indexOf("\n");
+                    root.previewImage = n2 < 0 ? "" : body.slice(0, n2).trim();
+                    root.previewBody = MediaInfo.format(n2 < 0 ? "" : body.slice(n2 + 1));
+                } else {
+                    root.previewImage = "";
+                    root.previewBody = kind === "#text" ? Ansi.toHtml(body) : body;
+                }
             }
         }
         onExited: {
@@ -1555,9 +1579,13 @@ PanelWindow {
             Flickable {
                 id: previewFlick
 
-                visible: previewPane.current && (root.previewKind === "text" || root.previewKind === "dir" || root.previewKind === "info")
-                anchors.fill: parent
+                visible: previewPane.current && (root.previewKind === "text" || root.previewKind === "dir" || root.previewKind === "info" || root.previewKind === "archive" || root.previewKind === "media")
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.top: parent.top
                 anchors.margins: 10
+                anchors.topMargin: mediaImage.visible ? mediaImage.height + 20 : 10
                 contentWidth: width
                 contentHeight: previewText.height
                 clip: true
@@ -1570,11 +1598,25 @@ PanelWindow {
                     textFormat: root.previewKind === "text" ? Text.RichText : Text.PlainText
                     wrapMode: root.previewKind === "dir" ? Text.NoWrap : Text.Wrap
                     text: root.previewBody
-                    color: root.previewKind === "text" ? Theme.text : (root.previewKind === "dir" ? Theme.blue : Theme.subtext1)
+                    color: root.previewKind === "dir" ? Theme.blue : (root.previewKind === "info" ? Theme.subtext1 : Theme.text)
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize + 2
                     renderType: root.textRendering
                 }
+            }
+
+            Image {
+                id: mediaImage
+
+                visible: previewPane.current && root.previewKind === "media" && root.previewImage !== ""
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 10
+                height: Math.round(parent.height * 0.5)
+                source: visible ? "file://" + root.previewImage : ""
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
             }
 
             Connections {
