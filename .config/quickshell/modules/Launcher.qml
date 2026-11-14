@@ -99,11 +99,73 @@ PanelWindow {
         return score;
     }
 
+    // ---- Frecency + learned search terms (ideas/app-launcher-omacast.md 1, 2) ----
+    // visits: { [desktopId]: { anchor: <epoch s>, terms: [{ term, at: <epoch s> }] } }
+    // Frecency ported from oma-cast core/Frecency.js: score decays with a
+    // 10-day half-life, each launch adds 100. `anchor` is the moment the
+    // score decays to 1, so no per-item timestamp churn.
+    readonly property real frecencyLambda: Math.LN2 / 10
+    readonly property int termMax: 20
+    readonly property real termTtl: 17 * 86400
+    property var visits: ({})
+
+    function frecency(id, now) {
+        const v = root.visits[id];
+        if (!v)
+            return 1;
+        return Math.max(1, Math.exp(root.frecencyLambda * (v.anchor - now) / 86400));
+    }
+
+    function recordVisit(entry, rawQuery) {
+        const now = Date.now() / 1000;
+        const next = Object.assign({}, root.visits);
+        const old = next[entry.id];
+        const score = root.frecency(entry.id, now) + 100;
+        const rec = {
+            anchor: now + 86400 * Math.log(score) / root.frecencyLambda,
+            terms: (old && old.terms ? old.terms : []).filter(t => now - t.at < root.termTtl)
+        };
+        const term = rawQuery.trim().toLowerCase();
+        if (term && term !== (entry.name || "").toLowerCase()) {
+            rec.terms = rec.terms.filter(t => t.term !== term);
+            rec.terms.unshift({ term: term, at: now });
+            rec.terms = rec.terms.slice(0, root.termMax);
+        }
+        next[entry.id] = rec;
+        root.visits = next;
+        visitsAdapter.visits = next;
+        visitsFile.writeAdapter();
+        chmodProc.running = true;
+    }
+
+    // State dir 0700 / file 0600 (omacast row 18). Re-run after each write.
+    property var chmodProc: Process {
+        command: ["sh", "-c", "chmod 700 \"$HOME/.local/state/quickshell\" && chmod 600 \"$HOME/.local/state/quickshell/launcher.json\""]
+    }
+
+    property var mkdirProc: Process {
+        running: true
+        command: ["mkdir", "-p", "-m", "700", Quickshell.env("HOME") + "/.local/state/quickshell"]
+    }
+
+    property var visitsFile: FileView {
+        id: visitsFile
+        path: Quickshell.env("HOME") + "/.local/state/quickshell/launcher.json"
+        printErrors: false
+        onLoaded: root.visits = visitsAdapter.visits ?? ({})
+
+        JsonAdapter {
+            id: visitsAdapter
+            property var visits: ({})
+        }
+    }
+
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
         if (!q)
             return [];
 
+        const now = Date.now() / 1000;
         const scored = [];
         for (const e of root.apps) {
             const name = (e.name || "").toLowerCase();
@@ -111,8 +173,26 @@ PanelWindow {
             const comment = (e.comment || "").toLowerCase();
             const keywords = (e.keywords || []).join(" ").toLowerCase();
 
+            // Terms that previously launched this app act like an exact/prefix hit.
+            let learned = -1;
+            const vrec = root.visits[e.id];
+            if (vrec && vrec.terms) {
+                for (const t of vrec.terms) {
+                    if (now - t.at >= root.termTtl)
+                        continue;
+                    if (t.term === q) {
+                        learned = 1100;
+                        break;
+                    }
+                    if (t.term.startsWith(q))
+                        learned = Math.max(learned, 850);
+                }
+            }
+
             let score = -1;
-            if (name === q)
+            if (learned >= 0)
+                score = learned;
+            else if (name === q)
                 score = 1000;
             else if (name.startsWith(q))
                 score = 800;
@@ -128,10 +208,14 @@ PanelWindow {
                     score = 50 + Math.min(fuzzy, 40);
             }
 
-            if (score >= 0)
-                scored.push({ entry: e, score: score });
+            if (score >= 0) {
+                // Frecency: small additive bonus (<= 40) plus an exact tie-breaker below.
+                const f = root.frecency(e.id, now);
+                score += Math.min(40, 8 * Math.log2(f));
+                scored.push({ entry: e, score: score, frec: f });
+            }
         }
-        scored.sort((a, b) => b.score - a.score || a.entry.name.localeCompare(b.entry.name));
+        scored.sort((a, b) => b.score - a.score || b.frec - a.frec || a.entry.name.localeCompare(b.entry.name));
         return scored.map(s => s.entry);
     }
 
@@ -176,6 +260,7 @@ PanelWindow {
         const entry = root.filtered[index];
         if (!entry)
             return;
+        root.recordVisit(entry, root.query);
         if (entry.runInTerminal) {
             Apps.runInTerminal(entry.command);
         } else {
