@@ -134,9 +134,73 @@ PanelWindow {
         }
         next[entry.id] = rec;
         root.visits = next;
-        visitsAdapter.visits = next;
+        root.save();
+    }
+
+    // ---- Favorites + hidden entries (omacast rows 6, 7) ----
+    // favorites: ordered desktop ids, shown first in results.
+    // hidden: desktop ids excluded from results (qs ipc call launcher unhideAll).
+    property var favorites: []
+    property var hidden: []
+    // Hidden-apps mode: lists only hidden apps (even before typing) so they
+    // can be restored with the same key that hides.
+    property bool showHidden: false
+
+    function save() {
+        visitsAdapter.visits = root.visits;
+        visitsAdapter.favorites = root.favorites;
+        visitsAdapter.hidden = root.hidden;
         visitsFile.writeAdapter();
         chmodProc.running = true;
+    }
+
+    // Keep the highlight on the same app after the result list reorders.
+    function reselect(id) {
+        const i = root.filtered.findIndex(e => e.id === id);
+        root.selectedIndex = i < 0 ? 0 : i;
+    }
+
+    function toggleFavorite() {
+        const e = root.selectedEntry;
+        if (!e)
+            return;
+        root.favorites = root.favorites.includes(e.id) ? root.favorites.filter(id => id !== e.id) : root.favorites.concat([e.id]);
+        root.save();
+        root.reselect(e.id);
+    }
+
+    // Swap the selected favorite with its neighbouring favorite in the results.
+    function moveFavorite(delta) {
+        const e = root.selectedEntry;
+        const other = root.filtered[root.selectedIndex + delta];
+        if (!e || !other)
+            return;
+        const a = root.favorites.indexOf(e.id);
+        const b = root.favorites.indexOf(other.id);
+        if (a < 0 || b < 0)
+            return;
+        const next = root.favorites.slice();
+        next[a] = other.id;
+        next[b] = e.id;
+        root.favorites = next;
+        root.save();
+        root.reselect(e.id);
+    }
+
+    // Hides the selected app, or restores it when in hidden-apps mode.
+    function toggleHidden() {
+        const e = root.selectedEntry;
+        if (!e)
+            return;
+        const idx = root.selectedIndex;
+        if (root.showHidden) {
+            root.hidden = root.hidden.filter(id => id !== e.id);
+        } else {
+            root.hidden = root.hidden.concat([e.id]);
+            root.favorites = root.favorites.filter(id => id !== e.id);
+        }
+        root.save();
+        root.selectedIndex = Math.min(idx, root.filtered.length - 1);
     }
 
     // State dir 0700 / file 0600 (omacast row 18). Re-run after each write.
@@ -153,22 +217,30 @@ PanelWindow {
         id: visitsFile
         path: Quickshell.env("HOME") + "/.local/state/quickshell/launcher.json"
         printErrors: false
-        onLoaded: root.visits = visitsAdapter.visits ?? ({})
+        onLoaded: {
+            root.visits = visitsAdapter.visits ?? ({});
+            root.favorites = visitsAdapter.favorites ?? [];
+            root.hidden = visitsAdapter.hidden ?? [];
+        }
 
         JsonAdapter {
             id: visitsAdapter
             property var visits: ({})
+            property var favorites: []
+            property var hidden: []
         }
     }
 
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
-        if (!q)
+        if (!q && !root.showHidden)
             return [];
 
         const now = Date.now() / 1000;
         const scored = [];
         for (const e of root.apps) {
+            if (root.hidden.includes(e.id) !== root.showHidden)
+                continue;
             const name = (e.name || "").toLowerCase();
             const generic = (e.genericName || "").toLowerCase();
             const comment = (e.comment || "").toLowerCase();
@@ -216,7 +288,11 @@ PanelWindow {
                 scored.push({ entry: e, score: score, frec: f });
             }
         }
-        scored.sort((a, b) => b.score - a.score || b.frec - a.frec || a.entry.name.localeCompare(b.entry.name));
+        const favRank = id => {
+            const i = root.favorites.indexOf(id);
+            return i < 0 ? Infinity : i;
+        };
+        scored.sort((a, b) => (favRank(a.entry.id) - favRank(b.entry.id)) || b.score - a.score || b.frec - a.frec || a.entry.name.localeCompare(b.entry.name));
         return scored.map(s => s.entry);
     }
 
@@ -226,6 +302,7 @@ PanelWindow {
         // stale query lingers on reopen.
         searchInput.text = "";
         root.selectedIndex = 0;
+        root.showHidden = false;
         // lastIpcObject is empty until refreshed; needed for window matching.
         Hyprland.refreshToplevels();
         root.visible = true;
@@ -254,6 +331,11 @@ PanelWindow {
 
         function toggle(): void {
             root.toggle();
+        }
+
+        function unhideAll(): void {
+            root.hidden = [];
+            root.save();
         }
     }
 
@@ -448,11 +530,39 @@ PanelWindow {
                 onTextChanged: root.query = text
 
                 Keys.onEscapePressed: root.close()
+                Keys.onPressed: event => {
+                    const ctrl = event.modifiers & Qt.ControlModifier;
+                    const alt = event.modifiers & Qt.AltModifier;
+                    const shift = event.modifiers & Qt.ShiftModifier;
+                    if (ctrl && shift && event.key === Qt.Key_F) {
+                        root.toggleFavorite();
+                    } else if (alt && shift && event.key === Qt.Key_D) {
+                        root.toggleHidden();
+                    } else if (alt && shift && event.key === Qt.Key_H) {
+                        root.showHidden = !root.showHidden;
+                        root.selectedIndex = 0;
+                    } else if (ctrl && alt && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
+                        root.moveFavorite(event.key === Qt.Key_Left ? -1 : 1);
+                    } else {
+                        return;
+                    }
+                    event.accepted = true;
+                }
                 Keys.onRightPressed: root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1)
                 Keys.onLeftPressed: root.selectedIndex = Math.max(root.selectedIndex - 1, 0)
                 Keys.onDownPressed: root.selectedIndex = Math.min(root.selectedIndex + root.resultColumns, root.filtered.length - 1)
                 Keys.onUpPressed: root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0)
                 Keys.onReturnPressed: event => root.launch(root.selectedIndex, (event.modifiers & Qt.ShiftModifier) !== 0)
+            }
+
+            Text {
+                visible: root.showHidden
+                Layout.alignment: Qt.AlignVCenter
+                text: root.filtered.length > 0 ? "Hidden apps \u00b7 Alt+Shift+D restores" : "No hidden apps"
+                color: Theme.yellow
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize
+                renderType: Text.NativeRendering
             }
         }
     }
@@ -548,6 +658,16 @@ PanelWindow {
                         renderType: Text.NativeRendering
                         elide: Text.ElideRight
                     }
+                }
+
+                Text {
+                    visible: root.favorites.includes(delegateRoot.modelData.id)
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 16
+                    text: "★"
+                    color: Theme.yellow
+                    font.pixelSize: root.resultFontSize
                 }
 
                 MouseArea {
