@@ -641,6 +641,99 @@ PanelWindow {
         renderType: Text.NativeRendering
     }
 
+    // Context-sensitive key hints under the results (omacast row 21): rows of
+    // { keys: [...], text } rendered as key-cap chips.
+    readonly property int hintFontSize: Theme.fontSize + 2
+    readonly property var keyHints: {
+        const e = root.selectedEntry;
+        if (!e)
+            return [];
+        const open = root.findWindow(e)
+            ? [{ keys: ["\u21b5"], text: "focus window" }, { keys: ["Shift", "\u21b5"], text: "new window" }]
+            : [{ keys: ["\u21b5"], text: "open" }];
+        // Only the open/focus hints until the Ctrl+K action panel exists to
+        // list the rest (pin, hide, hidden apps, quick picks).
+        if (root.showHidden)
+            return [open.concat([
+                { keys: ["Alt", "Shift", "D"], text: "restore" },
+                { keys: ["Alt", "Shift", "H"], text: "back" }
+            ])];
+        return [open];
+    }
+
+    Column {
+        visible: resultsPanel.visible
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: resultsPanel.bottom
+        anchors.topMargin: 14
+        spacing: 8
+        opacity: 0.85
+
+        Repeater {
+            model: root.keyHints
+
+            Row {
+                id: hintRow
+
+                required property var modelData
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 26
+
+                Repeater {
+                    model: hintRow.modelData
+
+                    Row {
+                        id: hintItem
+
+                        required property var modelData
+                        spacing: 8
+
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+
+                            Repeater {
+                                model: hintItem.modelData.keys
+
+                                Rectangle {
+                                    id: cap
+
+                                    required property string modelData
+                                    height: capLabel.implicitHeight + 8
+                                    width: Math.max(height, capLabel.implicitWidth + 14)
+                                    radius: 6
+                                    color: Theme.surface2
+                                    border.width: 1
+                                    border.color: Theme.surface1
+
+                                    Text {
+                                        id: capLabel
+
+                                        anchors.centerIn: parent
+                                        text: cap.modelData
+                                        color: Theme.text
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: root.hintFontSize
+                                        renderType: Text.NativeRendering
+                                    }
+                                }
+                            }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: hintItem.modelData.text
+                            color: Theme.subtext1
+                            font.family: Theme.fontFamily
+                            font.pixelSize: root.hintFontSize
+                            renderType: Text.NativeRendering
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Item {
         id: resultsPanel
 
