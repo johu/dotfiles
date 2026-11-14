@@ -1311,6 +1311,16 @@ PanelWindow {
         }
     }
 
+    Component {
+        id: weatherView
+
+        LauncherWeatherView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.closeView()
+        }
+    }
+
     // Everything except the blurred backdrop is scaled around the screen
     // centre (Ctrl +/-/0), so the launcher stays readable on small screens.
     Item {
@@ -1349,7 +1359,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewActive
-                sourceComponent: root.viewName === "calendar" ? calendarView : (root.viewName === "notifications" ? notificationsView : null)
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView })[root.viewName] ?? null
             }
         }
 

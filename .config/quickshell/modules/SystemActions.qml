@@ -80,6 +80,8 @@ Singleton {
 
         list.push(Object.assign(root.entry("view-notifications", "Notifications", "Inbox and history with keyboard actions", ["notifications", "notification", "inbox", "history", "messages", "alerts", "dnd"], "\uf0f3", Theme.mauve, () => {}), { view: "notifications" }));
 
+        list.push(Object.assign(root.entry("view-weather", "Weather", "Forecast with hourly details", ["weather", "forecast", "temperature", "rain", "wind", "sun", "wetter", "climate"], "\uf0c2", Theme.sky, () => {}), { view: "weather" }));
+
         // Capture (handled by Capture.qml through DashboardBridge)
         list.push(root.entry("shot-region", "Screenshot Region", "Pick an area to capture", ["screenshot", "screen shot", "capture", "region"], "\uf030", Theme.mauve, () => root.capture("region")));
         list.push(root.entry("shot-screen", "Screenshot Screen", "Capture the whole screen", ["screenshot", "screen shot", "capture", "full screen"], "\uf108", Theme.mauve, () => root.capture("screen")));
