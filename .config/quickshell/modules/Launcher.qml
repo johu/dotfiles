@@ -3,6 +3,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import "Ansi.js" as Ansi
 import "Calculator.js" as Calculator
+import "FzfMatch.js" as FzfMatch
 import "Locations.js" as Locations
 import "WebSearch.js" as WebSearch
 import Quickshell
@@ -1390,6 +1391,7 @@ PanelWindow {
                 readonly property bool isDir: fileRow.modelData.endsWith("/")
                 readonly property string clean: fileRow.isDir ? fileRow.modelData.slice(0, -1) : fileRow.modelData
                 readonly property int cut: fileRow.clean.lastIndexOf("/")
+                readonly property var hl: FzfMatch.positions(root.fileTerm, fileRow.clean)
 
                 width: fileView.width
                 height: fileList.rowHeight
@@ -1419,7 +1421,8 @@ PanelWindow {
 
                         Text {
                             Layout.fillWidth: true
-                            text: fileRow.clean.slice(fileRow.cut + 1)
+                            textFormat: Text.StyledText
+                            text: FzfMatch.html(fileRow.clean.slice(fileRow.cut + 1), fileRow.hl, fileRow.cut + 1, Theme.yellow)
                             elide: Text.ElideMiddle
                             color: Theme.text
                             font.family: Theme.fontFamily
@@ -1430,7 +1433,8 @@ PanelWindow {
 
                         Text {
                             Layout.fillWidth: true
-                            text: fileRow.cut < 0 ? "~" : "~/" + fileRow.clean.slice(0, fileRow.cut)
+                            textFormat: Text.StyledText
+                            text: fileRow.cut < 0 ? "~" : FzfMatch.html("~/" + fileRow.clean.slice(0, fileRow.cut), fileRow.hl, -2, Theme.yellow)
                             elide: Text.ElideLeft
                             color: Theme.subtext1
                             font.family: Theme.fontFamily
@@ -1476,11 +1480,11 @@ PanelWindow {
             anchors.fill: parent
             anchors.margins: 10
             textFormat: Text.RichText
+            wrapMode: Text.Wrap
             text: root.previewBody
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize + 2
-            wrapMode: Text.Wrap
             renderType: Text.NativeRendering
             clip: true
         }
