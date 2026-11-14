@@ -151,7 +151,7 @@ PanelWindow {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: caps.fontSize
-                    renderType: Text.NativeRendering
+                    renderType: root.textRendering
                 }
             }
         }
@@ -207,6 +207,19 @@ PanelWindow {
     // history: most-recent-first queries that launched something.
     property var history: []
     property int historyIndex: -1
+
+    // UI scale (Ctrl +/-/0), persisted in launcher.json.
+    property real zoom: 1
+
+    // Native glyphs are rasterised once and pixelate when scaled; the
+    // distance-field renderer stays sharp at any zoom.
+    readonly property int textRendering: root.zoom === 1 ? Text.NativeRendering : Text.QtRendering
+
+    function setZoom(z) {
+        root.zoom = Math.max(0.6, Math.min(2, Math.round(z * 100) / 100));
+        root.save();
+        ToastManager.show("Launcher zoom " + Math.round(root.zoom * 100) + "%", "\uf002");
+    }
     readonly property int historyMax: 20
     property bool ctrlHeld: false
 
@@ -232,6 +245,7 @@ PanelWindow {
         visitsAdapter.favorites = root.favorites;
         visitsAdapter.hidden = root.hidden;
         visitsAdapter.history = root.history;
+        visitsAdapter.zoom = root.zoom;
         visitsFile.writeAdapter();
         chmodProc.running = true;
     }
@@ -304,6 +318,7 @@ PanelWindow {
             root.favorites = visitsAdapter.favorites ?? [];
             root.hidden = visitsAdapter.hidden ?? [];
             root.history = visitsAdapter.history ?? [];
+            root.zoom = visitsAdapter.zoom > 0 ? visitsAdapter.zoom : 1;
         }
 
         JsonAdapter {
@@ -312,6 +327,7 @@ PanelWindow {
             property var favorites: []
             property var hidden: []
             property var history: []
+            property real zoom: 1
         }
     }
 
@@ -1001,260 +1017,6 @@ PanelWindow {
         }
     }
 
-    Rectangle {
-        id: pill
-
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height * 0.32 - height / 2
-        width: root.pillWidth
-        height: root.pillHeight
-        radius: root.pillHeight / 2.5
-        color: Theme.surface1
-        border.width: 1
-        border.color: Theme.surface2
-
-        // Swallow clicks so they don't reach the dismiss MouseArea behind.
-        MouseArea {
-            anchors.fill: parent
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 20
-            anchors.rightMargin: 20
-            spacing: 14
-
-            Text {
-                Layout.alignment: Qt.AlignVCenter
-                verticalAlignment: Text.AlignVCenter
-                text: "\uf002"
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: root.inputFontSize
-                renderType: Text.NativeRendering
-            }
-
-            TextInput {
-                id: searchInput
-
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                verticalAlignment: Text.AlignVCenter
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: root.inputFontSize
-                renderType: Text.NativeRendering
-                clip: true
-
-                onTextChanged: {
-                    root.query = text;
-                    if (root.historyIndex >= 0 && text !== root.history[root.historyIndex])
-                        root.historyIndex = -1;
-                }
-
-                // All keys are handled in onPressed: Qt emits the specific
-                // handlers (onUpPressed, onReturnPressed, ...) first and they
-                // would shadow the action panel and Ctrl+Alt+arrow combos.
-                Keys.onPressed: event => {
-                    const ctrl = event.modifiers & Qt.ControlModifier;
-                    const alt = event.modifiers & Qt.AltModifier;
-                    const shift = event.modifiers & Qt.ShiftModifier;
-                    if (event.key === Qt.Key_Control)
-                        root.ctrlHeld = true;
-                    if (root.actionsOpen) {
-                        if (event.key === Qt.Key_Escape || (ctrl && event.key === Qt.Key_K))
-                            root.actionsOpen = false;
-                        else if (event.key === Qt.Key_Down || (ctrl && event.key === Qt.Key_N))
-                            root.actionIndex = Math.min(root.actionIndex + 1, root.actions.length - 1);
-                        else if (event.key === Qt.Key_Up || (ctrl && event.key === Qt.Key_P))
-                            root.actionIndex = Math.max(root.actionIndex - 1, 0);
-                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                            root.runAction(root.actionIndex);
-                        else if (root.webLocked)
-                            return;
-                        event.accepted = true;
-                        return;
-                    }
-                    if (ctrl && !alt && !shift && event.key === Qt.Key_K) {
-                        root.openActions();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (ctrl && !alt && !shift && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
-                        if (root.fileMode)
-                            root.openFileAt(event.key - Qt.Key_1);
-                        else
-                            root.launch(event.key - Qt.Key_1, false);
-                    } else if (ctrl && !alt && !shift && event.key === Qt.Key_N) {
-                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.navCount - 1);
-                    } else if (ctrl && !alt && !shift && event.key === Qt.Key_P) {
-                        root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
-                    } else if (ctrl && shift && event.key === Qt.Key_F) {
-                        root.toggleFavorite();
-                    } else if (alt && shift && event.key === Qt.Key_D) {
-                        root.toggleHidden();
-                    } else if (alt && shift && event.key === Qt.Key_H) {
-                        root.showHidden = !root.showHidden;
-                        root.selectedIndex = 0;
-                    } else if (ctrl && alt && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
-                        root.moveFavorite(event.key === Qt.Key_Left ? -1 : 1);
-                    } else if (root.fileMode && (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp)) {
-                        root.scrollPreview(event.key === Qt.Key_PageDown ? 1 : -1);
-                    } else if (event.key === Qt.Key_Escape) {
-                        root.close();
-                    } else if (event.key === Qt.Key_Right) {
-                        if (root.fileMode)
-                            return;
-                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.navCount - 1);
-                    } else if (event.key === Qt.Key_Left) {
-                        if (root.fileMode)
-                            return;
-                        root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
-                    } else if (event.key === Qt.Key_Down) {
-                        root.selectedIndex = Math.min(root.selectedIndex + root.navColumns, root.navCount - 1);
-                    } else if (event.key === Qt.Key_Up) {
-                        const browsing = root.historyIndex >= 0 && root.selectedIndex < root.navColumns;
-                        if (!root.fileMode && !root.showHidden && (searchInput.text === "" || browsing))
-                            root.historyStep();
-                        else
-                            root.selectedIndex = Math.max(root.selectedIndex - root.navColumns, 0);
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (root.fileMode) {
-                            if (root.selectedFile)
-                                root.openPath(root.selectedFile);
-                        } else if (ctrl && !root.loc && root.query.trim() !== "")
-                            root.openSearch(WebSearch.defaultProvider(), root.query.trim());
-                        else if (root.calc || root.loc || root.web)
-                            root.activateInline();
-                        else
-                            root.launch(root.selectedIndex, shift !== 0);
-                    } else {
-                        return;
-                    }
-                    event.accepted = true;
-                }
-                Keys.onReleased: event => {
-                    if (event.key === Qt.Key_Control)
-                        root.ctrlHeld = false;
-                }
-            }
-
-            Text {
-                visible: root.showHidden
-                Layout.alignment: Qt.AlignVCenter
-                text: root.filtered.length > 0 ? "Hidden apps \u00b7 Alt+Shift+D restores" : "No hidden apps"
-                color: Theme.yellow
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                renderType: Text.NativeRendering
-            }
-        }
-    }
-
-    // Reserves room under the pill for the calculator row.
-    Item {
-        id: belowPill
-
-        anchors.top: pill.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: 1
-        height: root.inlineRow ? calcRow.height + 12 : 0
-    }
-
-    Rectangle {
-        id: calcRow
-
-        visible: root.inlineRow !== null
-        anchors.top: pill.bottom
-        anchors.topMargin: 12
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: root.pillWidth
-        height: 84
-        radius: root.pillHeight / 2.5
-        color: Theme.surface1
-        border.width: 1
-        border.color: Theme.surface2
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.activateInline()
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 24
-            anchors.rightMargin: 20
-            spacing: 14
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 2
-
-                Text {
-                    Layout.fillWidth: true
-                    text: root.inlineRow ? root.inlineRow.title : ""
-                    elide: Text.ElideRight
-                    color: Theme.subtext1
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
-                    renderType: Text.NativeRendering
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: root.inlineRow ? root.inlineRow.text : ""
-                    elide: Text.ElideRight
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize + 10
-                    font.bold: true
-                    renderType: Text.NativeRendering
-                }
-            }
-
-            KeyCaps {
-                visible: !!root.inlineRow && root.inlineRow.hint !== ""
-                Layout.alignment: Qt.AlignVCenter
-                keys: ["\u21b5"]
-                fontSize: root.hintFontSize
-            }
-
-            Text {
-                visible: !!root.inlineRow && root.inlineRow.hint !== ""
-                Layout.alignment: Qt.AlignVCenter
-                text: root.inlineRow ? root.inlineRow.hint : ""
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: root.hintFontSize
-                renderType: Text.NativeRendering
-            }
-        }
-    }
-
-    Text {
-        id: focusedDescription
-
-        visible: root.selectedDescription.length > 0 && !root.actionsOpen
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: belowPill.bottom
-        anchors.topMargin: 10
-        width: root.resultsPanelWidth
-        height: root.focusedDescHeight
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignTop
-        wrapMode: Text.WordWrap
-        maximumLineCount: 2
-        elide: Text.ElideRight
-        text: root.selectedDescription
-        color: Theme.subtext1
-        font.family: Theme.fontFamily
-        font.italic: true
-        font.pixelSize: root.focusedDescFontSize
-        renderType: Text.NativeRendering
-    }
-
     // ---- Action panel on Ctrl+K (omacast row 10) ----
     property bool actionsOpen: false
     property int actionIndex: 0
@@ -1351,439 +1113,709 @@ PanelWindow {
         return [open.concat([{ keys: ["Ctrl", "K"], text: "actions" }])];
     }
 
-    Column {
-        visible: (resultsPanel.visible || fileList.visible) && !root.actionsOpen
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: root.fileMode ? fileList.bottom : resultsPanel.bottom
-        anchors.topMargin: 14
-        spacing: 8
-        opacity: 0.85
-
-        Repeater {
-            model: root.keyHints
-
-            Row {
-                id: hintRow
-
-                required property var modelData
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 26
-
-                Repeater {
-                    model: hintRow.modelData
-
-                    Row {
-                        id: hintItem
-
-                        required property var modelData
-                        spacing: 8
-
-                        KeyCaps {
-                            anchors.verticalCenter: parent.verticalCenter
-                            keys: hintItem.modelData.keys
-                            fontSize: root.hintFontSize
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: hintItem.modelData.text
-                            color: Theme.subtext1
-                            font.family: Theme.fontFamily
-                            font.pixelSize: root.hintFontSize
-                            renderType: Text.NativeRendering
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // File search results: full-width rows (name, dimmed folder) so long
-    // paths stay readable; apps keep their tiles.
+    // Everything except the blurred backdrop is scaled around the screen
+    // centre (Ctrl +/-/0), so the launcher stays readable on small screens.
     Item {
-        id: fileList
+        id: content
 
-        readonly property int rowHeight: 54
-
-        visible: root.fileMode && root.fileResults.length > 0 && !root.actionsOpen
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: focusedDescription.bottom
-        anchors.topMargin: 14
-        width: root.pillWidth
-        height: Math.max(Math.min(root.fileResults.length, 7), 5) * fileList.rowHeight
-        clip: true
-
-        MouseArea {
-            anchors.fill: parent
+        anchors.fill: parent
+        transform: Scale {
+            origin.x: content.width / 2
+            origin.y: content.height / 2
+            xScale: root.zoom
+            yScale: root.zoom
         }
 
-        ListView {
-            id: fileView
+        Rectangle {
+            id: pill
 
-            anchors.fill: parent
-            clip: true
-            model: root.fileMode ? root.fileResults : []
-            currentIndex: root.selectedIndex
-            highlightFollowsCurrentItem: false
-            onCurrentIndexChanged: fileView.positionViewAtIndex(fileView.currentIndex, ListView.Contain)
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: parent.height * 0.32 - height / 2
+            width: root.pillWidth
+            height: root.pillHeight
+            radius: root.pillHeight / 2.5
+            color: Theme.surface1
+            border.width: 1
+            border.color: Theme.surface2
 
-            delegate: Rectangle {
-                id: fileRow
-
-                required property string modelData
-                required property int index
-
-                readonly property bool isDir: fileRow.modelData.endsWith("/")
-                readonly property string clean: fileRow.isDir ? fileRow.modelData.slice(0, -1) : fileRow.modelData
-                readonly property int cut: fileRow.clean.lastIndexOf("/")
-                readonly property var hl: FzfMatch.positions(root.fileTerm, fileRow.clean)
-                readonly property bool isAbs: fileRow.clean.charAt(0) === "/"
-
-                width: fileView.width
-                height: fileList.rowHeight
-                radius: Theme.radius / 2
-                color: fileRow.index === root.selectedIndex ? Theme.surface2 : "transparent"
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
-                    spacing: 12
-
-                    Text {
-                        Layout.preferredWidth: 22
-                        horizontalAlignment: Text.AlignHCenter
-                        text: fileRow.isDir ? "\uf07b" : "\uf15b"
-                        color: fileRow.isDir ? Theme.blue : Theme.subtext1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize + 2
-                        renderType: Text.NativeRendering
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        spacing: 1
-
-                        Text {
-                            Layout.fillWidth: true
-                            textFormat: Text.StyledText
-                            text: FzfMatch.html(fileRow.clean.slice(fileRow.cut + 1), fileRow.hl, fileRow.cut + 1, Theme.yellow)
-                            elide: Text.ElideMiddle
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize + 2
-                            font.bold: true
-                            renderType: Text.NativeRendering
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            textFormat: Text.StyledText
-                            text: fileRow.isAbs ? FzfMatch.html(fileRow.cut > 0 ? fileRow.clean.slice(0, fileRow.cut) : "/", fileRow.hl, 0, Theme.yellow) : (fileRow.cut < 0 ? "~" : FzfMatch.html("~/" + fileRow.clean.slice(0, fileRow.cut), fileRow.hl, -2, Theme.yellow))
-                            elide: Text.ElideLeft
-                            color: Theme.subtext1
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 1
-                            renderType: Text.NativeRendering
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: fileMouse
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: mouse => root.hoverSelect(fileMouse, mouse, fileRow.index)
-                    onClicked: root.openFileAt(fileRow.index)
-                }
+            // Swallow clicks so they don't reach the dismiss MouseArea behind.
+            MouseArea {
+                anchors.fill: parent
             }
-        }
-    }
 
-    // Preview of the selected file result (right of the list).
-    Rectangle {
-        id: previewPane
-
-        visible: fileList.visible
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: fileList.right
-        anchors.leftMargin: 40
-        width: Math.min(780, root.width - fileList.x - fileList.width - 40 - 24)
-        height: Math.round(root.height * 0.6)
-        radius: Theme.radius / 2
-        color: Theme.surface1
-        border.width: 1
-        border.color: Theme.surface2
-        clip: true
-
-        readonly property bool current: root.previewShown === root.selectedFilePath
-
-        Flickable {
-            id: previewFlick
-
-            visible: previewPane.current && (root.previewKind === "text" || root.previewKind === "dir" || root.previewKind === "info")
-            anchors.fill: parent
-            anchors.margins: 10
-            contentWidth: width
-            contentHeight: previewText.height
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-
-            Text {
-                id: previewText
-
-                width: previewFlick.width
-                textFormat: root.previewKind === "text" ? Text.RichText : Text.PlainText
-                wrapMode: root.previewKind === "dir" ? Text.NoWrap : Text.Wrap
-                text: root.previewBody
-                color: root.previewKind === "text" ? Theme.text : (root.previewKind === "dir" ? Theme.blue : Theme.subtext1)
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize + 2
-                renderType: Text.NativeRendering
-            }
-        }
-
-        Connections {
-            target: root
-
-            function onPreviewBodyChanged() {
-                previewFlick.contentY = 0;
-            }
-        }
-
-        Image {
-            visible: previewPane.current && (root.previewKind === "image" || root.previewKind === "imagefile")
-            anchors.fill: parent
-            anchors.margins: 8
-            source: visible ? "file://" + (root.previewKind === "imagefile" ? root.previewBody.trim() : root.selectedFilePath) : ""
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            sourceSize.width: 1000
-            sourceSize.height: 1000
-        }
-    }
-
-    Item {
-        id: resultsPanel
-
-        visible: root.filtered.length > 0
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: focusedDescription.bottom
-        anchors.topMargin: 14
-        width: root.resultsPanelWidth
-        height: Math.min(grid.contentHeight, root.maxVisibleRows * root.tileHeight)
-        clip: true
-
-        MouseArea {
-            anchors.fill: parent
-        }
-
-        GridView {
-            id: grid
-
-            anchors.fill: parent
-            clip: true
-            cellWidth: resultsPanel.width / root.resultColumns
-            cellHeight: root.tileHeight
-            model: root.filtered
-            currentIndex: root.selectedIndex
-            highlightFollowsCurrentItem: true
-
-            onCurrentIndexChanged: grid.positionViewAtIndex(grid.currentIndex, GridView.Contain)
-
-            delegate: Item {
-                id: delegateRoot
-
-                required property var modelData
-                required property int index
-
-                width: grid.cellWidth
-                height: grid.cellHeight
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    radius: Theme.radius / 2
-                    color: delegateRoot.index === root.selectedIndex ? Theme.surface2 : "transparent"
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: root.tileContentMargin
-                    spacing: root.tileIconSpacing
-
-                    Item {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: root.tileIconSize
-                        Layout.preferredHeight: root.tileIconSize
-
-                        IconImage {
-                            anchors.fill: parent
-                            visible: !delegateRoot.modelData.glyph
-                            source: Quickshell.iconPath(delegateRoot.modelData.icon, "image-missing")
-                        }
-
-                        // System actions have a Nerd Font glyph instead of an icon.
-                        Text {
-                            anchors.centerIn: parent
-                            visible: !!delegateRoot.modelData.glyph
-                            text: delegateRoot.modelData.glyph ?? ""
-                            color: delegateRoot.modelData.color ?? Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: root.tileIconSize * 0.75
-                            renderType: Text.NativeRendering
-                        }
-                    }
-
-                    Text {
-                        id: nameText
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: root.nameBlockHeight
-                        verticalAlignment: Text.AlignTop
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.WordWrap
-                        maximumLineCount: 2
-                        text: delegateRoot.modelData.name + (delegateRoot.modelData.active ? " \u2713" : "")
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: root.resultFontSize
-                        renderType: Text.NativeRendering
-                        elide: Text.ElideRight
-
-                        Binding {
-                            target: root
-                            property: "selectedNameTruncated"
-                            value: nameText.truncated
-                            when: delegateRoot.index === root.selectedIndex
-                        }
-                    }
-                }
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 20
+                anchors.rightMargin: 20
+                spacing: 14
 
                 Text {
-                    visible: root.ctrlHeld && !root.actionsOpen && delegateRoot.index < 9
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.margins: 16
-                    text: delegateRoot.index + 1
+                    Layout.alignment: Qt.AlignVCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "\uf002"
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
-                    font.bold: true
+                    font.pixelSize: root.inputFontSize
+                    renderType: root.textRendering
+                }
+
+                TextInput {
+                    id: searchInput
+
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    verticalAlignment: Text.AlignVCenter
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: root.inputFontSize
+                    renderType: root.textRendering
+                    clip: true
+
+                    onTextChanged: {
+                        root.query = text;
+                        if (root.historyIndex >= 0 && text !== root.history[root.historyIndex])
+                            root.historyIndex = -1;
+                    }
+
+                    // All keys are handled in onPressed: Qt emits the specific
+                    // handlers (onUpPressed, onReturnPressed, ...) first and they
+                    // would shadow the action panel and Ctrl+Alt+arrow combos.
+                    Keys.onPressed: event => {
+                        const ctrl = event.modifiers & Qt.ControlModifier;
+                        const alt = event.modifiers & Qt.AltModifier;
+                        const shift = event.modifiers & Qt.ShiftModifier;
+                        if (event.key === Qt.Key_Control)
+                            root.ctrlHeld = true;
+                        if (root.actionsOpen) {
+                            if (event.key === Qt.Key_Escape || (ctrl && event.key === Qt.Key_K))
+                                root.actionsOpen = false;
+                            else if (event.key === Qt.Key_Down || (ctrl && event.key === Qt.Key_N))
+                                root.actionIndex = Math.min(root.actionIndex + 1, root.actions.length - 1);
+                            else if (event.key === Qt.Key_Up || (ctrl && event.key === Qt.Key_P))
+                                root.actionIndex = Math.max(root.actionIndex - 1, 0);
+                            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                root.runAction(root.actionIndex);
+                            else if (root.webLocked)
+                                return;
+                            event.accepted = true;
+                            return;
+                        }
+                        if (ctrl && !alt && !shift && event.key === Qt.Key_K) {
+                            root.openActions();
+                            event.accepted = true;
+                            return;
+                        }
+                        if (ctrl && !alt && (event.key === Qt.Key_Plus || event.key === Qt.Key_Equal || event.key === Qt.Key_Minus || event.key === Qt.Key_0)) {
+                        root.setZoom(event.key === Qt.Key_0 ? 1 : root.zoom + (event.key === Qt.Key_Minus ? -0.1 : 0.1));
+                    } else if (ctrl && !alt && !shift && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+                            if (root.fileMode)
+                                root.openFileAt(event.key - Qt.Key_1);
+                            else
+                                root.launch(event.key - Qt.Key_1, false);
+                        } else if (ctrl && !alt && !shift && event.key === Qt.Key_N) {
+                            root.selectedIndex = Math.min(root.selectedIndex + 1, root.navCount - 1);
+                        } else if (ctrl && !alt && !shift && event.key === Qt.Key_P) {
+                            root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
+                        } else if (ctrl && shift && event.key === Qt.Key_F) {
+                            root.toggleFavorite();
+                        } else if (alt && shift && event.key === Qt.Key_D) {
+                            root.toggleHidden();
+                        } else if (alt && shift && event.key === Qt.Key_H) {
+                            root.showHidden = !root.showHidden;
+                            root.selectedIndex = 0;
+                        } else if (ctrl && alt && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
+                            root.moveFavorite(event.key === Qt.Key_Left ? -1 : 1);
+                        } else if (root.fileMode && (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp)) {
+                            root.scrollPreview(event.key === Qt.Key_PageDown ? 1 : -1);
+                        } else if (event.key === Qt.Key_Escape) {
+                            root.close();
+                        } else if (event.key === Qt.Key_Right) {
+                            if (root.fileMode)
+                                return;
+                            root.selectedIndex = Math.min(root.selectedIndex + 1, root.navCount - 1);
+                        } else if (event.key === Qt.Key_Left) {
+                            if (root.fileMode)
+                                return;
+                            root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
+                        } else if (event.key === Qt.Key_Down) {
+                            root.selectedIndex = Math.min(root.selectedIndex + root.navColumns, root.navCount - 1);
+                        } else if (event.key === Qt.Key_Up) {
+                            const browsing = root.historyIndex >= 0 && root.selectedIndex < root.navColumns;
+                            if (!root.fileMode && !root.showHidden && (searchInput.text === "" || browsing))
+                                root.historyStep();
+                            else
+                                root.selectedIndex = Math.max(root.selectedIndex - root.navColumns, 0);
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            if (root.fileMode) {
+                                if (root.selectedFile)
+                                    root.openPath(root.selectedFile);
+                            } else if (ctrl && !root.loc && root.query.trim() !== "")
+                                root.openSearch(WebSearch.defaultProvider(), root.query.trim());
+                            else if (root.calc || root.loc || root.web)
+                                root.activateInline();
+                            else
+                                root.launch(root.selectedIndex, shift !== 0);
+                        } else {
+                            return;
+                        }
+                        event.accepted = true;
+                    }
+                    Keys.onReleased: event => {
+                        if (event.key === Qt.Key_Control)
+                            root.ctrlHeld = false;
+                    }
                 }
 
                 Text {
-                    visible: root.favorites.includes(delegateRoot.modelData.id)
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    anchors.margins: 16
-                    text: "★"
+                    visible: root.showHidden
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.filtered.length > 0 ? "Hidden apps \u00b7 Alt+Shift+D restores" : "No hidden apps"
                     color: Theme.yellow
-                    font.pixelSize: root.resultFontSize
-                }
-
-                MouseArea {
-                    id: tileMouse
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: mouse => root.hoverSelect(tileMouse, mouse, delegateRoot.index)
-                    onClicked: mouse => root.launch(delegateRoot.index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    renderType: root.textRendering
                 }
             }
         }
-    }
 
-    // Scrim: clicking outside the panel dismisses it.
-    MouseArea {
-        visible: root.actionsOpen
-        anchors.fill: parent
-        onClicked: root.actionsOpen = false
-    }
+        // Reserves room under the pill for the calculator row.
+        Item {
+            id: belowPill
 
-    Rectangle {
-        id: actionPanel
+            anchors.top: pill.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 1
+            height: root.inlineRow ? calcRow.height + 12 : 0
+        }
 
-        visible: root.actionsOpen
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: pill.bottom
-        anchors.topMargin: 12
-        width: 440
-        height: actionColumn.implicitHeight + 16
-        radius: Theme.radius
-        color: Theme.surface1
-        border.width: 1
-        border.color: Theme.surface2
+        Rectangle {
+            id: calcRow
 
-        MouseArea {
-            anchors.fill: parent
+            visible: root.inlineRow !== null
+            anchors.top: pill.bottom
+            anchors.topMargin: 12
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: root.pillWidth
+            height: 84
+            radius: root.pillHeight / 2.5
+            color: Theme.surface1
+            border.width: 1
+            border.color: Theme.surface2
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.activateInline()
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 24
+                anchors.rightMargin: 20
+                spacing: 14
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: 2
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.inlineRow ? root.inlineRow.title : ""
+                        elide: Text.ElideRight
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize
+                        renderType: root.textRendering
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.inlineRow ? root.inlineRow.text : ""
+                        elide: Text.ElideRight
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 10
+                        font.bold: true
+                        renderType: root.textRendering
+                    }
+                }
+
+                KeyCaps {
+                    visible: !!root.inlineRow && root.inlineRow.hint !== ""
+                    Layout.alignment: Qt.AlignVCenter
+                    keys: ["\u21b5"]
+                    fontSize: root.hintFontSize
+                }
+
+                Text {
+                    visible: !!root.inlineRow && root.inlineRow.hint !== ""
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.inlineRow ? root.inlineRow.hint : ""
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: root.hintFontSize
+                    renderType: root.textRendering
+                }
+            }
+        }
+
+        Text {
+            id: focusedDescription
+
+            visible: root.selectedDescription.length > 0 && !root.actionsOpen
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: belowPill.bottom
+            anchors.topMargin: 10
+            width: root.resultsPanelWidth
+            height: root.focusedDescHeight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignTop
+            wrapMode: Text.WordWrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            text: root.selectedDescription
+            color: Theme.subtext1
+            font.family: Theme.fontFamily
+            font.italic: true
+            font.pixelSize: root.focusedDescFontSize
+            renderType: root.textRendering
         }
 
         Column {
-            id: actionColumn
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: 8
-
-            Text {
-                width: parent.width
-                leftPadding: 12
-                topPadding: 4
-                bottomPadding: 6
-                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : (root.loc ? root.loc.text : (root.selectedFile ? root.selectedFile.text : "")))
-                elide: Text.ElideRight
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                font.italic: true
-                renderType: Text.NativeRendering
-            }
+            visible: (resultsPanel.visible || fileList.visible) && !root.actionsOpen
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: root.fileMode ? fileList.bottom : resultsPanel.bottom
+            anchors.topMargin: 14
+            spacing: 8
+            opacity: 0.85
 
             Repeater {
-                model: root.actions
+                model: root.keyHints
 
-                Rectangle {
-                    id: actionRow
+                Row {
+                    id: hintRow
+
+                    required property var modelData
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 26
+
+                    Repeater {
+                        model: hintRow.modelData
+
+                        Row {
+                            id: hintItem
+
+                            required property var modelData
+                            spacing: 8
+
+                            KeyCaps {
+                                anchors.verticalCenter: parent.verticalCenter
+                                keys: hintItem.modelData.keys
+                                fontSize: root.hintFontSize
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: hintItem.modelData.text
+                                color: Theme.subtext1
+                                font.family: Theme.fontFamily
+                                font.pixelSize: root.hintFontSize
+                                renderType: root.textRendering
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // File search results: full-width rows (name, dimmed folder) so long
+        // paths stay readable; apps keep their tiles.
+        Item {
+            id: fileList
+
+            readonly property int rowHeight: 54
+
+            visible: root.fileMode && root.fileResults.length > 0 && !root.actionsOpen
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: focusedDescription.bottom
+            anchors.topMargin: 14
+            width: root.pillWidth
+            height: Math.max(Math.min(root.fileResults.length, 7), 5) * fileList.rowHeight
+            clip: true
+
+            MouseArea {
+                anchors.fill: parent
+            }
+
+            ListView {
+                id: fileView
+
+                anchors.fill: parent
+                clip: true
+                model: root.fileMode ? root.fileResults : []
+                currentIndex: root.selectedIndex
+                highlightFollowsCurrentItem: false
+                onCurrentIndexChanged: fileView.positionViewAtIndex(fileView.currentIndex, ListView.Contain)
+
+                delegate: Rectangle {
+                    id: fileRow
+
+                    required property string modelData
+                    required property int index
+
+                    readonly property bool isDir: fileRow.modelData.endsWith("/")
+                    readonly property string clean: fileRow.isDir ? fileRow.modelData.slice(0, -1) : fileRow.modelData
+                    readonly property int cut: fileRow.clean.lastIndexOf("/")
+                    readonly property var hl: FzfMatch.positions(root.fileTerm, fileRow.clean)
+                    readonly property bool isAbs: fileRow.clean.charAt(0) === "/"
+
+                    width: fileView.width
+                    height: fileList.rowHeight
+                    radius: Theme.radius / 2
+                    color: fileRow.index === root.selectedIndex ? Theme.surface2 : "transparent"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        spacing: 12
+
+                        Text {
+                            Layout.preferredWidth: 22
+                            horizontalAlignment: Text.AlignHCenter
+                            text: fileRow.isDir ? "\uf07b" : "\uf15b"
+                            color: fileRow.isDir ? Theme.blue : Theme.subtext1
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize + 2
+                            renderType: root.textRendering
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 1
+
+                            Text {
+                                Layout.fillWidth: true
+                                textFormat: Text.StyledText
+                                text: FzfMatch.html(fileRow.clean.slice(fileRow.cut + 1), fileRow.hl, fileRow.cut + 1, Theme.yellow)
+                                elide: Text.ElideMiddle
+                                color: Theme.text
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize + 2
+                                font.bold: true
+                                renderType: root.textRendering
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                textFormat: Text.StyledText
+                                text: fileRow.isAbs ? FzfMatch.html(fileRow.cut > 0 ? fileRow.clean.slice(0, fileRow.cut) : "/", fileRow.hl, 0, Theme.yellow) : (fileRow.cut < 0 ? "~" : FzfMatch.html("~/" + fileRow.clean.slice(0, fileRow.cut), fileRow.hl, -2, Theme.yellow))
+                                elide: Text.ElideLeft
+                                color: Theme.subtext1
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize - 1
+                                renderType: root.textRendering
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: fileMouse
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onPositionChanged: mouse => root.hoverSelect(fileMouse, mouse, fileRow.index)
+                        onClicked: root.openFileAt(fileRow.index)
+                    }
+                }
+            }
+        }
+
+        // Preview of the selected file result (right of the list).
+        Rectangle {
+            id: previewPane
+
+            visible: fileList.visible
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: fileList.right
+            anchors.leftMargin: 40
+            width: Math.min(780, root.width / 2 + root.width / (2 * root.zoom) - fileList.x - fileList.width - 40 - 24)
+            height: Math.round(root.height / root.zoom * 0.6)
+            radius: Theme.radius / 2
+            color: Theme.surface1
+            border.width: 1
+            border.color: Theme.surface2
+            clip: true
+
+            readonly property bool current: root.previewShown === root.selectedFilePath
+
+            Flickable {
+                id: previewFlick
+
+                visible: previewPane.current && (root.previewKind === "text" || root.previewKind === "dir" || root.previewKind === "info")
+                anchors.fill: parent
+                anchors.margins: 10
+                contentWidth: width
+                contentHeight: previewText.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                Text {
+                    id: previewText
+
+                    width: previewFlick.width
+                    textFormat: root.previewKind === "text" ? Text.RichText : Text.PlainText
+                    wrapMode: root.previewKind === "dir" ? Text.NoWrap : Text.Wrap
+                    text: root.previewBody
+                    color: root.previewKind === "text" ? Theme.text : (root.previewKind === "dir" ? Theme.blue : Theme.subtext1)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize + 2
+                    renderType: root.textRendering
+                }
+            }
+
+            Connections {
+                target: root
+
+                function onPreviewBodyChanged() {
+                    previewFlick.contentY = 0;
+                }
+            }
+
+            Image {
+                visible: previewPane.current && (root.previewKind === "image" || root.previewKind === "imagefile")
+                anchors.fill: parent
+                anchors.margins: 8
+                source: visible ? "file://" + (root.previewKind === "imagefile" ? root.previewBody.trim() : root.selectedFilePath) : ""
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+                sourceSize.width: 1000
+                sourceSize.height: 1000
+            }
+        }
+
+        Item {
+            id: resultsPanel
+
+            visible: root.filtered.length > 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: focusedDescription.bottom
+            anchors.topMargin: 14
+            width: root.resultsPanelWidth
+            height: Math.min(grid.contentHeight, root.maxVisibleRows * root.tileHeight)
+            clip: true
+
+            MouseArea {
+                anchors.fill: parent
+            }
+
+            GridView {
+                id: grid
+
+                anchors.fill: parent
+                clip: true
+                cellWidth: resultsPanel.width / root.resultColumns
+                cellHeight: root.tileHeight
+                model: root.filtered
+                currentIndex: root.selectedIndex
+                highlightFollowsCurrentItem: true
+
+                onCurrentIndexChanged: grid.positionViewAtIndex(grid.currentIndex, GridView.Contain)
+
+                delegate: Item {
+                    id: delegateRoot
 
                     required property var modelData
                     required property int index
 
-                    width: actionColumn.width
-                    height: 38
-                    radius: Theme.radius / 2
-                    color: actionRow.index === root.actionIndex ? Theme.surface2 : "transparent"
+                    width: grid.cellWidth
+                    height: grid.cellHeight
 
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: actionRow.modelData.title
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSize + 1
-                        renderType: Text.NativeRendering
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        radius: Theme.radius / 2
+                        color: delegateRoot.index === root.selectedIndex ? Theme.surface2 : "transparent"
                     }
 
-                    KeyCaps {
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.tileContentMargin
+                        spacing: root.tileIconSpacing
+
+                        Item {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: root.tileIconSize
+                            Layout.preferredHeight: root.tileIconSize
+
+                            IconImage {
+                                anchors.fill: parent
+                                visible: !delegateRoot.modelData.glyph
+                                source: Quickshell.iconPath(delegateRoot.modelData.icon, "image-missing")
+                            }
+
+                            // System actions have a Nerd Font glyph instead of an icon.
+                            Text {
+                                anchors.centerIn: parent
+                                visible: !!delegateRoot.modelData.glyph
+                                text: delegateRoot.modelData.glyph ?? ""
+                                color: delegateRoot.modelData.color ?? Theme.text
+                                font.family: Theme.fontFamily
+                                font.pixelSize: root.tileIconSize * 0.75
+                                renderType: root.textRendering
+                            }
+                        }
+
+                        Text {
+                            id: nameText
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: root.nameBlockHeight
+                            verticalAlignment: Text.AlignTop
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
+                            maximumLineCount: 2
+                            text: delegateRoot.modelData.name + (delegateRoot.modelData.active ? " \u2713" : "")
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: root.resultFontSize
+                            renderType: root.textRendering
+                            elide: Text.ElideRight
+
+                            Binding {
+                                target: root
+                                property: "selectedNameTruncated"
+                                value: nameText.truncated
+                                when: delegateRoot.index === root.selectedIndex
+                            }
+                        }
+                    }
+
+                    Text {
+                        visible: root.ctrlHeld && !root.actionsOpen && delegateRoot.index < 9
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.margins: 16
+                        text: delegateRoot.index + 1
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize
+                        font.bold: true
+                    }
+
+                    Text {
+                        visible: root.favorites.includes(delegateRoot.modelData.id)
+                        anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        keys: actionRow.modelData.keys
-                        fontSize: Theme.fontSize - 1
+                        anchors.margins: 16
+                        text: "★"
+                        color: Theme.yellow
+                        font.pixelSize: root.resultFontSize
                     }
 
                     MouseArea {
+                        id: tileMouse
+
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.actionIndex = actionRow.index
-                        onClicked: root.runAction(actionRow.index)
+                        onPositionChanged: mouse => root.hoverSelect(tileMouse, mouse, delegateRoot.index)
+                        onClicked: mouse => root.launch(delegateRoot.index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
+                    }
+                }
+            }
+        }
+
+        // Scrim: clicking outside the panel dismisses it.
+        MouseArea {
+            visible: root.actionsOpen
+            anchors.fill: parent
+            onClicked: root.actionsOpen = false
+        }
+
+        Rectangle {
+            id: actionPanel
+
+            visible: root.actionsOpen
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: pill.bottom
+            anchors.topMargin: 12
+            width: 440
+            height: actionColumn.implicitHeight + 16
+            radius: Theme.radius
+            color: Theme.surface1
+            border.width: 1
+            border.color: Theme.surface2
+
+            MouseArea {
+                anchors.fill: parent
+            }
+
+            Column {
+                id: actionColumn
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 8
+
+                Text {
+                    width: parent.width
+                    leftPadding: 12
+                    topPadding: 4
+                    bottomPadding: 6
+                    text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : (root.loc ? root.loc.text : (root.selectedFile ? root.selectedFile.text : "")))
+                    elide: Text.ElideRight
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    font.italic: true
+                    renderType: root.textRendering
+                }
+
+                Repeater {
+                    model: root.actions
+
+                    Rectangle {
+                        id: actionRow
+
+                        required property var modelData
+                        required property int index
+
+                        width: actionColumn.width
+                        height: 38
+                        radius: Theme.radius / 2
+                        color: actionRow.index === root.actionIndex ? Theme.surface2 : "transparent"
+
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: actionRow.modelData.title
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize + 1
+                            renderType: root.textRendering
+                        }
+
+                        KeyCaps {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                            keys: actionRow.modelData.keys
+                            fontSize: Theme.fontSize - 1
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: root.actionIndex = actionRow.index
+                            onClicked: root.runAction(actionRow.index)
+                        }
                     }
                 }
             }
