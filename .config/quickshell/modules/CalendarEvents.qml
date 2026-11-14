@@ -6,7 +6,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Each entry: { summary, dtstart: { date, allDay, hhmm }, rrule: { freq, until } | null }
+    // Each entry: { summary, dtstart: { date, allDay, hhmm }, dtend (Date, may be
+    // missing), endHhmm, location, description, url, rrule: { freq, until } | null }
     property var events: []
     property bool loaded: false
 
@@ -141,8 +142,16 @@ Singleton {
                     cur.summary = unescapeIcs(value);
                 else if (key === "DTSTART")
                     cur.dtstart = parseIcsDate(value, rawKey);
-                else if (key === "DTEND")
-                    cur.dtend = parseIcsDate(value, rawKey).date;
+                else if (key === "DTEND") {
+                    const end = parseIcsDate(value, rawKey);
+                    cur.dtend = end.date;
+                    cur.endHhmm = end.hhmm;
+                } else if (key === "LOCATION")
+                    cur.location = unescapeIcs(value);
+                else if (key === "DESCRIPTION")
+                    cur.description = unescapeIcs(value);
+                else if (key === "URL")
+                    cur.url = value;
                 else if (key === "RRULE")
                     cur.rrule = parseRRule(value);
             }
