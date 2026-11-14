@@ -41,6 +41,8 @@ PanelWindow {
     readonly property int tileIconSpacing: 8
     readonly property int maxVisibleRows: 3
     readonly property int resultColumns: Math.max(1, Math.floor(root.resultsPanelWidth / root.tileWidth))
+    readonly property int navCount: root.fileMode ? root.fileResults.length : root.filtered.length
+    readonly property int navColumns: root.fileMode ? 1 : root.resultColumns
     readonly property int inputFontSize: Theme.fontSize + 8
     readonly property int resultFontSize: Theme.fontSize + 4
     readonly property int focusedDescFontSize: Theme.fontSize + 1
@@ -56,6 +58,8 @@ PanelWindow {
     // line can show the full name.
     property bool selectedNameTruncated: false
     readonly property string selectedDescription: {
+        if (root.fileMode)
+            return root.selectedFile ? root.selectedFile.text : "";
         const e = root.selectedEntry;
         if (!e)
             return "";
@@ -379,6 +383,23 @@ PanelWindow {
         }
     }
 
+    // Qt sends a position event when a row appears under a stationary pointer.
+    // The first event after opening is taken as the baseline, and only real
+    // movement afterwards selects, so results don't steal the selection.
+    property point lastPointer: Qt.point(-1, -1)
+
+    function hoverSelect(item, mouse, index) {
+        if (root.actionsOpen)
+            return;
+        const p = item.mapToItem(null, mouse.x, mouse.y);
+        console.log("HOVER", index, p.x, p.y, root.lastPointer.x);
+        const baseline = root.lastPointer.x < 0;
+        const moved = Math.abs(p.x - root.lastPointer.x) > 1 || Math.abs(p.y - root.lastPointer.y) > 1;
+        root.lastPointer = p;
+        if (!baseline && moved)
+            root.selectedIndex = index;
+    }
+
     function openLoc() {
         const l = root.loc;
         if (!l)
@@ -401,6 +422,150 @@ PanelWindow {
             root.openSearch(root.web.provider, root.web.text);
     }
 
+    // ---- File search (omacast row 22): "f <fzf query>" ----
+    // fd lists $HOME into a tmpfs cache once per mode entry; every keystroke
+    // runs `fzf --filter` over it, so ranking and query syntax match the
+    // terminal. Paths are passed as argv, never built into shell text.
+    readonly property var fileMatch: /^f\s(.*)$/i.exec(root.query)
+    readonly property bool fileMode: root.fileMatch !== null && !root.showHidden && !root.webLocked
+    readonly property string fileTerm: root.fileMode ? root.fileMatch[1].trim() : ""
+    readonly property string filesPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/quickshell-launcher-files.txt"
+    property var fileResults: []
+    property bool fileIndexReady: false
+    property real fileIndexAt: 0
+
+    readonly property var selectedFile: {
+        if (!root.fileMode)
+            return null;
+        const rel = root.fileResults[root.selectedIndex];
+        if (!rel)
+            return null;
+        const isDir = rel.endsWith("/");
+        const clean = isDir ? rel.slice(0, -1) : rel;
+        const cut = clean.lastIndexOf("/");
+        return {
+            kind: isDir ? "dir" : "file",
+            path: root.homeDir + "/" + clean,
+            text: "~/" + clean,
+            name: clean.slice(cut + 1),
+            dir: cut < 0 ? "~" : "~/" + clean.slice(0, cut)
+        };
+    }
+
+    // Skips caches, VCS data and big app/game data that would drown results.
+    // Sorted because fd's parallel output order would make ties between
+    // equal-scoring results flip on every rebuild.
+    readonly property string fileIndexScript: [
+        'umask 077',
+        'tmp="$2.$$"',
+        'cd "$1" || exit 1',
+        'fd --hidden --max-results 1000000 \\',
+        '  --exclude .git --exclude .cfg --exclude node_modules --exclude .cache --exclude .npm --exclude .cargo --exclude .rustup --exclude .var --exclude .wine \\',
+        "  --exclude 'Cache*' --exclude GPUCache --exclude 'Code Cache' --exclude __pycache__ \\",
+        "  --exclude '.local/share/Steam*' --exclude '.local/share/pnpm' --exclude '.local/share/mise' --exclude '.local/share/icons' --exclude '.local/share/pi' \\",
+        "  --exclude '.local/share/nvim*' --exclude '.local/share/copilot' --exclude '.local/share/Trash' --exclude '.local/share/flatpak' \\",
+        "  --exclude '.config/mozilla' --exclude '.config/zen' --exclude '.config/discord' . 2>/dev/null | LC_ALL=C sort > \"$tmp\"",
+        'mv "$tmp" "$2"'
+    ].join("\n")
+
+    onFileModeChanged: {
+        if (root.fileMode && !fileIndexProc.running && Date.now() - root.fileIndexAt > 120000)
+            fileIndexProc.running = true;
+        if (!root.fileMode)
+            root.fileResults = [];
+    }
+
+    onFileTermChanged: fileTimer.restart()
+    onFileResultsChanged: root.selectedIndex = 0
+
+    Process {
+        id: fileIndexProc
+
+        command: ["sh", "-c", root.fileIndexScript, "sh", root.homeDir, root.filesPath]
+        onExited: code => {
+            root.fileIndexReady = code === 0;
+            root.fileIndexAt = Date.now();
+            if (root.fileMode)
+                fileTimer.restart();
+        }
+    }
+
+    Timer {
+        id: fileTimer
+
+        interval: 60
+        onTriggered: {
+            if (!root.fileMode || root.fileTerm === "" || !root.fileIndexReady) {
+                if (root.fileResults.length > 0)
+                    root.fileResults = [];
+                return;
+            }
+            if (fileProc.running)
+                return;
+            fileProc.target = root.fileTerm;
+            fileProc.running = true;
+        }
+    }
+
+    Process {
+        id: fileProc
+
+        property string target: ""
+
+        command: ["sh", "-c", 'fzf --filter "$1" --scheme=path --tiebreak=pathname,length < "$2" | head -n 200', "sh", fileProc.target, root.filesPath]
+        stdout: StdioCollector {
+            onStreamFinished: root.fileResults = text.split("\n").filter(l => l !== "")
+        }
+        onExited: {
+            if (root.fileMode && fileProc.target !== root.fileTerm)
+                fileTimer.restart();
+        }
+    }
+
+    readonly property bool fileSearching: fileProc.running || fileTimer.running || fileIndexProc.running
+
+    function openPath(l) {
+        root.recordHistory(root.query);
+        root.save();
+        Apps.openFile(l.path);
+        root.close();
+    }
+
+    function openFileAt(i) {
+        const keep = root.selectedIndex;
+        root.selectedIndex = i;
+        const f = root.selectedFile;
+        if (f)
+            root.openPath(f);
+        else
+            root.selectedIndex = keep;
+    }
+
+    // Shared by URL/path rows and file results.
+    function pathActions(l) {
+        const list = [{ title: l.kind === "url" ? "Open in browser" : (l.kind === "dir" ? "Open folder" : "Open file"), keys: ["\u21b5"], run: () => l.kind === "url" ? root.openLoc() : root.openPath(l) }];
+        if (l.kind !== "url") {
+            const dir = l.kind === "dir" ? l.path : (l.path.replace(/\/[^\/]*$/, "") || "/");
+            const act = (title, fn) => list.push({ title: title, keys: [], run: () => {
+                fn();
+                root.close();
+            } });
+            act("Open in terminal", () => Apps.openInTerminal(dir));
+            if (Apps.hasYazi)
+                act("Open in yazi", () => Apps.openInYazi(l.path));
+            if (l.kind === "file") {
+                act("Open in editor", () => Apps.openInEditor(l.path));
+                act("Open folder in file manager", () => Apps.openFile(dir));
+            }
+            act("Reveal in file manager", () => Apps.revealInFileManager(l.path));
+        }
+        list.push({ title: l.kind === "url" ? "Copy URL" : "Copy path", keys: [], run: () => {
+            root.copyText(l.kind === "url" ? l.url : l.path);
+            root.close();
+        } });
+        return list;
+    }
+
     // While the provider list is open the typed text is a web search term:
     // editing it must not switch to app results or the calculator.
     property bool webLocked: false
@@ -414,7 +579,7 @@ PanelWindow {
         const q = root.query.trim();
         if (root.webLocked)
             return { provider: root.lockedProvider, text: q, fallback: true };
-        if (!q || root.showHidden || root.calc || root.loc)
+        if (!q || root.showHidden || root.calc || root.loc || root.fileMode)
             return null;
         if (root.webPrefix)
             return root.webPrefix;
@@ -425,6 +590,12 @@ PanelWindow {
 
     // What the row under the pill shows: calculation or web search.
     readonly property var inlineRow: {
+        if (root.fileMode && root.fileResults.length === 0)
+            return {
+                title: "Files in ~",
+                text: root.fileTerm === "" ? "Type to search" : (root.fileSearching ? "Searching\u2026" : "No matches"),
+                hint: ""
+            };
         if (root.calc)
             return { title: root.calc.expr, text: "= " + root.calc.text, hint: "copy" };
         if (root.loc)
@@ -453,7 +624,7 @@ PanelWindow {
 
     readonly property var filtered: {
         const q = root.query.trim().toLowerCase();
-        if ((!q && !root.showHidden) || root.calc || root.loc || root.webPrefix || root.webLocked)
+        if ((!q && !root.showHidden) || root.calc || root.loc || root.webPrefix || root.webLocked || root.fileMode)
             return [];
 
         const now = Date.now() / 1000;
@@ -527,6 +698,7 @@ PanelWindow {
         root.showHidden = false;
         root.actionsOpen = false;
         root.webLocked = false;
+        root.lastPointer = Qt.point(-1, -1);
         root.historyIndex = -1;
         root.ctrlHeld = false;
         // lastIpcObject is empty until refreshed; needed for window matching.
@@ -796,9 +968,12 @@ PanelWindow {
                         return;
                     }
                     if (ctrl && !alt && !shift && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
-                        root.launch(event.key - Qt.Key_1, false);
+                        if (root.fileMode)
+                            root.openFileAt(event.key - Qt.Key_1);
+                        else
+                            root.launch(event.key - Qt.Key_1, false);
                     } else if (ctrl && !alt && !shift && event.key === Qt.Key_N) {
-                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1);
+                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.navCount - 1);
                     } else if (ctrl && !alt && !shift && event.key === Qt.Key_P) {
                         root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
                     } else if (ctrl && shift && event.key === Qt.Key_F) {
@@ -813,19 +988,26 @@ PanelWindow {
                     } else if (event.key === Qt.Key_Escape) {
                         root.close();
                     } else if (event.key === Qt.Key_Right) {
-                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.filtered.length - 1);
+                        if (root.fileMode)
+                            return;
+                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.navCount - 1);
                     } else if (event.key === Qt.Key_Left) {
+                        if (root.fileMode)
+                            return;
                         root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
                     } else if (event.key === Qt.Key_Down) {
-                        root.selectedIndex = Math.min(root.selectedIndex + root.resultColumns, root.filtered.length - 1);
+                        root.selectedIndex = Math.min(root.selectedIndex + root.navColumns, root.navCount - 1);
                     } else if (event.key === Qt.Key_Up) {
-                        const browsing = root.historyIndex >= 0 && root.selectedIndex < root.resultColumns;
-                        if (!root.showHidden && (searchInput.text === "" || browsing))
+                        const browsing = root.historyIndex >= 0 && root.selectedIndex < root.navColumns;
+                        if (!root.fileMode && !root.showHidden && (searchInput.text === "" || browsing))
                             root.historyStep();
                         else
-                            root.selectedIndex = Math.max(root.selectedIndex - root.resultColumns, 0);
+                            root.selectedIndex = Math.max(root.selectedIndex - root.navColumns, 0);
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (ctrl && !root.loc && root.query.trim() !== "")
+                        if (root.fileMode) {
+                            if (root.selectedFile)
+                                root.openPath(root.selectedFile);
+                        } else if (ctrl && !root.loc && root.query.trim() !== "")
                             root.openSearch(WebSearch.defaultProvider(), root.query.trim());
                         else if (root.calc || root.loc || root.web)
                             root.activateInline();
@@ -918,12 +1100,14 @@ PanelWindow {
             }
 
             KeyCaps {
+                visible: !!root.inlineRow && root.inlineRow.hint !== ""
                 Layout.alignment: Qt.AlignVCenter
                 keys: ["\u21b5"]
                 fontSize: root.hintFontSize
             }
 
             Text {
+                visible: !!root.inlineRow && root.inlineRow.hint !== ""
                 Layout.alignment: Qt.AlignVCenter
                 text: root.inlineRow ? root.inlineRow.hint : ""
                 color: Theme.subtext1
@@ -975,30 +1159,10 @@ PanelWindow {
                 run: () => root.openSearch(p, text)
             }));
         }
-        if (root.loc) {
-            const l = root.loc;
-            const list = [{ title: l.kind === "url" ? "Open in browser" : (l.kind === "dir" ? "Open folder" : "Open file"), keys: ["\u21b5"], run: () => root.openLoc() }];
-            if (l.kind !== "url") {
-                const dir = l.kind === "dir" ? l.path : (l.path.replace(/\/[^\/]*$/, "") || "/");
-                const act = (title, fn) => list.push({ title: title, keys: [], run: () => {
-                    fn();
-                    root.close();
-                } });
-                act("Open in terminal", () => Apps.openInTerminal(dir));
-                if (Apps.hasYazi)
-                    act("Open in yazi", () => Apps.openInYazi(l.path));
-                if (l.kind === "file") {
-                    act("Open in editor", () => Apps.openInEditor(l.path));
-                    act("Open folder in file manager", () => Apps.openFile(dir));
-                }
-                act("Reveal in file manager", () => Apps.revealInFileManager(l.path));
-            }
-            list.push({ title: l.kind === "url" ? "Copy URL" : "Copy path", keys: [], run: () => {
-                root.copyText(l.kind === "url" ? l.url : l.path);
-                root.close();
-            } });
-            return list;
-        }
+        if (root.fileMode)
+            return root.selectedFile ? root.pathActions(root.selectedFile) : [];
+        if (root.loc)
+            return root.pathActions(root.loc);
         const e = root.selectedEntry;
         if (!e)
             return [];
@@ -1037,7 +1201,7 @@ PanelWindow {
     }
 
     function openActions() {
-        if (!root.selectedEntry && !root.web && !root.loc)
+        if (!root.selectedEntry && !root.web && !root.loc && !root.selectedFile)
             return;
         root.actionIndex = 0;
         root.lockedProvider = root.web ? root.web.provider : null;
@@ -1061,6 +1225,8 @@ PanelWindow {
     // { keys: [...], text } rendered as key-cap chips.
     readonly property int hintFontSize: Theme.fontSize + 2
     readonly property var keyHints: {
+        if (root.fileMode)
+            return root.fileResults.length > 0 ? [[{ keys: ["\u21b5"], text: "open" }, { keys: ["Ctrl", "K"], text: "actions" }]] : [];
         const e = root.selectedEntry;
         if (!e)
             return [];
@@ -1071,9 +1237,9 @@ PanelWindow {
     }
 
     Column {
-        visible: resultsPanel.visible && !root.actionsOpen
+        visible: (resultsPanel.visible || fileList.visible) && !root.actionsOpen
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: resultsPanel.bottom
+        anchors.top: root.fileMode ? fileList.bottom : resultsPanel.bottom
         anchors.topMargin: 14
         spacing: 8
         opacity: 0.85
@@ -1112,6 +1278,101 @@ PanelWindow {
                             renderType: Text.NativeRendering
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // File search results: full-width rows (name, dimmed folder) so long
+    // paths stay readable; apps keep their tiles.
+    Item {
+        id: fileList
+
+        readonly property int rowHeight: 42
+
+        visible: root.fileMode && root.fileResults.length > 0 && !root.actionsOpen
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: focusedDescription.bottom
+        anchors.topMargin: 14
+        width: root.resultsPanelWidth
+        height: Math.min(root.fileResults.length, 8) * fileList.rowHeight
+        clip: true
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        ListView {
+            id: fileView
+
+            anchors.fill: parent
+            clip: true
+            model: root.fileMode ? root.fileResults : []
+            currentIndex: root.selectedIndex
+            highlightFollowsCurrentItem: false
+            onCurrentIndexChanged: fileView.positionViewAtIndex(fileView.currentIndex, ListView.Contain)
+
+            delegate: Rectangle {
+                id: fileRow
+
+                required property string modelData
+                required property int index
+
+                readonly property bool isDir: fileRow.modelData.endsWith("/")
+                readonly property string clean: fileRow.isDir ? fileRow.modelData.slice(0, -1) : fileRow.modelData
+                readonly property int cut: fileRow.clean.lastIndexOf("/")
+
+                width: fileView.width
+                height: fileList.rowHeight
+                radius: Theme.radius / 2
+                color: fileRow.index === root.selectedIndex ? Theme.surface2 : "transparent"
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    spacing: 12
+
+                    Text {
+                        Layout.preferredWidth: 22
+                        horizontalAlignment: Text.AlignHCenter
+                        text: fileRow.isDir ? "\uf07b" : "\uf15b"
+                        color: fileRow.isDir ? Theme.blue : Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 2
+                        renderType: Text.NativeRendering
+                    }
+
+                    Text {
+                        Layout.maximumWidth: fileList.width * 0.5
+                        text: fileRow.clean.slice(fileRow.cut + 1)
+                        elide: Text.ElideMiddle
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 2
+                        font.bold: true
+                        renderType: Text.NativeRendering
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: fileRow.cut < 0 ? "~" : "~/" + fileRow.clean.slice(0, fileRow.cut)
+                        elide: Text.ElideLeft
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize
+                        renderType: Text.NativeRendering
+                    }
+                }
+
+                MouseArea {
+                    id: fileMouse
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onPositionChanged: mouse => root.hoverSelect(fileMouse, mouse, fileRow.index)
+                    onClicked: root.openFileAt(fileRow.index)
                 }
             }
         }
@@ -1237,10 +1498,12 @@ PanelWindow {
                 }
 
                 MouseArea {
+                    id: tileMouse
+
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: if (!root.actionsOpen) root.selectedIndex = delegateRoot.index
+                    onPositionChanged: mouse => root.hoverSelect(tileMouse, mouse, delegateRoot.index)
                     onClicked: mouse => root.launch(delegateRoot.index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
                 }
             }
@@ -1285,7 +1548,7 @@ PanelWindow {
                 leftPadding: 12
                 topPadding: 4
                 bottomPadding: 6
-                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : (root.loc ? root.loc.text : ""))
+                text: root.selectedEntry ? root.selectedEntry.name : (root.web ? "Search the web for \u201c" + root.web.text + "\u201d" : (root.loc ? root.loc.text : (root.selectedFile ? root.selectedFile.text : "")))
                 elide: Text.ElideRight
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
