@@ -392,7 +392,6 @@ PanelWindow {
         if (root.actionsOpen)
             return;
         const p = item.mapToItem(null, mouse.x, mouse.y);
-        console.log("HOVER", index, p.x, p.y, root.lastPointer.x);
         const baseline = root.lastPointer.x < 0;
         const moved = Math.abs(p.x - root.lastPointer.x) > 1 || Math.abs(p.y - root.lastPointer.y) > 1;
         root.lastPointer = p;
