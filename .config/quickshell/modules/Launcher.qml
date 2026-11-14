@@ -52,7 +52,16 @@ PanelWindow {
     readonly property int focusedDescHeight: Math.round(root.focusedDescFontSize * 3.2)
 
     readonly property var selectedEntry: root.filtered[root.selectedIndex] ?? null
-    readonly property string selectedDescription: root.selectedEntry ? (root.selectedEntry.comment || root.selectedEntry.genericName || "") : ""
+    // Set by the selected tile when its name is elided, so the description
+    // line can show the full name.
+    property bool selectedNameTruncated: false
+    readonly property string selectedDescription: {
+        const e = root.selectedEntry;
+        if (!e)
+            return "";
+        const desc = e.comment || e.genericName || "";
+        return root.selectedNameTruncated ? e.name + (desc ? "\n" + desc : "") : desc;
+    }
 
     property string query: ""
     property int selectedIndex: 0
@@ -1181,6 +1190,8 @@ PanelWindow {
                     }
 
                     Text {
+                        id: nameText
+
                         Layout.fillWidth: true
                         Layout.preferredHeight: root.nameBlockHeight
                         verticalAlignment: Text.AlignTop
@@ -1193,6 +1204,13 @@ PanelWindow {
                         font.pixelSize: root.resultFontSize
                         renderType: Text.NativeRendering
                         elide: Text.ElideRight
+
+                        Binding {
+                            target: root
+                            property: "selectedNameTruncated"
+                            value: nameText.truncated
+                            when: delegateRoot.index === root.selectedIndex
+                        }
                     }
                 }
 
