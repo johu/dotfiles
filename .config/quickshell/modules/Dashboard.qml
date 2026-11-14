@@ -106,6 +106,44 @@ PanelWindow {
         return "\uf026";
     }
 
+    function toggleNightLight() {
+        if (nightLogic.gameModeActive)
+            return;
+        nightLogic.active = !nightLogic.active;
+        nightLogic.overrideUntil = nightLogic.nextTransitionEpochAfter(new Date());
+        nightLogic.sendCommand(nightLogic.active ? "temperature 4500" : "identity");
+    }
+
+    // Lets other modules (SystemActions/launcher) read and toggle these.
+    Connections {
+        target: DashboardBridge
+        function onToggleNightLightRequested() {
+            if (nightLogic.present)
+                root.toggleNightLight();
+        }
+        function onToggleIdleInhibitRequested() {
+            idleLogic.active = !idleLogic.active;
+        }
+    }
+
+    Binding {
+        target: DashboardBridge
+        property: "nightLightPresent"
+        value: nightLogic.present
+    }
+
+    Binding {
+        target: DashboardBridge
+        property: "nightLightActive"
+        value: nightLogic.active
+    }
+
+    Binding {
+        target: DashboardBridge
+        property: "idleInhibitActive"
+        value: idleLogic.active
+    }
+
     // Invisible instances, used only for their state and functions.
     NetworkIndicator {
         id: netLogic
@@ -232,13 +270,7 @@ PanelWindow {
                     accentColor: Theme.yellow
                     active: nightLogic.active
                     enabled: nightLogic.present
-                    onClicked: {
-                        if (nightLogic.gameModeActive)
-                            return;
-                        nightLogic.active = !nightLogic.active;
-                        nightLogic.overrideUntil = nightLogic.nextTransitionEpochAfter(new Date());
-                        nightLogic.sendCommand(nightLogic.active ? "temperature 4500" : "identity");
-                    }
+                    onClicked: root.toggleNightLight()
                 }
                 ToggleTile {
                     icon: "\uf0f4"

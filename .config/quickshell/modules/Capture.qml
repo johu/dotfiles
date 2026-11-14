@@ -361,6 +361,10 @@ PanelWindow {
             root.capture(0, 0, root.screen.width, root.screen.height);
         else if (mode === "window")
             activeProc.running = true;
+        else if (mode === "ocr" || mode === "qr")
+            root.open(mode);
+        else if (mode === "annotate")
+            root.open("shot", true);
         else
             root.open();
     }

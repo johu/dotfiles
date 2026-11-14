@@ -60,6 +60,9 @@ PanelWindow {
         return entries.slice().sort((a, b) => a.name.localeCompare(b.name));
     }
 
+    // Desktop apps plus session/toggle/capture actions (SystemActions.qml).
+    readonly property var candidates: root.apps.concat(SystemActions.entries)
+
     // fzf-style subsequence scorer: rewards consecutive runs and word-boundary
     // starts, penalizes scattered spans. Returns -1 if needle isn't a
     // subsequence.
@@ -316,7 +319,7 @@ PanelWindow {
 
         const now = Date.now() / 1000;
         const scored = [];
-        for (const e of root.apps) {
+        for (const e of root.candidates) {
             if (root.hidden.includes(e.id) !== root.showHidden)
                 continue;
             const name = (e.name || "").toLowerCase();
@@ -440,6 +443,8 @@ PanelWindow {
 
     // Address of the most recently focused open window of this app, or "".
     function findWindow(entry) {
+        if (entry.system)
+            return "";
         const classes = root.entryClasses(entry);
         let best = null;
         for (const t of Hyprland.toplevels.values) {
@@ -467,6 +472,11 @@ PanelWindow {
         const addr = forceNew ? "" : root.findWindow(entry);
         if (addr) {
             Quickshell.execDetached(["hyprctl", "dispatch", `hl.dsp.focus({ window = "address:${addr}" })`]);
+            root.close();
+            return;
+        }
+        if (entry.system) {
+            entry.execute();
             root.close();
             return;
         }
@@ -818,7 +828,7 @@ PanelWindow {
         const hasWindow = !!root.findWindow(e);
         const idx = root.selectedIndex;
         const list = [];
-        list.push({ title: hasWindow ? "Focus window" : "Open", keys: ["\u21b5"], run: () => root.launch(idx, false) });
+        list.push({ title: hasWindow ? "Focus window" : (e.system ? "Run" : "Open"), keys: ["\u21b5"], run: () => root.launch(idx, false) });
         if (hasWindow)
             list.push({ title: "New window", keys: ["Shift", "\u21b5"], run: () => root.launch(idx, true) });
         for (const a of (e.actions || [])) {
@@ -872,7 +882,7 @@ PanelWindow {
             return [];
         const open = root.findWindow(e)
             ? [{ keys: ["\u21b5"], text: "focus window" }, { keys: ["Shift", "\u21b5"], text: "new window" }]
-            : [{ keys: ["\u21b5"], text: "open" }];
+            : [{ keys: ["\u21b5"], text: e.system ? "run" : "open" }];
         return [open.concat([{ keys: ["Ctrl", "K"], text: "actions" }])];
     }
 
@@ -972,10 +982,27 @@ PanelWindow {
                     anchors.margins: root.tileContentMargin
                     spacing: root.tileIconSpacing
 
-                    IconImage {
-                        source: Quickshell.iconPath(delegateRoot.modelData.icon, "image-missing")
-                        implicitSize: root.tileIconSize
+                    Item {
                         Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: root.tileIconSize
+                        Layout.preferredHeight: root.tileIconSize
+
+                        IconImage {
+                            anchors.fill: parent
+                            visible: !delegateRoot.modelData.glyph
+                            source: Quickshell.iconPath(delegateRoot.modelData.icon, "image-missing")
+                        }
+
+                        // System actions have a Nerd Font glyph instead of an icon.
+                        Text {
+                            anchors.centerIn: parent
+                            visible: !!delegateRoot.modelData.glyph
+                            text: delegateRoot.modelData.glyph ?? ""
+                            color: delegateRoot.modelData.color ?? Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: root.tileIconSize * 0.75
+                            renderType: Text.NativeRendering
+                        }
                     }
 
                     Text {
@@ -985,7 +1012,7 @@ PanelWindow {
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         maximumLineCount: 2
-                        text: delegateRoot.modelData.name
+                        text: delegateRoot.modelData.name + (delegateRoot.modelData.active ? " \u2713" : "")
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: root.resultFontSize
