@@ -497,10 +497,12 @@ PanelWindow {
     onFileModeChanged: {
         if (root.fileMode && !fileIndexProc.running && Date.now() - root.fileIndexAt > 120000)
             fileIndexProc.running = true;
-        if (root.fileMode)
+        if (root.fileMode) {
+            root.purgeFileVisits();
             fileTimer.restart();
-        else
+        } else {
             root.fileResults = [];
+        }
     }
 
     onFileTermChanged: fileTimer.restart()
@@ -675,6 +677,50 @@ PanelWindow {
     function scrollPreview(dir) {
         const f = previewFlick;
         f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, f.contentY + dir * f.height * 0.8));
+    }
+
+    // Frecency records of files that no longer exist (or have fully decayed)
+    // are dropped, at most every 10 minutes and only when "f " is entered.
+    property real purgedAt: 0
+    property var purgeKeys: []
+
+    function dropVisits(keys) {
+        const next = Object.assign({}, root.visits);
+        for (const k of keys)
+            delete next[k];
+        root.visits = next;
+        root.save();
+    }
+
+    function purgeFileVisits() {
+        if (purgeProc.running || Date.now() - root.purgedAt < 600000)
+            return;
+        const now = Date.now() / 1000;
+        const keys = Object.keys(root.visits).filter(k => k.startsWith("file:"));
+        const decayed = keys.filter(k => root.frecency(k, now) <= 1.05);
+        if (decayed.length > 0)
+            root.dropVisits(decayed);
+        root.purgeKeys = keys.filter(k => !decayed.includes(k));
+        if (root.purgeKeys.length === 0)
+            return;
+        root.purgedAt = Date.now();
+        purgeProc.running = true;
+    }
+
+    Process {
+        id: purgeProc
+
+        command: ["sh", "-c", 'home="$1"; shift; for k in "$@"; do p="${k#file:}"; case "$p" in /*) ;; *) p="$home/$p";; esac; [ -e "${p%/}" ] || printf "%s\\n" "$k"; done', "sh", root.homeDir].concat(root.purgeKeys)
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const gone = text.split("\n").filter(l => l !== "");
+                if (gone.length === 0)
+                    return;
+                root.dropVisits(gone);
+                if (root.fileMode && root.fileTerm === "")
+                    fileTimer.restart();
+            }
+        }
     }
 
     function openPath(l) {
