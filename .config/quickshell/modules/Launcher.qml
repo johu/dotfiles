@@ -969,11 +969,21 @@ PanelWindow {
         if (root.loc) {
             const l = root.loc;
             const list = [{ title: l.kind === "url" ? "Open in browser" : (l.kind === "dir" ? "Open folder" : "Open file"), keys: ["\u21b5"], run: () => root.openLoc() }];
-            if (l.kind !== "url")
-                list.push({ title: "Reveal in file manager", keys: [], run: () => {
-                    Apps.revealInFileManager(l.path);
+            if (l.kind !== "url") {
+                const dir = l.kind === "dir" ? l.path : (l.path.replace(/\/[^\/]*$/, "") || "/");
+                const act = (title, fn) => list.push({ title: title, keys: [], run: () => {
+                    fn();
                     root.close();
                 } });
+                act("Open in terminal", () => Apps.openInTerminal(dir));
+                if (Apps.hasYazi)
+                    act("Open in yazi", () => Apps.openInYazi(l.path));
+                if (l.kind === "file") {
+                    act("Open in editor", () => Apps.openInEditor(l.path));
+                    act("Open folder in file manager", () => Apps.openFile(dir));
+                }
+                act("Reveal in file manager", () => Apps.revealInFileManager(l.path));
+            }
             list.push({ title: l.kind === "url" ? "Copy URL" : "Copy path", keys: [], run: () => {
                 root.copyText(l.kind === "url" ? l.url : l.path);
                 root.close();

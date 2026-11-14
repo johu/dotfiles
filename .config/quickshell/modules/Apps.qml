@@ -1,11 +1,14 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 // Single choke point for "which app opens X". Resolved in an sh wrapper at
 // launch: PATH checks need no synchronous Process, and the bar (started
 // from Hyprland autostart) may lack $TERMINAL.
 QtObject {
+    id: root
+
     // $TERMINAL (word-split, first word must be on PATH), else the first
     // terminal found on PATH. gnome-terminal/kgx/ptyxis take "--" as the
     // command separator, everything else "-e". Mirrors noctalia's
@@ -32,6 +35,33 @@ QtObject {
 
     function runInTerminal(argv) {
         Quickshell.execDetached(terminalCommand(argv));
+    }
+
+    // yazi is optional; probed once so the launcher can hide its action.
+    property bool hasYazi: false
+
+    property var yaziProbe: Process {
+        running: true
+        command: ["sh", "-c", "command -v yazi >/dev/null 2>&1 && echo 1"]
+        stdout: StdioCollector {
+            onStreamFinished: root.hasYazi = text.trim() === "1"
+        }
+    }
+
+    // A shell in `dir`: terminals disagree on the working-directory flag, so
+    // cd inside the command instead.
+    function openInTerminal(dir) {
+        runInTerminal(["sh", "-c", 'cd "$1" && exec "${SHELL:-sh}"', "sh", String(dir)]);
+    }
+
+    function openInYazi(path) {
+        runInTerminal(["yazi", String(path)]);
+    }
+
+    // $EDITOR may carry arguments, so it is word-split on purpose; the bar
+    // may start without $EDITOR, hence the nvim fallback.
+    function openInEditor(path) {
+        runInTerminal(["sh", "-c", 'exec ${EDITOR:-nvim} "$1"', "sh", String(path)]);
     }
 
     function openUrl(url) {
