@@ -193,7 +193,7 @@ Item {
                 { keys: ["↵"], text: "expand", ghost: !page.selected || page.selected.kind !== "group" },
                 { keys: ["K"], text: "kill" },
                 { keys: ["Tab"], text: "performance" },
-                { keys: ["q"], text: "back" }
+                { keys: ["q"], text: "close" }
             ]];
     }
 

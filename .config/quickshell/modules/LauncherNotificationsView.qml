@@ -40,7 +40,7 @@ Item {
             { keys: ["D"], text: "clear all" }
         ].concat(view.live && (view.actions.length > 0 || view.hasDefault) ? [{ keys: ["↵"], text: "default" }] : []).concat(view.live && view.actions.length > 0 ? [{ keys: ["1-9"], text: "action" }] : []).concat([
             { keys: ["m"], text: Notifications.dnd ? "\uf1f7" : "\uf0a2", width: 28 },
-            { keys: ["q"], text: "back" }
+            { keys: ["q"], text: "close" }
         ])]
 
     Component.onCompleted: Notifications.markSeen()

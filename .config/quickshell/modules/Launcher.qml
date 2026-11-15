@@ -223,11 +223,6 @@ PanelWindow {
         root.viewName = name;
     }
 
-    function closeView() {
-        root.viewName = "";
-        Qt.callLater(() => searchInput.forceActiveFocus());
-    }
-
     // UI scale (Ctrl +/-/0), persisted in launcher.json.
     property real zoom: 1
 
@@ -1303,7 +1298,7 @@ PanelWindow {
         LauncherCalendarView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1313,7 +1308,7 @@ PanelWindow {
         LauncherNotificationsView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1323,7 +1318,7 @@ PanelWindow {
         LauncherSystemView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1333,7 +1328,7 @@ PanelWindow {
         LauncherClipboardView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1343,7 +1338,7 @@ PanelWindow {
         LauncherAudioView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1353,7 +1348,7 @@ PanelWindow {
         LauncherMediaView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1363,7 +1358,7 @@ PanelWindow {
         LauncherWeatherView {
             textRender: root.textRendering
             onCloseRequested: root.close()
-            onLeaveRequested: root.closeView()
+            onLeaveRequested: root.close()
         }
     }
 
@@ -1477,9 +1472,12 @@ PanelWindow {
                         if (root.viewActive) {
                             if (ctrl && !alt && root.zoomKey(event.key)) {
                             } else if (event.key === Qt.Key_Escape) {
-                                // A view may use Esc to step back inside itself first.
+                                // A view may use Esc to step back inside itself first;
+                                // otherwise Esc (and q) close the launcher: it is one
+                                // Hyprland shortcut away, so there is no step back to
+                                // the search.
                                 if (!(viewLoader.item && viewLoader.item.handleEscape && viewLoader.item.handleEscape()))
-                                    root.closeView();
+                                    root.close();
                             } else if (viewLoader.item) {
                                 viewLoader.item.handleKey(event);
                             }

@@ -36,7 +36,7 @@ Item {
             { keys: ["Ctrl-u", "Ctrl-d"], text: "6 hours" },
             { keys: ["t"], text: "now" },
             { keys: ["r"], text: "refresh" },
-            { keys: ["q"], text: "back" }
+            { keys: ["q"], text: "close" }
         ]]
 
     Component.onCompleted: WeatherData.loadDetail(false)

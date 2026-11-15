@@ -37,7 +37,7 @@ Item {
             { keys: ["h", "l"], text: "1 / 5 minutes" },
             { keys: ["↵"], text: "show processes", ghost: page.type !== "cpu" && page.type !== "mem" },
             { keys: ["Tab"], text: "processes" },
-            { keys: ["q"], text: "back" }
+            { keys: ["q"], text: "close" }
         ]]
 
     function select(delta) {

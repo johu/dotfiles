@@ -240,13 +240,13 @@ Item {
         const visKey = { keys: ["v"], text: "visualizer" };
         const back = { keys: ["h"], text: "back" };
         if (!view.hasPlayer)
-            return [[{ keys: ["q"], text: "back" }]];
+            return [[{ keys: ["q"], text: "close" }]];
         const players = view.players.length > 1 ? [{ keys: ["Tab"], text: "player" }] : [];
         if (view.mode === "lyrics")
             return [[{ keys: ["j", "k"], text: "scroll" }, { keys: ["↵"], text: "jump to line" }, { keys: ["t"], text: "follow" }, { keys: ["r"], text: "reload" }], [play, tracks, seek, visKey, back]];
         if (view.mode === "visualizer")
             return [[play, tracks, seek, lyricsKey, back]];
-        return [[play, tracks, seek, lyricsKey, visKey].concat(players).concat([{ keys: ["q"], text: "back" }])];
+        return [[play, tracks, seek, lyricsKey, visKey].concat(players).concat([{ keys: ["q"], text: "close" }])];
     }
 
     function handleKey(event) {

@@ -386,7 +386,7 @@ Item {
         if (view.searching)
             return [[{ keys: ["↵"], text: "keep filter" }, { keys: ["Esc"], text: "stop searching" }, { keys: ["Ctrl", "U"], text: "clear" }]];
         if (view.loaded && view.rows.length === 0 && view.filter === "")
-            return [[{ keys: ["q"], text: "back" }]];
+            return [[{ keys: ["q"], text: "close" }]];
         const pinned = view.selected ? view.selected.pinned === true : false;
         return [[
                 { keys: ["j", "k"], text: "move" },
@@ -397,7 +397,7 @@ Item {
                 { keys: ["/"], text: "search" },
                 { keys: ["PgUp", "PgDn"], text: "scroll" },
                 { keys: ["D"], text: "clear all" },
-                { keys: ["q"], text: "back" },
+                { keys: ["q"], text: "close" },
                 { keys: ["o"], text: "open", ghost: view.kind !== "url" }
             ]];
     }

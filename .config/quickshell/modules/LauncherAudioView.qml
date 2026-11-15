@@ -249,7 +249,7 @@ Item {
                 { keys: ["0-9"], text: "set" },
                 { keys: ["m"], text: "mute" },
                 { keys: ["↵"], text: k === "app" ? "move to output" : "make default", slot: "move to output", ghost: k === "rec" },
-                { keys: ["q"], text: "back" }
+                { keys: ["q"], text: "close" }
             ]];
     }
 

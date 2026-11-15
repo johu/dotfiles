@@ -42,7 +42,7 @@ Item {
             { keys: ["Ctrl-u", "Ctrl-d"], text: "month" },
             { keys: ["t"], text: "today" },
             { keys: ["Ctrl-n", "Ctrl-p"], text: "event" }
-        ].concat(view.selectedLink !== "" ? [{ keys: ["o"], text: "open link" }] : []).concat([{ keys: ["q"], text: "back" }])]
+        ].concat(view.selectedLink !== "" ? [{ keys: ["o"], text: "open link" }] : []).concat([{ keys: ["q"], text: "close" }])]
 
     onSelectedDateChanged: view.eventIndex = 0
 
