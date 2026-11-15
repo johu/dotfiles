@@ -51,6 +51,14 @@ static() {
   [ -n "$a" ] && [ "$a" = "$b" ] && pass "QT_QPA_PLATFORMTHEME consistent (uwsm/env = env.lua = $a)" \
     || fail "QT_QPA_PLATFORMTHEME differs: uwsm/env='$a' env.lua='$b'"
 
+  # quickshell is a systemd unit: it only gets what uwsm exports, not hl.env
+  local mm
+  mm=$(sed -n "s/^ *main_monitor *= *'\([^']*\)'.*/\1/p" "$HYPR/globals.lua" | head -n1)
+  out=$(env -i HOME="$HOME" PATH="$PATH" bash -c ". '$UWSM/env-hyprland'; printf '%s|%s' \"\$QS_BAR_SCREEN\" \"\$TERMINAL\"")
+  [ -n "$mm" ] && [ "$out" = "$mm|$(sed -n "s/^ *terminal *= *'\([^']*\)'.*/\1/p" "$HYPR/globals.lua" | head -n1)" ] \
+    && pass "env-hyprland exports QS_BAR_SCREEN/TERMINAL from globals.lua ($out)" \
+    || fail "env-hyprland QS_BAR_SCREEN|TERMINAL = '$out' (expected main_monitor '$mm')"
+
   echo "== static: Hyprland config"
   if command -v Hyprland >/dev/null; then
     out=$(Hyprland --verify-config -c "$HYPR/hyprland.lua" 2>&1)
@@ -116,6 +124,9 @@ runtime() {
   grep -qE "^QT_QPA_PLATFORM=(\\\$')?wayland;xcb'?$" <<<"$env" \
     && pass "QT_QPA_PLATFORM=wayland;xcb" || fail "QT_QPA_PLATFORM wrong/missing"
 
+  grep -q '^QS_BAR_SCREEN=' <<<"$env" && pass "QS_BAR_SCREEN present" || fail "QS_BAR_SCREEN missing"
+  grep -q '^TERMINAL=' <<<"$env" && pass "TERMINAL present" || fail "TERMINAL missing"
+
   echo "== runtime: services"
   local s
   for s in hyprsunset hyprpolkitagent nm-applet cliphist hypridle hyprpaper xwaylandvideobridge quickshell quickshell-watchdog pipewire wireplumber; do
@@ -128,6 +139,14 @@ runtime() {
     env HYPRLAND_INSTANCE_SIGNATURE="$sig" hyprctl hyprsunset temperature
   check "videobridge tray icon is filtered in Tray.qml" \
     grep -q 'Xwayland Video Bridge' "$HOME/.config/quickshell/modules/Tray.qml"
+  local want bar
+  want=$(systemctl --user show-environment | sed -n 's/^QS_BAR_SCREEN=//p')
+  bar=$(env HYPRLAND_INSTANCE_SIGNATURE="$sig" hyprctl layers -j 2>/dev/null | python3 -c "
+import json,sys
+print(' '.join(m for m,v in json.load(sys.stdin).items()
+  if any(l['namespace']=='quickshell' for ls in v['levels'].values() for l in ls)))")
+  [ -n "$want" ] && [ "$bar" = "$want" ] && pass "quickshell bar only on $want" \
+    || fail "quickshell bar on '$bar', expected '$want'"
   check "no conflicting second polkit agent running" \
     bash -c '! pgrep -f "^/usr/libexec/polkit-gnome" >/dev/null'
   # XDG autostart units that must stay masked (the generator ignores
