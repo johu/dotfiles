@@ -1318,6 +1318,16 @@ PanelWindow {
     }
 
     Component {
+        id: audioView
+
+        LauncherAudioView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.closeView()
+        }
+    }
+
+    Component {
         id: mediaView
 
         LauncherMediaView {
@@ -1378,7 +1388,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewActive
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView })[root.viewName] ?? null
             }
         }
 
