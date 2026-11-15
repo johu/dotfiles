@@ -9,7 +9,9 @@ import Quickshell.Hyprland
 // Dashboard, Launcher). Each registers itself through a PopupBehavior
 // child, which gives all of them the same rules:
 //   * only one is open at a time (opening one closes the previous),
-//   * all of them close on a workspace switch,
+//   * all of them close on a workspace switch, except a popup that sets
+//     `persistsAcrossWorkspaces` (the launcher while a view is open: it
+//     hides itself and returns with its workspace),
 //   * a trigger click that lands while the popup's own focus grab is
 //     being cleared does not immediately reopen it (see toggle()),
 //   * `qs ipc call popups open <name>` opens any registered one, so
@@ -70,6 +72,14 @@ Singleton {
         }
     }
 
+    function closeForWorkspaceSwitch() {
+        for (const name in root.entries) {
+            const p = root.entries[name].popup;
+            if (p.visible && p.persistsAcrossWorkspaces !== true)
+                p.visible = false;
+        }
+    }
+
     // Trigger-button entry point: close if open, otherwise open unless the
     // popup was closed a moment ago (same click that dismissed it).
     function toggle(name) {
@@ -86,7 +96,7 @@ Singleton {
     // Hyprland.focusedWorkspace is a new object on every switch, so track the
     // id through a plain binding.
     readonly property int focusedWorkspaceId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
-    onFocusedWorkspaceIdChanged: root.closeAll()
+    onFocusedWorkspaceIdChanged: root.closeForWorkspaceSwitch()
 
     IpcHandler {
         target: "popups"

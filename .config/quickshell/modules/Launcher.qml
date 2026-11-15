@@ -216,6 +216,8 @@ PanelWindow {
     readonly property bool viewActive: root.viewName !== ""
 
     function openView(name) {
+        root.viewWorkspaceId = root.homeWorkspaceId;
+        root.parked = false;
         root.actionsOpen = false;
         root.webLocked = false;
         searchInput.text = "";
@@ -974,6 +976,7 @@ PanelWindow {
     }
 
     function open() {
+        root.parked = false;
         root.query = "";
         // searchInput.text isn't bound to root.query, so clear it separately or a
         // stale query lingers on reopen.
@@ -992,7 +995,34 @@ PanelWindow {
     }
 
     function close() {
+        root.parked = false;
         root.visible = false;
+    }
+
+    // ---- A view stays on the workspace it was opened on ----
+    // Switching this monitor to another workspace hides the launcher (no
+    // input, no focus, nothing in the way) and keeps the view alive; switching
+    // back shows it again as it was. PopupManager does not close the launcher
+    // on a workspace switch while a view is open (persistsAcrossWorkspaces).
+    readonly property var homeMonitor: Hyprland.monitorFor(root.screen)
+    readonly property int homeWorkspaceId: root.homeMonitor && root.homeMonitor.activeWorkspace ? root.homeMonitor.activeWorkspace.id : -1
+    property int viewWorkspaceId: -1
+    property bool parked: false
+    readonly property bool persistsAcrossWorkspaces: root.viewActive
+
+    onHomeWorkspaceIdChanged: {
+        if (!root.viewActive || root.viewWorkspaceId < 0 || root.homeWorkspaceId < 0)
+            return;
+        const away = root.homeWorkspaceId !== root.viewWorkspaceId;
+        if (away && root.visible) {
+            root.parked = true;
+            root.visible = false;
+        } else if (!away && root.parked) {
+            root.parked = false;
+            // a modifier released while hidden would stay "held"
+            root.ctrlHeld = false;
+            root.visible = true;
+        }
     }
 
     PopupBehavior {
