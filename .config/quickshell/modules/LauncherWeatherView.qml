@@ -255,9 +255,9 @@ Item {
         // Selected hour
         Rectangle {
             x: 0
-            y: parent.height - 168
+            y: parent.height - 178
             width: view.leftWidth
-            height: 168
+            height: 178
             radius: 14
             color: Theme.surface2
 
@@ -300,18 +300,49 @@ Item {
                 renderType: view.textRender
             }
 
-            Text {
-                x: 14
-                y: 84
-                width: view.leftWidth - 28
-                height: 70
-                wrapMode: Text.Wrap
-                lineHeight: 1.2
-                text: view.hourEntry ? "Feels like " + view.hourEntry.feels + "°  ·  Humidity " + view.hourEntry.humidity + " %\nWind " + view.hourEntry.wind + " km/h  ·  Rain " + view.hourEntry.pop + " % (" + view.mm(view.hourEntry.precip) + ")" : ""
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize + 1
-                renderType: view.textRender
+            // Two columns of fixed label / value cells: values of different
+            // width (9 vs 10 km/h, -2 vs 1 degrees) must not push the text
+            // after them around.
+            Repeater {
+                model: view.hourEntry ? [
+                    { x: 14, y: 84, lw: 100, vw: 78, label: "Feels like", value: view.hourEntry.feels + "°" },
+                    { x: 14, y: 112, lw: 100, vw: 78, label: "Wind", value: view.hourEntry.wind + " km/h" },
+                    { x: 14, y: 140, lw: 100, vw: 78, label: "Rain", value: view.mm(view.hourEntry.precip) },
+                    { x: 206, y: 84, lw: 84, vw: 90, label: "Humidity", value: view.hourEntry.humidity + " %" },
+                    { x: 206, y: 112, lw: 84, vw: 90, label: "Chance", value: view.hourEntry.pop + " %" }
+                ] : []
+
+                Item {
+                    required property var modelData
+
+                    x: modelData.x
+                    y: modelData.y
+                    width: modelData.lw + modelData.vw
+                    height: 26
+
+                    Text {
+                        width: modelData.lw
+                        height: parent.height
+                        verticalAlignment: Text.AlignVCenter
+                        text: modelData.label
+                        color: Theme.subtext1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 1
+                        renderType: view.textRender
+                    }
+
+                    Text {
+                        x: modelData.lw
+                        width: modelData.vw
+                        height: parent.height
+                        verticalAlignment: Text.AlignVCenter
+                        text: modelData.value
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 1
+                        renderType: view.textRender
+                    }
+                }
             }
         }
     }
