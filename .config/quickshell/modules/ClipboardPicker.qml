@@ -42,14 +42,16 @@ PopupWindow {
         root.visible = false;
     }
 
+    // Quickshell's Process keeps stdin open, and cliphist decode/delete wait
+    // for end of input, so the id is piped in by the shell instead.
     function copyEntry(id) {
-        copyProc.pendingId = id;
+        copyProc.command = ["sh", "-c", "printf '%s\\t\\n' \"$1\" | cliphist decode | wl-copy", "sh", id];
         copyProc.running = true;
         root.close();
     }
 
     function deleteEntry(id) {
-        deleteProc.pendingId = id;
+        deleteProc.command = ["sh", "-c", "printf '%s\\t\\n' \"$1\" | cliphist delete", "sh", id];
         deleteProc.running = true;
         root.entries = root.entries.filter(e => e.id !== id);
     }
@@ -69,7 +71,7 @@ PopupWindow {
                     if (!m)
                         continue;
                     const preview = m[2];
-                    const imgMatch = preview.match(/^\[\[ binary data [^ ]+ (\w+) \d+x\d+ \]\]$/);
+                    const imgMatch = preview.match(/^\[\[ binary data [^ ]+ [^ ]+ (\w+) \d+x\d+ \]\]$/);
                     const ext = imgMatch ? imgMatch[1].toLowerCase() : null;
                     const knownExt = ["png", "jpg", "jpeg", "gif", "bmp", "webp", "tiff"].includes(ext);
                     parsed.push({
@@ -87,18 +89,10 @@ PopupWindow {
 
     Process {
         id: copyProc
-        property string pendingId: ""
-        stdinEnabled: true
-        command: ["sh", "-c", "cliphist decode | wl-copy"]
-        onRunningChanged: if (running) write(pendingId + "\t\n")
     }
 
     Process {
         id: deleteProc
-        property string pendingId: ""
-        stdinEnabled: true
-        command: ["cliphist", "delete"]
-        onRunningChanged: if (running) write(pendingId + "\t\n")
     }
 
     Process {
@@ -214,11 +208,9 @@ PopupWindow {
                     Process {
                         id: thumbProc
                         running: rowItem.modelData.isImage
-                        stdinEnabled: true
                         command: ["sh", "-c",
-                            'mkdir -p /tmp/quickshell-clipboard-thumbs && cliphist decode > "$1"',
-                            "thumb", "/tmp/quickshell-clipboard-thumbs/" + rowItem.modelData.id + "." + rowItem.modelData.ext]
-                        onRunningChanged: if (running) write(rowItem.modelData.id + "\t\n")
+                            'mkdir -p /tmp/quickshell-clipboard-thumbs && printf \'%s\\t\\n\' "$2" | cliphist decode > "$1"',
+                            "thumb", "/tmp/quickshell-clipboard-thumbs/" + rowItem.modelData.id + "." + rowItem.modelData.ext, rowItem.modelData.id]
                         onExited: rowItem.thumbPath = "/tmp/quickshell-clipboard-thumbs/" + rowItem.modelData.id + "." + rowItem.modelData.ext
                     }
 
