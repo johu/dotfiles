@@ -12,6 +12,9 @@ Item {
     property string title: ""
     property string hint: ""
     property int imageSize: 220
+    property int titleSize: Theme.fontSize + 8
+    property int hintSize: Theme.fontSize + 2
+    property int gap: 12
     property int textRender: Text.NativeRendering
 
     implicitWidth: Math.max(root.imageSize, titleText.implicitWidth, hintText.implicitWidth)
@@ -21,7 +24,7 @@ Item {
         id: column
 
         anchors.centerIn: parent
-        spacing: 12
+        spacing: root.gap
 
         Image {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -40,7 +43,7 @@ Item {
             text: root.title
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize + 8
+            font.pixelSize: root.titleSize
             font.bold: true
             renderType: root.textRender
         }
@@ -53,7 +56,7 @@ Item {
             text: root.hint
             color: Theme.subtext1
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize + 2
+            font.pixelSize: root.hintSize
             renderType: root.textRender
         }
     }

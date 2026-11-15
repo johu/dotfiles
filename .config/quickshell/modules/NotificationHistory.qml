@@ -111,6 +111,8 @@ PopupWindow {
 
             ListView {
                 id: list
+                // Hidden when empty so the placeholder below gets the room.
+                visible: Notifications.history.length > 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 6
@@ -314,15 +316,17 @@ PopupWindow {
                 }
             }
 
-            Text {
+            EmptyState {
                 visible: Notifications.history.length === 0
-                Layout.alignment: Qt.AlignHCenter
-                text: "No notifications"
-                color: Theme.subtext1
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.small(-1)
-                font.weight: Theme.smallWeight
-                renderType: Text.NativeRendering
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                illustration: "notifications.svg"
+                imageSize: 150
+                titleSize: Theme.fontSize + 3
+                hintSize: Theme.fontSize
+                gap: 8
+                title: "All caught up"
+                hint: Notifications.dnd ? "Do Not Disturb is on" : "New notifications will show up here"
             }
 
             Item {
