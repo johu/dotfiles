@@ -6,16 +6,21 @@ import Quickshell.Services.SystemTray
 RowLayout {
     spacing: 8
 
+    // Tray items that must keep running but should not get a bar icon
+    // (matched on the StatusNotifierItem Id).
+    readonly property var hiddenIds: ["Xwayland Video Bridge"]
+    readonly property var shownItems: SystemTray.items.values.filter(i => hiddenIds.indexOf(i.id) < 0)
+
     // An empty RowLayout still adds spacing as a layout child of the pill, a
     // phantom gap with no tray icons; hide it.
-    visible: SystemTray.items.values.length > 0
+    visible: shownItems.length > 0
 
     TrayMenu {
         id: trayMenu
     }
 
     Repeater {
-        model: SystemTray.items.values
+        model: shownItems
 
         delegate: Rectangle {
             id: trayIcon
