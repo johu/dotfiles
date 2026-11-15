@@ -1016,6 +1016,10 @@ PanelWindow {
     function close() {
         if (root.searching) {
             // Only the search goes away; the view stays alive, parked.
+            // Clear the query too, or its results would draw over the view
+            // when it comes back.
+            root.query = "";
+            searchInput.text = "";
             root.searching = false;
             root.visible = false;
             return;
@@ -1723,7 +1727,7 @@ PanelWindow {
         Text {
             id: focusedDescription
 
-            visible: root.selectedDescription.length > 0 && !root.actionsOpen
+            visible: root.selectedDescription.length > 0 && !root.actionsOpen && !root.viewActive
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: belowPill.bottom
             anchors.topMargin: 10
@@ -1991,7 +1995,7 @@ PanelWindow {
         Item {
             id: resultsPanel
 
-            visible: root.filtered.length > 0
+            visible: root.filtered.length > 0 && !root.viewActive
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: focusedDescription.bottom
             anchors.topMargin: 14
