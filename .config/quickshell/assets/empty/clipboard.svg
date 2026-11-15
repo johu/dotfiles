@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- board -->
+  <rect x="20" y="16" width="52" height="68" rx="8" fill="#6b7394"/>
+  <rect x="26" y="26" width="40" height="52" rx="4" fill="#3b4261"/>
+  <!-- clip -->
+  <rect x="34" y="9" width="24" height="14" rx="5" fill="#8a93b8"/>
+  <rect x="40" y="13" width="12" height="6" rx="3" fill="#24283b"/>
+  <!-- lines -->
+  <rect x="32" y="38" width="28" height="4" rx="2" fill="#4d5578"/>
+  <rect x="32" y="48" width="22" height="4" rx="2" fill="#4d5578"/>
+  <rect x="32" y="58" width="26" height="4" rx="2" fill="#4d5578"/>
+  <!-- sparkles -->
+  <path fill="#e0af68" d="M82 20l1.600 3.800L87.400 25.400l-3.800 1.600L82 30.800l-1.600-3.800L76.600 25.400l3.800-1.600z"/>
+  <circle cx="12" cy="40" r="3" fill="#7aa2f7"/>
+  <circle cx="84" cy="64" r="2.500" fill="#bb9af7" opacity=".8"/>
+  <!-- empty badge -->
+  <circle cx="68" cy="70" r="15" fill="#7aa2f7" stroke="#24283b" stroke-width="4"/>
+  <path d="M61 70h14" stroke="#24283b" stroke-width="4.500" stroke-linecap="round"/>
+</svg>
