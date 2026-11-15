@@ -18,6 +18,15 @@ EMERGE_TAB_LABEL="emerge"
 # instead of trusting $PATH.
 HERDR="$HOME/.local/bin/herdr"
 
+# Guard against surprise re-runs: a systemd daemon-reload re-arms the
+# timer's OnActiveSec=, so every reload (login, enabling a unit, ...)
+# would otherwise trigger another eix-sync ~90s later. Skip if a sync was
+# started less than MIN_INTERVAL seconds ago. The stamp is only written
+# after the sync was actually sent, so skips (game mode, emerge running,
+# herdr never appearing) don't suppress the next attempt.
+STAMP="${XDG_CACHE_HOME:-$HOME/.cache}/portage-sync.stamp"
+MIN_INTERVAL=$((3 * 3600))
+
 # Same ~/.cache/gamemode flag NightLight.qml and PortageUpdates.qml's own
 # pretend-check already respect (see hypr/keybinds.lua's SUPER+F2 toggle).
 # This script forces a workspace switch below, which would yank focus out
@@ -34,6 +43,14 @@ fi
 # running. eix-sync itself calls emerge --sync - running it concurrently
 # with a real build risks portage db lock contention, on top of it also
 # forcing a workspace switch over whatever the user is watching build.
+if [ -f "$STAMP" ]; then
+  age=$(( $(date +%s) - $(stat -c %Y "$STAMP") ))
+  if [ "$age" -lt "$MIN_INTERVAL" ]; then
+    echo "portage-sync.sh: last sync ${age}s ago (< ${MIN_INTERVAL}s), skipping" >&2
+    exit 0
+  fi
+fi
+
 if pgrep -x emerge -a 2>/dev/null \
     | grep -v -- '-pvuDN @world' \
     | grep -q .; then
@@ -115,6 +132,7 @@ find_emerge_pane() {
 for _ in $(seq 1 90); do
   if EMERGE_PANE=$(find_emerge_pane); then
     "$HERDR" pane run "$EMERGE_PANE" eix-sync
+    touch "$STAMP"
     hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
     exit 0
   fi
