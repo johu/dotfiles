@@ -1,0 +1,15 @@
+[Unit]
+Description=XWayland video bridge (screen sharing for X11 apps)
+PartOf=graphical-session.target
+After=graphical-session.target xdg-desktop-portal.service
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/xwaylandvideobridge --autostart
+Restart=on-failure
+RestartSec=2
+Slice=app.slice
+
+[Install]
+WantedBy=graphical-session.target

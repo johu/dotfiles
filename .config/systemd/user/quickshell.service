@@ -1,12 +1,16 @@
 [Unit]
 Description=Quickshell bar/shell
+PartOf=graphical-session.target
 After=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/qs -p %h/.config/quickshell
 Restart=on-failure
 RestartSec=2
-StartLimitIntervalSec=60
-StartLimitBurst=5
 Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target
