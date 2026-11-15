@@ -37,17 +37,6 @@ QtObject {
         Quickshell.execDetached(terminalCommand(argv));
     }
 
-    // yazi is optional; probed once so the launcher can hide its action.
-    property bool hasYazi: false
-
-    property var yaziProbe: Process {
-        running: true
-        command: ["sh", "-c", "command -v yazi >/dev/null 2>&1 && echo 1"]
-        stdout: StdioCollector {
-            onStreamFinished: root.hasYazi = text.trim() === "1"
-        }
-    }
-
     // A shell in `dir`: terminals disagree on the working-directory flag, so
     // cd inside the command instead.
     function openInTerminal(dir) {

@@ -489,6 +489,8 @@ PanelWindow {
     property bool fileIndexReady: false
     property real fileIndexAt: 0
 
+    readonly property string fileMissingReason: Dependencies.why("fd") || Dependencies.why("fzf")
+
     readonly property var selectedFile: {
         if (!root.fileMode)
             return null;
@@ -574,7 +576,7 @@ PanelWindow {
         '$QS_EXCLUDES',
         'EOF',
         'scan() {',
-        '  if [ -n "$root" ]; then fd --hidden --max-results 1000000 "$@" . "$root"; else fd --hidden --max-results 1000000 "$@" .; fi',
+        '  if [ -n "$root" ]; then "$QS_FD" --hidden --max-results 1000000 "$@" . "$root"; else "$QS_FD" --hidden --max-results 1000000 "$@" .; fi',
         '}',
         '{',
         '  root=""; scan "$@"',
@@ -586,6 +588,10 @@ PanelWindow {
     ].join("\n")
 
     onFileModeChanged: {
+        if (root.fileMode) {
+            Dependencies.recheckIfMissing("fd");
+            Dependencies.recheckIfMissing("fzf");
+        }
         if (root.fileMode && !fileIndexProc.running && Date.now() - root.fileIndexAt > 120000)
             fileIndexProc.running = true;
         if (root.fileMode) {
@@ -604,6 +610,7 @@ PanelWindow {
 
         command: ["sh", "-c", root.fileIndexScript, "sh", root.homeDir, root.filesPath]
         environment: ({
+                QS_FD: Dependencies.bin("fd"),
                 QS_ROOTS: root.fileRoots.join("\n"),
                 QS_EXCLUDES: root.fileExcludes.join("\n")
             })
@@ -850,7 +857,7 @@ PanelWindow {
                 root.close();
             } });
             act("Open in terminal", () => Apps.openInTerminal(dir));
-            if (Apps.hasYazi)
+            if (Dependencies.has("yazi"))
                 act("Open in yazi", () => Apps.openInYazi(l.path));
             if (l.kind === "file") {
                 act("Open in editor", () => Apps.openInEditor(l.path));
@@ -892,7 +899,7 @@ PanelWindow {
         if (root.fileMode && root.fileResults.length === 0)
             return {
                 title: "Files in ~",
-                text: root.fileTerm === "" ? "Type to search" : (root.fileSearching ? "Searching\u2026" : "No matches"),
+                text: root.fileMissingReason !== "" ? root.fileMissingReason : (root.fileTerm === "" ? "Type to search" : (root.fileSearching ? "Searching\u2026" : "No matches")),
                 hint: ""
             };
         if (root.calc)
