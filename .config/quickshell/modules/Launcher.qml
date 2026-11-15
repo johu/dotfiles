@@ -212,16 +212,29 @@ PanelWindow {
     // ---- Views (launcher-views.md): full-size keyboard-driven screens ----
     // A view is a component with `hints`, handleKey(event) and
     // closeRequested(); while one is open it receives every key.
+    // The view that exists ("" = none). It lives until it is closed: it may be
+    // hidden on another workspace, or covered by the search (`searching`).
     property string viewName: ""
-    readonly property bool viewActive: root.viewName !== ""
+    readonly property bool viewExists: root.viewName !== ""
+    // The search is shown over a view that lives on another workspace.
+    property bool searching: false
+    // A view is on screen (not parked, not covered by the search).
+    readonly property bool viewActive: root.viewExists && !root.searching
 
     function openView(name) {
-        root.viewWorkspaceId = root.homeWorkspaceId;
-        root.parked = false;
         root.actionsOpen = false;
         root.webLocked = false;
         searchInput.text = "";
         root.query = "";
+        // Focus-or-launch for views: the view already exists on another
+        // workspace, so go there instead of starting a second one. The
+        // workspace change shows it (onHomeWorkspaceIdChanged).
+        if (root.viewExists && root.viewName === name && root.viewWorkspaceId >= 0 && root.homeWorkspaceId !== root.viewWorkspaceId) {
+            Quickshell.execDetached(["hyprctl", "dispatch", `hl.dsp.focus({ workspace = ${root.viewWorkspaceId} })`]);
+            return;
+        }
+        root.viewWorkspaceId = root.homeWorkspaceId;
+        root.searching = false;
         root.viewName = name;
     }
 
@@ -976,14 +989,20 @@ PanelWindow {
     }
 
     function open() {
-        root.parked = false;
         root.query = "";
         // searchInput.text isn't bound to root.query, so clear it separately or a
         // stale query lingers on reopen.
         searchInput.text = "";
         root.selectedIndex = 0;
         root.showHidden = false;
-        root.viewName = "";
+        // A view parked on another workspace survives: the search is shown
+        // over it. Otherwise the launcher starts clean.
+        if (root.viewExists && root.viewWorkspaceId >= 0 && root.homeWorkspaceId !== root.viewWorkspaceId) {
+            root.searching = true;
+        } else {
+            root.viewName = "";
+            root.searching = false;
+        }
         root.actionsOpen = false;
         root.webLocked = false;
         root.lastPointer = Qt.point(-1, -1);
@@ -995,7 +1014,16 @@ PanelWindow {
     }
 
     function close() {
-        root.parked = false;
+        if (root.searching) {
+            // Only the search goes away; the view stays alive, parked.
+            root.searching = false;
+            root.visible = false;
+            return;
+        }
+        // Closing a view (or the plain search) ends it, so its background
+        // work (collectors, visualizer) stops too.
+        root.viewName = "";
+        root.viewWorkspaceId = -1;
         root.visible = false;
     }
 
@@ -1007,18 +1035,18 @@ PanelWindow {
     readonly property var homeMonitor: Hyprland.monitorFor(root.screen)
     readonly property int homeWorkspaceId: root.homeMonitor && root.homeMonitor.activeWorkspace ? root.homeMonitor.activeWorkspace.id : -1
     property int viewWorkspaceId: -1
-    property bool parked: false
     readonly property bool persistsAcrossWorkspaces: root.viewActive
 
     onHomeWorkspaceIdChanged: {
-        if (!root.viewActive || root.viewWorkspaceId < 0 || root.homeWorkspaceId < 0)
+        if (!root.viewExists || root.viewWorkspaceId < 0 || root.homeWorkspaceId < 0)
             return;
-        const away = root.homeWorkspaceId !== root.viewWorkspaceId;
-        if (away && root.visible) {
-            root.parked = true;
-            root.visible = false;
-        } else if (!away && root.parked) {
-            root.parked = false;
+        if (root.homeWorkspaceId !== root.viewWorkspaceId) {
+            // away: park the view (a search over it is closed by PopupManager)
+            if (root.visible && !root.searching)
+                root.visible = false;
+        } else if (!root.visible || root.searching) {
+            // back (or sent here by "focus view"): show it again
+            root.searching = false;
             // a modifier released while hidden would stay "held"
             root.ctrlHeld = false;
             root.visible = true;
@@ -1048,6 +1076,9 @@ PanelWindow {
 
         // Open the launcher straight into a view, e.g. `view calendar`.
         function view(name: string): void {
+            // already on screen: nothing to do (do not restart it)
+            if (root.visible && root.viewActive && root.viewName === name)
+                return;
             root.open();
             root.openView(name);
         }
@@ -1315,8 +1346,10 @@ PanelWindow {
         // change): the Enter label reserves the room of "focus window" and
         // the "new window" hint stays as an invisible placeholder.
         const running = !!root.findWindow(e);
+        // a view that already lives on another workspace: Enter goes there
+        const viewAway = !!e.view && root.viewExists && root.viewName === e.view && root.homeWorkspaceId !== root.viewWorkspaceId;
         return [[
-                { keys: ["\u21b5"], text: running ? "focus window" : (e.system ? "run" : "open"), slot: "focus window" },
+                { keys: ["\u21b5"], text: viewAway ? "go to view" : (running ? "focus window" : (e.system ? "run" : "open")), slot: "focus window" },
                 { keys: ["Ctrl", "K"], text: "actions" },
                 { keys: ["Shift", "\u21b5"], text: "new window", ghost: !running }
             ]];
@@ -1432,7 +1465,7 @@ PanelWindow {
 
                 anchors.fill: parent
                 anchors.margins: 22
-                active: root.viewActive
+                active: root.viewExists
                 sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, clipboard: clipboardView, system: systemView })[root.viewName] ?? null
             }
         }
