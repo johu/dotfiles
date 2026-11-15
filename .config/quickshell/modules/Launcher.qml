@@ -1318,6 +1318,16 @@ PanelWindow {
     }
 
     Component {
+        id: systemView
+
+        LauncherSystemView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.closeView()
+        }
+    }
+
+    Component {
         id: clipboardView
 
         LauncherClipboardView {
@@ -1398,7 +1408,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewActive
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, clipboard: clipboardView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, clipboard: clipboardView, system: systemView })[root.viewName] ?? null
             }
         }
 

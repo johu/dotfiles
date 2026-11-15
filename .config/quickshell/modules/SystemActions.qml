@@ -80,6 +80,7 @@ Singleton {
 
         list.push(Object.assign(root.entry("view-notifications", "Notifications", "Inbox and history with keyboard actions", ["notifications", "notification", "inbox", "history", "messages", "alerts", "dnd"], "\uf0f3", Theme.mauve, () => {}), { view: "notifications" }));
 
+        list.push(Object.assign(root.entry("view-system", "System", "Performance graphs and processes", ["system", "monitor", "resources", "performance", "cpu", "ram", "memory", "gpu", "disk", "network", "processes", "task manager", "htop", "top", "btop", "temperature", "battery", "kill", "systemmonitor"], "\uf080", Theme.green, () => {}), { view: "system" }));
         list.push(Object.assign(root.entry("view-clipboard", "Clipboard", "History with preview, search and pins", ["clipboard", "clip", "history", "copy", "paste", "cliphist", "zwischenablage"], "\uf0ea", Theme.mauve, () => {}), { view: "clipboard" }));
         list.push(Object.assign(root.entry("view-audio", "Audio", "Volume, devices and per-app mixer", ["audio", "volume", "sound", "mixer", "speaker", "headphones", "microphone", "mic", "output", "input", "pipewire", "lautstaerke", "ton"], "\uf028", Theme.teal, () => {}), { view: "audio" }));
         list.push(Object.assign(root.entry("view-media", "Media", "Player, lyrics and visualizer", ["media", "music", "player", "lyrics", "visualizer", "cava", "song", "spotify", "playing", "musik"], "\uf001", Theme.mauve, () => {}), { view: "media" }));
