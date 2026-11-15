@@ -4,3 +4,11 @@ export HYPRCURSOR_SIZE=20
 
 # screenshots
 export HYPRSHOT_DIR=pics/screenshots
+
+# quickshell runs as a systemd user unit, so it only sees what uwsm exports
+# here; hl.env in env.lua does not reach it. Read the values from globals.lua
+# so there is a single source of truth.
+_globals="$HOME/.config/hypr/globals.lua"
+export QS_BAR_SCREEN="$(sed -n "s/^ *main_monitor *= *'\([^']*\)'.*/\1/p" "$_globals" | head -n1)"
+export TERMINAL="$(sed -n "s/^ *terminal *= *'\([^']*\)'.*/\1/p" "$_globals" | head -n1)"
+unset _globals
