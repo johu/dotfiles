@@ -7,6 +7,9 @@ PopupWindow {
     id: root
 
     property var entries: []
+    // False until the first `cliphist list` answered, so an empty popup does
+    // not flash the "empty" state while the history is still loading.
+    property bool loaded: false
     property string filterText: ""
     property bool confirmClear: false
 
@@ -77,6 +80,7 @@ PopupWindow {
                     });
                 }
                 root.entries = parsed;
+                root.loaded = true;
             }
         }
     }
@@ -188,6 +192,8 @@ PopupWindow {
 
             ListView {
                 id: listView
+                // Hidden when empty so the placeholders below get the room.
+                visible: count > 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -266,14 +272,32 @@ PopupWindow {
                 }
             }
 
-            Text {
-                visible: listView.count === 0
+            EmptyState {
+                visible: root.loaded && root.entries.length === 0
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                illustration: "clipboard.svg"
+                imageSize: 150
+                titleSize: Theme.fontSize + 3
+                hintSize: Theme.fontSize
+                gap: 8
+                title: "Clipboard is empty"
+                hint: "Copied text and images show up here"
+            }
+
+            // A search that matches nothing is not an empty history.
+            Text {
+                visible: root.entries.length > 0 && root.filteredEntries.length === 0
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 horizontalAlignment: Text.AlignHCenter
-                text: "No clipboard history"
+                verticalAlignment: Text.AlignVCenter
+                text: "No entry matches \"" + root.filterText + "\""
                 color: Theme.subtext1
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
+                font.italic: true
+                elide: Text.ElideRight
                 renderType: Text.NativeRendering
             }
         }
