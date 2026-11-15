@@ -1,0 +1,6 @@
+# cursor
+export HYPRCURSOR_THEME=Bibata-Modern-Ice
+export HYPRCURSOR_SIZE=20
+
+# screenshots
+export HYPRSHOT_DIR=pics/screenshots
