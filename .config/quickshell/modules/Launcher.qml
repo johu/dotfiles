@@ -1318,6 +1318,16 @@ PanelWindow {
     }
 
     Component {
+        id: mediaView
+
+        LauncherMediaView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.closeView()
+        }
+    }
+
+    Component {
         id: weatherView
 
         LauncherWeatherView {
@@ -1348,8 +1358,11 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: -30
-            width: 1360
-            height: 780
+            // A view may ask for more room (preferredWidth / preferredHeight);
+            // the default is the compact size of the calendar and weather views.
+            // Never larger than the screen allows (the hints sit below the box).
+            width: Math.min(viewLoader.item?.preferredWidth ?? 1360, content.width - 80)
+            height: Math.min(viewLoader.item?.preferredHeight ?? 780, content.height - 220)
             radius: Theme.radius
             color: Theme.surface1
             border.width: 1
@@ -1365,7 +1378,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewActive
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView })[root.viewName] ?? null
             }
         }
 
@@ -1434,7 +1447,9 @@ PanelWindow {
                         if (root.viewActive) {
                             if (ctrl && !alt && root.zoomKey(event.key)) {
                             } else if (event.key === Qt.Key_Escape) {
-                                root.closeView();
+                                // A view may use Esc to step back inside itself first.
+                                if (!(viewLoader.item && viewLoader.item.handleEscape && viewLoader.item.handleEscape()))
+                                    root.closeView();
                             } else if (viewLoader.item) {
                                 viewLoader.item.handleKey(event);
                             }

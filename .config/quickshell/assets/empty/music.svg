@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- record -->
+  <circle cx="44" cy="54" r="34" fill="#3b4261"/>
+  <circle cx="44" cy="54" r="28" fill="none" stroke="#4d5578" stroke-width="1.500"/>
+  <circle cx="44" cy="54" r="22" fill="none" stroke="#4d5578" stroke-width="1.500"/>
+  <circle cx="44" cy="54" r="16" fill="none" stroke="#4d5578" stroke-width="1.500"/>
+  <path d="M44 54 L44 20 A34 34 0 0 1 72 35 Z" fill="#6b7394" opacity=".35"/>
+  <circle cx="44" cy="54" r="11" fill="#7aa2f7"/>
+  <circle cx="44" cy="54" r="3.500" fill="#24283b"/>
+  <!-- tonearm -->
+  <circle cx="82" cy="18" r="6" fill="#6b7394"/>
+  <path d="M82 18 L66 52" stroke="#6b7394" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <rect x="59" y="50" width="10" height="7" rx="2" transform="rotate(25 64 53)" fill="#8a93b8"/>
+  <!-- sparkles -->
+  <path fill="#e0af68" d="M14 14l1.600 3.800L19.400 19.400l-3.800 1.600L14 24.800l-1.600-3.800L8.600 19.400l3.800-1.600z"/>
+  <circle cx="86" cy="60" r="2.500" fill="#7aa2f7"/>
+  <circle cx="10" cy="46" r="2" fill="#bb9af7" opacity=".8"/>
+</svg>
