@@ -66,10 +66,11 @@ Text {
 
     function resync() {
         if (gameModeActive) {
-            if (active) {
-                active = false;
-                sendCommand("identity");
-            }
+            // hyprsunset's own scheduler can apply a profile at any time
+            // (e.g. 22:00) without telling us, so re-assert identity on
+            // every tick instead of only on the active->inactive edge.
+            active = false;
+            sendCommand("identity");
             return;
         }
         const now = new Date();
