@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- bell -->
+  <path fill="#6b7394" d="M48 12c-3.3 0-6 2.7-6 6v1.6C31.6 22.3 25 31.5 25 43v13.5L17.5 65.5V71h61v-5.5L71 56.5V43c0-11.5-6.600-20.700-17-23.400V18c0-3.300-2.700-6-6-6z"/>
+  <path fill="#6b7394" d="M39 75a9 9 0 0 0 18 0z"/>
+  <!-- sparkles -->
+  <path fill="#e0af68" d="M17 22l1.800 4.200L23 28l-4.200 1.800L17 34l-1.800-4.200L11 28l4.200-1.800z"/>
+  <circle cx="80" cy="25" r="3" fill="#7aa2f7"/>
+  <circle cx="12" cy="52" r="2" fill="#7aa2f7" opacity=".7"/>
+  <!-- check badge -->
+  <circle cx="70" cy="68" r="16" fill="#9ece6a" stroke="#24283b" stroke-width="4"/>
+  <path d="M62.500 68.500l5.500 5.500l9.500-10.500" fill="none" stroke="#24283b" stroke-width="4.500" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

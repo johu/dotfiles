@@ -285,20 +285,21 @@ Item {
         }
     }
 
-    Text {
+    EmptyState {
         visible: view.entries.length === 0
         x: 0
-        y: 120
-        width: view.listWidth
-        text: "No notifications"
-        color: Theme.subtext1
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSize + 2
-        renderType: view.textRender
+        y: 92
+        width: view.width
+        height: view.height - 92
+        illustration: "notifications.svg"
+        title: "All caught up"
+        hint: Notifications.dnd ? "Do Not Disturb is on, new ones are kept quiet" : "New notifications will show up here"
+        textRender: view.textRender
     }
 
     // ---- separator + detail ----
     Rectangle {
+        visible: view.entries.length > 0
         x: view.listWidth + 20
         width: 1
         height: parent.height
