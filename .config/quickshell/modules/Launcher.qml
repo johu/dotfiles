@@ -1285,10 +1285,16 @@ PanelWindow {
         const e = root.selectedEntry;
         if (!e)
             return [];
-        const open = root.findWindow(e)
-            ? [{ keys: ["\u21b5"], text: "focus window" }, { keys: ["Shift", "\u21b5"], text: "new window" }]
-            : [{ keys: ["\u21b5"], text: e.system ? "run" : "open" }];
-        return [open.concat([{ keys: ["Ctrl", "K"], text: "actions" }])];
+        // Same three slots in the same order for every entry (the row is
+        // centered, so a different width would shift it on every selection
+        // change): the Enter label reserves the room of "focus window" and
+        // the "new window" hint stays as an invisible placeholder.
+        const running = !!root.findWindow(e);
+        return [[
+                { keys: ["\u21b5"], text: running ? "focus window" : (e.system ? "run" : "open"), slot: "focus window" },
+                { keys: ["Ctrl", "K"], text: "actions" },
+                { keys: ["Shift", "\u21b5"], text: "new window", ghost: !running }
+            ]];
     }
 
     Component {
@@ -1656,6 +1662,7 @@ PanelWindow {
 
                             required property var modelData
                             spacing: 8
+                            opacity: hintItem.modelData.ghost ? 0 : 1
 
                             KeyCaps {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1667,12 +1674,21 @@ PanelWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: hintItem.modelData.text
                                 // A fixed width keeps the row from shifting when an icon label changes.
-                                width: hintItem.modelData.width !== undefined ? hintItem.modelData.width : implicitWidth
-                                horizontalAlignment: Text.AlignHCenter
+                                // A `slot` string reserves the room of that text.
+                                width: hintItem.modelData.width !== undefined ? hintItem.modelData.width : Math.max(implicitWidth, slotMetrics.advanceWidth)
+                                horizontalAlignment: hintItem.modelData.slot ? Text.AlignLeft : Text.AlignHCenter
                                 color: Theme.subtext1
                                 font.family: Theme.fontFamily
                                 font.pixelSize: root.hintFontSize
                                 renderType: root.textRendering
+
+                                TextMetrics {
+                                    id: slotMetrics
+
+                                    text: hintItem.modelData.slot ?? ""
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: root.hintFontSize
+                                }
                             }
                         }
                     }
