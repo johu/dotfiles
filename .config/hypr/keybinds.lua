@@ -23,7 +23,7 @@ hl.bind(mod .. ' + CTRL + SHIFT + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quick
 hl.bind('F11', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
 hl.bind(mod .. ' + SHIFT + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
 hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
-hl.bind(mod .. ' + V', hl.dsp.exec_cmd '~/.config/hypr/scripts/clipboard.sh', { desc = 'Clipboard' })
+hl.bind(mod .. ' + V', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call popups open clipboard', { desc = 'Clipboard' })
 
 -- # media keys
 hl.bind('XF86MonBrightnessUp', hl.dsp.exec_cmd '~/.config/hypr/scripts/brightness.sh up', { desc = 'Brightness up' })
