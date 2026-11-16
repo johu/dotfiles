@@ -4,14 +4,14 @@ local file_manager = require('globals').file_manager
 
 hl.bind(mod .. ' + Return', hl.dsp.exec_cmd(terminal .. ' +new-window'), { desc = 'Terminal' })
 hl.bind(mod .. ' + W', hl.dsp.window.close(), { desc = 'Close window' })
-hl.bind(mod .. ' + Q', hl.dsp.exec_cmd 'wlogout')
-hl.bind(mod .. ' + E', hl.dsp.exec_cmd(file_manager))
+hl.bind(mod .. ' + Q', hl.dsp.exec_cmd 'wlogout', { desc = 'Logout menu' })
+hl.bind(mod .. ' + E', hl.dsp.exec_cmd(file_manager), { desc = 'File manager' })
 hl.bind(mod .. ' + Y', hl.dsp.window.float { action = 'toggle' }, { desc = 'Toggle window floating/tiling' })
 hl.bind(mod .. ' + F', hl.dsp.window.fullscreen { mode = 'fullscreen' }, { desc = 'Fullscreen' })
 hl.bind(mod .. ' + SPACE', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call launcher toggle', { desc = 'Application launcher' })
 -- bind = $mainMod, P, pseudo, # dwindle
-hl.bind(mod .. ' + T', hl.dsp.layout 'togglesplit') -- dwindle only
-hl.bind(mod .. ' + F1', hl.dsp.exec_cmd '~/.config/hypr/scripts/keybinds.sh', { desc = 'Show keybinds' })
+hl.bind(mod .. ' + T', hl.dsp.layout 'togglesplit', { desc = 'Toggle split' }) -- dwindle only
+hl.bind(mod .. ' + F1', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call launcher view keybindings', { desc = 'Show keybindings' })
 hl.bind('CTRL + ALT + L', hl.dsp.exec_cmd 'hyprlock', { desc = 'Lock screen' })
 hl.bind(mod .. ' + PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture window', { desc = 'Screenshot window' })
 hl.bind('PRINT', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
@@ -26,10 +26,6 @@ hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capt
 hl.bind(mod .. ' + V', hl.dsp.exec_cmd '~/.config/hypr/scripts/clipboard.sh', { desc = 'Clipboard' })
 hl.bind(mod .. ' + B', hl.dsp.exec_cmd 'killall -SIGUSR1 waybar', { desc = 'Toggle waybar' })
 
--- D2R run counter
-hl.bind(mod .. ' + F9', hl.dsp.exec_cmd '~/.config/hypr/scripts/d2runs.sh inc', { desc = 'D2R: log run' })
-hl.bind(mod .. ' + SHIFT + F9', hl.dsp.exec_cmd '~/.config/hypr/scripts/d2runs.sh dec', { desc = 'D2R: undo run' })
-
 -- # media keys
 hl.bind('XF86MonBrightnessUp', hl.dsp.exec_cmd '~/.config/hypr/scripts/brightness.sh up', { desc = 'Brightness up' })
 hl.bind('XF86MonBrightnessDown', hl.dsp.exec_cmd '~/.config/hypr/scripts/brightness.sh down', { desc = 'Brightness down' })
@@ -37,30 +33,30 @@ hl.bind('XF86AudioRaiseVolume', hl.dsp.exec_cmd 'pactl set-sink-volume @DEFAULT_
 hl.bind('XF86AudioLowerVolume', hl.dsp.exec_cmd 'pactl set-sink-volume @DEFAULT_SINK@ -5%', { desc = 'Lower volume' })
 hl.bind('XF86AudioMute', hl.dsp.exec_cmd 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle', { desc = 'Mute' })
 hl.bind('XF86AudioPlay', hl.dsp.exec_cmd 'playerctl play-pause', { desc = 'Play' })
-hl.bind('XF86AudioPause', hl.dsp.exec_cmd 'playerctl plause', { desc = 'Pause' })
+hl.bind('XF86AudioPause', hl.dsp.exec_cmd 'playerctl pause', { desc = 'Pause' })
 hl.bind('XF86AudioNext', hl.dsp.exec_cmd 'playerctl next', { desc = 'Next' })
 hl.bind('XF86AudioPrev', hl.dsp.exec_cmd 'playerctl previous', { desc = 'Previous' })
-hl.bind('XF86AudioMicMute', hl.dsp.exec_cmd 'playerctl previous', { desc = 'Previous' })
+hl.bind('XF86AudioMicMute', hl.dsp.exec_cmd 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle', { desc = 'Mic mute' })
 -- hl.bind('XF86Lock', hl.dsp.exec_cmd 'hyprlock', { desc = 'Lock screen' })
 
 -- Move focus with mod + vim keys
-hl.bind(mod .. ' + h', hl.dsp.focus { direction = 'left' })
-hl.bind(mod .. ' + j', hl.dsp.focus { direction = 'down' })
-hl.bind(mod .. ' + k', hl.dsp.focus { direction = 'up' })
-hl.bind(mod .. ' + l', hl.dsp.focus { direction = 'right' })
+hl.bind(mod .. ' + h', hl.dsp.focus { direction = 'left' }, { desc = 'Focus window left' })
+hl.bind(mod .. ' + j', hl.dsp.focus { direction = 'down' }, { desc = 'Focus window down' })
+hl.bind(mod .. ' + k', hl.dsp.focus { direction = 'up' }, { desc = 'Focus window up' })
+hl.bind(mod .. ' + l', hl.dsp.focus { direction = 'right' }, { desc = 'Focus window right' })
 
 -- Move window with mod + SHIFT + vim keys
-hl.bind(mod .. ' + SHIFT + h', hl.dsp.window.move { direction = 'left' })
-hl.bind(mod .. ' + SHIFT + j', hl.dsp.window.move { direction = 'down' })
-hl.bind(mod .. ' + SHIFT + k', hl.dsp.window.move { direction = 'up' })
-hl.bind(mod .. ' + SHIFT + l', hl.dsp.window.move { direction = 'right' })
+hl.bind(mod .. ' + SHIFT + h', hl.dsp.window.move { direction = 'left' }, { desc = 'Move window left' })
+hl.bind(mod .. ' + SHIFT + j', hl.dsp.window.move { direction = 'down' }, { desc = 'Move window down' })
+hl.bind(mod .. ' + SHIFT + k', hl.dsp.window.move { direction = 'up' }, { desc = 'Move window up' })
+hl.bind(mod .. ' + SHIFT + l', hl.dsp.window.move { direction = 'right' }, { desc = 'Move window right' })
 
 -- Switch workspaces with mod + [0-9]
 -- Move active window to a workspace with mod + SHIFT + [0-9]
 for i = 1, 10 do
   local key = i % 10 -- 10 maps to key 0
-  hl.bind(mod .. ' + ' .. key, hl.dsp.focus { workspace = i })
-  hl.bind(mod .. ' + SHIFT + ' .. key, hl.dsp.window.move { workspace = i })
+  hl.bind(mod .. ' + ' .. key, hl.dsp.focus { workspace = i }, { desc = 'Go to workspace ' .. i })
+  hl.bind(mod .. ' + SHIFT + ' .. key, hl.dsp.window.move { workspace = i }, { desc = 'Move window to workspace ' .. i })
 end
 
 -- Example special workspace (scratchpad)
@@ -68,12 +64,12 @@ end
 -- hl.bind(mod .. ' + SHIFT + S', hl.dsp.window.move { workspace = 'special:magic' })
 
 -- # Scroll through existing workspaces with mod + scroll
-hl.bind(mod .. ' + mouse_down', hl.dsp.focus { workspace = 'e+1' })
-hl.bind(mod .. ' + mouse_up', hl.dsp.focus { workspace = 'e-1' })
+hl.bind(mod .. ' + mouse_down', hl.dsp.focus { workspace = 'e+1' }, { desc = 'Next workspace' })
+hl.bind(mod .. ' + mouse_up', hl.dsp.focus { workspace = 'e-1' }, { desc = 'Previous workspace' })
 
 -- Move/resize windows with mod + LMB/RMB and dragging
-hl.bind(mod .. ' + mouse:272', hl.dsp.window.drag(), { mouse = true })
-hl.bind(mod .. ' + mouse:273', hl.dsp.window.resize(), { mouse = true })
+hl.bind(mod .. ' + mouse:272', hl.dsp.window.drag(), { mouse = true, desc = 'Move window (drag)' })
+hl.bind(mod .. ' + mouse:273', hl.dsp.window.resize(), { mouse = true, desc = 'Resize window (drag)' })
 
 -- Minimize windows using special workspaces
 hl.bind(mod .. ' + x', function()
@@ -84,10 +80,10 @@ hl.bind(mod .. ' + x', function()
     hl.dispatch(hl.dsp.window.tag { tag = 'minimized', window = hl.get_active_window() })
     hl.dispatch(hl.dsp.window.move { workspace = 'special:minimized', follow = false })
   end
-end)
+end, { desc = 'Minimize window (toggle)' })
 
 -- Global keybinds
-hl.bind('SUPER + F10', hl.dsp.pass { window = 'class:^(discord)$' })
+hl.bind('SUPER + F10', hl.dsp.pass { window = 'class:^(discord)$' }, { desc = 'Pass to Discord (mute toggle)' })
 
 -- Game mode
 -- Seed from the cache file so game_mode survives a `hyprctl reload`
