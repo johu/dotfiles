@@ -144,7 +144,7 @@ ColumnLayout {
             network.disconnect();
             return;
         }
-        if (network.known || network.security === WifiSecurityType.None) {
+        if (network.known || network.security === WifiSecurityType.Open || network.security === WifiSecurityType.Owe) {
             root.cancelPsk();
             network.connect();
             return;
@@ -362,7 +362,7 @@ ColumnLayout {
                     }
 
                     Text {
-                        visible: modelData.security !== WifiSecurityType.None
+                        visible: modelData.security !== WifiSecurityType.Open && modelData.security !== WifiSecurityType.Owe
                         text: "\uf023"
                         color: Theme.subtext1
                         font.family: Theme.fontFamily
