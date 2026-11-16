@@ -138,6 +138,20 @@ ColumnLayout {
                 }
 
                 Text {
+                    text: {
+                        if (modelData.state === BluetoothDeviceState.Connecting)
+                            return "Connecting…";
+                        if (modelData.state === BluetoothDeviceState.Disconnecting)
+                            return "Disconnecting…";
+                        return modelData.connected ? "Connected" : "";
+                    }
+                    color: Theme.subtext1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
+                    renderType: Text.NativeRendering
+                }
+
+                Text {
                     text: ""
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
@@ -153,20 +167,6 @@ ColumnLayout {
                             modelData.forget();
                         }
                     }
-                }
-
-                Text {
-                    text: {
-                        if (modelData.state === BluetoothDeviceState.Connecting)
-                            return "Connecting…";
-                        if (modelData.state === BluetoothDeviceState.Disconnecting)
-                            return "Disconnecting…";
-                        return modelData.connected ? "Connected" : "";
-                    }
-                    color: Theme.subtext1
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
-                    renderType: Text.NativeRendering
                 }
             }
         }
