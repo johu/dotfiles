@@ -24,7 +24,6 @@ hl.bind('F11', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture scre
 hl.bind(mod .. ' + SHIFT + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture screen', { desc = 'Screenshot screen' })
 hl.bind(mod .. ' + S', hl.dsp.exec_cmd 'qs -p ~/.config/quickshell ipc call capture region', { desc = 'Screenshot region' })
 hl.bind(mod .. ' + V', hl.dsp.exec_cmd '~/.config/hypr/scripts/clipboard.sh', { desc = 'Clipboard' })
-hl.bind(mod .. ' + B', hl.dsp.exec_cmd 'killall -SIGUSR1 waybar', { desc = 'Toggle waybar' })
 
 -- # media keys
 hl.bind('XF86MonBrightnessUp', hl.dsp.exec_cmd '~/.config/hypr/scripts/brightness.sh up', { desc = 'Brightness up' })
