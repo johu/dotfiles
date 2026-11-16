@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- keycaps -->
+  <rect x="10" y="30" width="34" height="34" rx="7" fill="#6b7394"/>
+  <rect x="14" y="33" width="26" height="26" rx="5" fill="#3b4261"/>
+  <rect x="52" y="30" width="34" height="34" rx="7" fill="#6b7394"/>
+  <rect x="56" y="33" width="26" height="26" rx="5" fill="#3b4261"/>
+  <rect x="24" y="68" width="48" height="16" rx="6" fill="#6b7394"/>
+  <rect x="28" y="71" width="40" height="10" rx="4" fill="#3b4261"/>
+  <!-- glyphs -->
+  <path d="M22 50l6-8 6 8" fill="none" stroke="#7aa2f7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 42l12 8-12 8" fill="none" stroke="#7aa2f7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+  <!-- magnifier -->
+  <circle cx="70" cy="20" r="9" fill="none" stroke="#e0af68" stroke-width="3.500"/>
+  <path d="M77 27l7 7" stroke="#e0af68" stroke-width="3.500" stroke-linecap="round"/>
+  <circle cx="12" cy="16" r="3" fill="#7aa2f7"/>
+  <circle cx="86" cy="76" r="2.500" fill="#bb9af7" opacity=".8"/>
+</svg>

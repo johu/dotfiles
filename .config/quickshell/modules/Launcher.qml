@@ -1417,6 +1417,16 @@ PanelWindow {
     }
 
     Component {
+        id: keybindsView
+
+        LauncherKeybindsView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.close()
+        }
+    }
+
+    Component {
         id: bluetoothView
 
         LauncherBluetoothView {
@@ -1498,7 +1508,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewExists
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, clipboard: clipboardView, system: systemView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, keybindings: keybindsView, clipboard: clipboardView, system: systemView })[root.viewName] ?? null
             }
         }
 
