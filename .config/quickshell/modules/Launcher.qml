@@ -534,6 +534,13 @@ PanelWindow {
 
     readonly property var fileRoots: root.strings(filesCfg.fileRoots).map(r => r === "~" ? root.homeDir : (r.startsWith("~/") ? root.homeDir + r.slice(1) : r)).map(r => r.length > 1 ? r.replace(/\/+$/, "") : r).filter(r => r.startsWith("/") && r !== root.homeDir && !r.startsWith(root.homeDir + "/"))
     readonly property var fileExcludes: (filesCfg.fileExcludes !== null && filesCfg.fileExcludes !== undefined ? root.strings(filesCfg.fileExcludes) : root.defaultFileExcludes).concat(root.strings(filesCfg.fileExtraExcludes))
+    readonly property var bluetoothIcons: {
+        const v = filesCfg.bluetoothIcons;
+        if (v === null || v === undefined)
+            return {};
+        const o = JSON.parse(JSON.stringify(v));
+        return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+    }
     property bool fileIndexDirty: false
 
     onFileRootsChanged: root.reindexFiles()
@@ -561,6 +568,9 @@ PanelWindow {
             property var fileRoots: ["/etc"]
             property var fileExcludes: null
             property var fileExtraExcludes: []
+            // Bluetooth view: device name -> theme icon name, e.g.
+            // { "WH-1000XM4": "audio-headphones" }
+            property var bluetoothIcons: ({})
         }
     }
 
@@ -1407,6 +1417,17 @@ PanelWindow {
     }
 
     Component {
+        id: bluetoothView
+
+        LauncherBluetoothView {
+            textRender: root.textRendering
+            iconOverrides: root.bluetoothIcons
+            onCloseRequested: root.close()
+            onLeaveRequested: root.close()
+        }
+    }
+
+    Component {
         id: audioView
 
         LauncherAudioView {
@@ -1477,7 +1498,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewExists
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, clipboard: clipboardView, system: systemView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, clipboard: clipboardView, system: systemView })[root.viewName] ?? null
             }
         }
 
