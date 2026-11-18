@@ -6,17 +6,7 @@
 # injecting eix-sync into it, so the sync output is visible live instead
 # of going to a systemd journal nobody looks at.
 
-# herdr ids (w3, w3:t1, w3:p1) differ between machines, so resolve them
-# by label each poll instead of hard-coding them.
-GENTOO_LABEL="gentoo"
-EMERGE_TAB_LABEL="emerge"
-
-# systemd user services run with a minimal $PATH (no ~/.local/bin) that
-# doesn't include herdr - every herdr call below was silently failing
-# with "command not found" under the service's 2>/dev/null, which looked
-# identical to the pane genuinely never appearing. Resolve it explicitly
-# instead of trusting $PATH.
-HERDR="$HOME/.local/bin/herdr"
+# The herdr lookup (workspace "gentoo", tab "emerge") and all its notes live in herdr-emerge-run.sh.
 
 # Guard against surprise re-runs: a systemd daemon-reload re-arms the
 # timer's OnActiveSec=, so every reload (login, enabling a unit, ...)
@@ -58,87 +48,10 @@ if pgrep -x emerge -a 2>/dev/null \
   exit 0
 fi
 
-previous_workspace=$(hyprctl -j activeworkspace | jq -r '.id')
-
-hyprctl dispatch "hl.dsp.focus({ workspace = 1 })"
-
-# The herdr *server* keeps running after its terminal is closed, so the
-# pane lookup below can succeed with nobody watching. A client is any
-# herdr process whose cmdline lacks the "server" subcommand.
-herdr_client_running() {
-  local pid
-  for pid in $(pgrep -x herdr); do
-    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -qw server || return 0
-  done
-  return 1
-}
-
-# Terminal-agnostic: $TERMINAL (set by hypr/env.lua, but a systemd user
-# service may not inherit it), then the systemd user environment, then
-# hypr/globals.lua's `terminal = '...'` (the one place it is configured
-# per machine), then the first known terminal on PATH.
-resolve_terminal() {
-  local t="${TERMINAL:-}"
-  [ -n "$t" ] || t=$(systemctl --user show-environment 2>/dev/null \
-    | sed -n 's/^TERMINAL=//p')
-  [ -n "$t" ] || t=$(sed -n "s/^ *terminal *= *'\([^']*\)'.*/\1/p" \
-    "$HOME/.config/hypr/globals.lua" 2>/dev/null | head -n1)
-  if [ -z "$t" ] || ! command -v "$t" >/dev/null 2>&1; then
-    t=""
-    for c in ghostty kitty alacritty foot wezterm; do
-      command -v "$c" >/dev/null 2>&1 && { t=$c; break; }
-    done
-  fi
-  printf '%s' "$t"
-}
-
-# Focusing an empty workspace 1 makes workspace.lua spawn the herdr
-# terminal itself; give that a few seconds so we don't launch a second
-# one, then spawn our own if nothing attached.
-for _ in $(seq 1 8); do
-  herdr_client_running && break
-  sleep 1
-done
-if ! herdr_client_running; then
-  term=$(resolve_terminal)
-  if [ -z "$term" ]; then
-    hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
-    echo "portage-sync.sh: no herdr client and no terminal found to start one" >&2
-    exit 1
-  fi
-  echo "portage-sync.sh: no herdr client attached, launching $term" >&2
-  hyprctl dispatch "hl.dsp.exec_cmd('$term -e zsh -c herdr')"
+# Switching to workspace 1, making sure herdr runs, typing eix-sync into the emerge tab and switching
+# back is shared with the quickshell Gentoo view: see herdr-emerge-run.sh.
+if "$(dirname "$(readlink -f "$0")")/herdr-emerge-run.sh" --background eix-sync; then
+  touch "$STAMP"
+  exit 0
 fi
-
-# Up to 90s: herdr's cold start (ghostty + zsh + herdr client attaching
-# and restoring its session) competes with the rest of autostart.lua at
-# session start and can genuinely take longer than a few seconds under
-# that load - the old 15s window gave up before herdr had even attached.
-# Prints the pane id of the first pane in the emerge tab of the gentoo
-# workspace, or nothing (non-zero) if any of them doesn't exist yet.
-find_emerge_pane() {
-  local ws tab
-  ws=$("$HERDR" workspace list 2>/dev/null \
-    | jq -er --arg l "$GENTOO_LABEL" \
-      '[.result.workspaces[] | select(.label == $l)][0].workspace_id') || return 1
-  tab=$("$HERDR" tab list --workspace "$ws" 2>/dev/null \
-    | jq -er --arg l "$EMERGE_TAB_LABEL" \
-      '[.result.tabs[] | select(.label == $l)][0].tab_id') || return 1
-  "$HERDR" pane list --workspace "$ws" 2>/dev/null \
-    | jq -er --arg t "$tab" \
-      '[.result.panes[] | select(.tab_id == $t)][0].pane_id'
-}
-
-for _ in $(seq 1 90); do
-  if EMERGE_PANE=$(find_emerge_pane); then
-    "$HERDR" pane run "$EMERGE_PANE" eix-sync
-    touch "$STAMP"
-    hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
-    exit 0
-  fi
-  sleep 1
-done
-
-hyprctl dispatch "hl.dsp.focus({ workspace = $previous_workspace })"
-echo "portage-sync.sh: herdr workspace '$GENTOO_LABEL' / tab '$EMERGE_TAB_LABEL' never appeared, giving up" >&2
 exit 1
