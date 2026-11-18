@@ -17,6 +17,11 @@ Singleton {
     // line, for the tooltip.
     property bool hasConflict: false
     property string conflictSummary: ""
+    // Full output of the last pretend run and when it finished, for the launcher's
+    // Gentoo view (it parses the list and the conflict text itself; no second poller).
+    property string pretendText: ""
+    property int pretendEpoch: 0
+    readonly property bool checking: checkProc.running
 
     // Live build state, polled every statusInterval (cheap: pgrep, a stat and
     // an awk pass over emerge.log).
@@ -45,7 +50,11 @@ Singleton {
     // pgrep -x emerge also matches our own pretend check, so exclude that exact
     // invocation or the badge flashes "running" on every poll.
     //
-    // Progress is scoped to the current emerge.log session: the latest
+    // Progress comes from the "(N of M)" lines newer than the oldest running emerge (the log has no pid, and a second
+    // emerge in another terminal writes its own start / terminate markers into it while the build runs; the old
+    // session logic lost the build then). Chains are kept per total N (concurrent emerges have different totals), a chain's final package completing
+    // drops it, the newest remaining chain wins. Old note:
+    // progress is scoped to the current emerge.log session: the latest
     // "(N of M)" in the whole log can be stale from a finished build and showed
     // a fake "Emerging" state. The awk resets on each "Started emerge on:" and
     // keeps `prog` only while the session is still open.
@@ -56,11 +65,26 @@ Singleton {
         progress=\"\"
         eta=\"\"
         if [ \"$running\" = \"1\" ]; then
-            progress=$(awk '
-                /Started emerge on:/ { open=1; prog=\"\" }
-                /\\*\\*\\* terminating\\.|\\*\\*\\* exiting successfully\\./ { open=0 }
-                open && /=== \\([0-9]+ of [0-9]+\\) (Compiling\\/Merging|Merging|Compiling)/ { prog=$0 }
-                END { if (open) print prog }
+            oldest=0
+            for pid in $(pgrep -x emerge); do
+                tr '\\0' ' ' < /proc/$pid/cmdline 2>/dev/null | grep -q -- '-pvuDN @world' && continue
+                et=$(ps -o etimes= -p $pid 2>/dev/null | tr -d ' ')
+                [ \"${et:-0}\" -gt \"$oldest\" ] && oldest=$et
+            done
+            min_epoch=$(( $(date +%s) - oldest - 5 ))
+            progress=$(awk -v min=\"$min_epoch\" '
+                { ts = substr($0, 1, index($0, \":\") - 1) + 0 }
+                ts >= min && /=== \\([0-9]+ of [0-9]+\\) (Compiling\\/Merging|Merging|Compiling)/ {
+                    match($0, /\\([0-9]+ of [0-9]+\\)/)
+                    split(substr($0, RSTART + 1, RLENGTH - 2), nn, \" of \")
+                    prog[nn[2]] = $0; pts[nn[2]] = ts
+                }
+                /::: completed emerge \\([0-9]+ of [0-9]+\\)/ {
+                    match($0, /\\([0-9]+ of [0-9]+\\)/)
+                    split(substr($0, RSTART + 1, RLENGTH - 2), nn, \" of \")
+                    if (nn[1] == nn[2]) { delete prog[nn[2]]; delete pts[nn[2]] }
+                }
+                END { best = \"\"; bt = 0; for (k in prog) if (pts[k] >= bt) { bt = pts[k]; best = prog[k] } print best }
             ' \"$emerge_log\" 2>/dev/null)
             eta=$(qlop -rp -M -C 2>/dev/null | sed -n 's/.*ETA: //p' | tail -1)
         fi
@@ -124,6 +148,8 @@ Singleton {
         command: ["sh", "-c", "emerge -pvuDN @world 2>&1"]
         stdout: StdioCollector {
             onStreamFinished: {
+                root.pretendText = this.text;
+                root.pretendEpoch = Math.floor(Date.now() / 1000);
                 const match = this.text.match(/Total:\s*(\d+)\s*packages?/);
                 if (match) {
                     root.pendingCount = parseInt(match[1], 10);
