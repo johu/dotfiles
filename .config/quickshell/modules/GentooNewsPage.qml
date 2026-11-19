@@ -210,7 +210,7 @@ Item {
         y: 36
         width: Math.round(page.width * 0.4)
         height: page.height - 36
-        illustration: "notifications.svg"
+        illustration: "news.svg"
         imageSize: 150
         title: "No news"
         hint: view.newsD.hidden > 0 ? "h shows " + view.newsD.hidden + " hidden items" : "nothing applies to this system"
