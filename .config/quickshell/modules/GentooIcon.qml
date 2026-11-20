@@ -7,6 +7,11 @@ Item {
 
     property string kind: "ok"
     property int size: 24
+    // optional: draw the glyph in this colour instead of the kind's own (alpha 0 = use the kind's)
+    property color tint: "transparent"
+    // optical correction in px when the icon sits in a ring (a play triangle's weight is left of its box)
+    property real nudgeX: 0
+    property real nudgeY: 0
 
     readonly property var spec: ({
             ok: { c: Theme.green, g: "", dy: 1 },
@@ -23,9 +28,10 @@ Item {
     Text {
         anchors.centerIn: parent
         // The glyphs sit 1-2 px above the middle of the text line next to them (measured per glyph).
-        anchors.verticalCenterOffset: icon.spec.dy
+        anchors.verticalCenterOffset: icon.spec.dy + icon.nudgeY
+        anchors.horizontalCenterOffset: icon.nudgeX
         text: icon.spec.g
-        color: icon.spec.c
+        color: icon.tint.a > 0 ? icon.tint : icon.spec.c
         font.family: Theme.fontFamily
         font.pixelSize: Math.round(icon.size * (icon.kind === "idle" ? 0.5 : 0.82))
         renderType: GentooStyle.textRender

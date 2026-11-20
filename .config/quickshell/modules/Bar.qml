@@ -78,10 +78,23 @@ PanelWindow {
         }
     }
 
+    // The date pill also shows a running timer / the next alarm (Clock.qml); the last minute
+    // lights its border, a ringing timer or alarm pulses it red until dismissed.
     Pill {
+        id: clockPill
+
+        readonly property var cp: ClockService.pill
+        readonly property bool ringing: cp.mode === "ringing"
+
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        Clock {}
+        border.width: ringing || cp.lastMinute ? 2 : 0
+        border.color: ringing ? Qt.alpha(Theme.red, 0.35 + 0.65 * clk.pulse) : cp.color
+        color: ringing ? Qt.tint(Theme.surface1, Qt.alpha(Theme.red, 0.22 * clk.pulse)) : Theme.surface1
+
+        Clock {
+            id: clk
+        }
     }
 
     RowLayout {

@@ -1030,6 +1030,13 @@ PanelWindow {
         root.visible = true;
     }
 
+    function showClock() {
+        if (root.visible && root.viewActive && root.viewName === "clock")
+            return;
+        root.open();
+        root.openView("clock");
+    }
+
     function close() {
         if (root.searching) {
             // Only the search goes away; the view stays alive, parked.
@@ -1427,6 +1434,29 @@ PanelWindow {
     }
 
     Component {
+        id: clockView
+
+        LauncherClockView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.close()
+        }
+    }
+
+    // A timer or alarm that rings opens the Clock view (also over another view), and a click on the
+    // bar's countdown asks for it too. The service itself runs without this window.
+    Connections {
+        target: ClockService
+
+        function onRingStarted() {
+            root.showClock();
+        }
+        function onOpenRequested() {
+            root.showClock();
+        }
+    }
+
+    Component {
         id: gentooView
 
         LauncherGentooView {
@@ -1528,7 +1558,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewExists
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, keybindings: keybindsView, network: networkView, clipboard: clipboardView, system: systemView, gentoo: gentooView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, keybindings: keybindsView, clock: clockView, network: networkView, clipboard: clipboardView, system: systemView, gentoo: gentooView })[root.viewName] ?? null
             }
         }
 
