@@ -62,6 +62,44 @@ Singleton {
         }
     }
 
+    // Retry soon after a failed card fetch instead of waiting for the 15 min tick.
+    Timer {
+        id: retryTimer
+        interval: 20 * 1000
+        onTriggered: if (!root.loaded) root.reload()
+    }
+
+    // Fill the card fields from the detailed forecast, so the cards and the
+    // launcher view never disagree about whether data is available.
+    function applyDetailToCard() {
+        const d = root.detail;
+        if (!d.current || d.hourly.length === 0 || d.daily.length === 0)
+            return;
+        root.currentTemp = d.current.temp;
+        root.currentCode = d.current.code;
+        root.currentIsDay = d.current.isDay;
+        root.currentHumidity = d.current.humidity;
+        root.currentWindSpeed = d.current.wind;
+
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 30, 0, 0);
+        now.setMinutes(0, 0, 0);
+        const startIdx = d.hourly.findIndex(h => h.time.getTime() >= now.getTime());
+        root.currentPrecipProb = startIdx >= 0 ? d.hourly[startIdx].pop : 0;
+        const trend = [];
+        if (startIdx >= 0) {
+            for (let i = 0; i < 8; i++) {
+                const hi = startIdx + i * 3;
+                if (hi >= d.hourly.length)
+                    break;
+                trend.push({ time: d.hourly[hi].time, temp: d.hourly[hi].temp });
+            }
+        }
+        root.hourly = trend;
+        root.daily = d.daily.slice(0, 4).map(y => ({ date: y.date, code: y.code, tempMax: y.tMax, tempMin: y.tMin }));
+        root.loaded = true;
+    }
+
     Process {
         id: fetchProc
         command: ["curl", "-sL", "--max-time", "10", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4"]
@@ -116,6 +154,8 @@ Singleton {
                     root.loaded = true;
                 } catch (e) {
                     // Network hiccup or malformed response - keep showing the last good data.
+                    if (!root.loaded)
+                        retryTimer.restart();
                 }
             }
         }
@@ -200,6 +240,8 @@ Singleton {
                     root.detailAt = Date.now();
                     root.detailLoaded = true;
                     root.detailError = "";
+                    if (!root.loaded)
+                        root.applyDetailToCard();
                 } catch (e) {
                     root.detailError = root.detailLoaded ? "" : "Could not load the forecast";
                 }
