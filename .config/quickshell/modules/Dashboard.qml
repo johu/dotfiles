@@ -174,6 +174,7 @@ PanelWindow {
     SystemResources {
         id: sysLogic
         visible: false
+        active: root.visible
     }
 
     AgentUsage {

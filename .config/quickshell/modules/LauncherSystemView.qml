@@ -3,8 +3,8 @@ import "SysMonFormat.js" as Fmt
 
 // System view of the launcher: a Performance page (live tiles, history graphs
 // and stats per resource) and a Processes page (grouped table, sort, filter,
-// kill). Data comes from SysMonCollector, which runs scripts/sysmon.py only
-// while this view exists. Same contract as the other views.
+// kill). Data comes from the SystemData singleton, which runs scripts/sysmon.py only
+// while a view is visible. Same contract as the other views.
 Item {
     id: view
 
@@ -20,8 +20,11 @@ Item {
     property string page: "performance"
     readonly property var current: view.page === "performance" ? perf : procs
 
-    SysMonCollector {
-        id: collector
+    // The shared sampler; it runs while a Consumer is active.
+    readonly property var collector: SystemData
+    Consumer {
+        target: SystemData
+        active: view.visible
     }
 
     function handleEscape() {

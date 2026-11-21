@@ -1,16 +1,22 @@
+pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
 import "SysMonFormat.js" as Fmt
 
-// Data of the launcher's system view: runs scripts/sysmon.py (one JSON sample
-// per second) only while this item exists, keeps 5 minutes of history per
-// metric and answers `info(key)` for the sidebar tiles and the detail pane.
-Item {
+// System resources: the single owner of the sysmon.py sample (CPU, memory,
+// temps, disks, network, GPU, battery, processes). Runs scripts/sysmon.py
+// (one JSON sample per second) only while `consumers > 0` (the dashboard
+// while open, the launcher's System view while visible; register with
+// Consumer { target: SystemData; active: ... }). Keeps 5 minutes of history
+// per metric and answers `info(key)` for the sidebar tiles and detail pane.
+Singleton {
     id: root
 
-    property bool running: true
+    property int consumers: 0
+    readonly property bool running: root.consumers > 0
     property bool ready: false
+    readonly property bool loaded: root.ready
     property var s: ({})        // latest sample
     property var procs: []      // latest process list (every 2 s)
     property int procCount: 0
@@ -24,12 +30,21 @@ Item {
     Process {
         // `env` rather than Process.environment, which did not reach the child.
         command: (root.psuDir !== "" ? ["env", "SYSMON_PSU=" + root.psuDir] : []).concat(["python3", "-I", Quickshell.shellPath("scripts/sysmon.py")])
-        running: root.running
+        id: proc
+        // Re-evaluates false -> true after a crash/kill so the sampler comes
+        // back while a consumer is still active.
+        running: root.running && !restartDelay.running
+        onExited: if (root.running) restartDelay.restart()
 
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => root.consume(data)
         }
+    }
+
+    Timer {
+        id: restartDelay
+        interval: 1000
     }
 
     function consume(data) {

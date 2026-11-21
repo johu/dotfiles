@@ -27,7 +27,7 @@ Item {
     property var retryBackoff: [20000, 60000]
     property var parse: text => JSON.parse(text)
     // Applied via an `env` argv prefix: Process.environment does not reach
-    // the child here (see SysMonCollector.qml).
+    // the child here (see SystemData.qml).
     property var env: ({})
     property string failureText: "Could not load data"
 
