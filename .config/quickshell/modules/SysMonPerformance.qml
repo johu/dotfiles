@@ -284,7 +284,18 @@ Item {
 
     // ---- graph ----
     readonly property int graphY: (page.info.legend ?? []).length > 0 ? 118 : 94
-    readonly property int graphH: 330
+
+    // The box is only 860 px high on a 1080p screen (screen height - 220) against 1040 asked for, so the graph
+    // takes whatever the stats grid and the extras below it leave (150..330 px) instead of a fixed 330, and the
+    // stat rows get tighter on short pages.
+    readonly property bool compact: page.height < 840
+    readonly property int statRowH: page.compact ? 66 : 78
+    readonly property int statRows: Math.ceil((page.info.stats ?? []).length / page.statCols)
+    readonly property int tempRows: Math.ceil(((page.col && page.col.s.temps ? page.col.s.temps.length : 0) + (page.col && page.col.s.gpu ? page.col.s.gpu.length : 0)) / 2)
+    // px the extras under the stats want: top list (title + 6 rows; the last row may reach 13 px into the card's bottom
+    // padding, as it always did on the 1440p desktop) for cpu / memory, sensors grid for temperatures
+    readonly property int extrasNeed: (page.type === "cpu" || page.type === "mem") ? 227 : (page.type === "temps" ? 20 + 36 + page.tempRows * 36 + ((page.col && page.col.s.fans ? page.col.s.fans.length : 0) > 0 ? 52 : 0) : 0)
+    readonly property int graphH: Math.max(150, Math.min(330, page.height - page.graphY - 24 - page.statRows * page.statRowH - 16 - page.extrasNeed))
 
     Rectangle {
         visible: page.hasGraph
@@ -321,7 +332,7 @@ Item {
             required property int index
 
             x: page.detailX + (index % page.statCols) * (page.detailW / page.statCols)
-            y: page.statsY + Math.floor(index / page.statCols) * 78
+            y: page.statsY + Math.floor(index / page.statCols) * page.statRowH
             width: page.detailW / page.statCols - 16
             height: 70
 
@@ -351,8 +362,10 @@ Item {
         }
     }
 
-    readonly property int extrasY: page.statsY + Math.ceil((page.info.stats ?? []).length / page.statCols) * 78 + 16
+    readonly property int extrasY: page.statsY + page.statRows * page.statRowH + 16
     readonly property int extrasH: page.height - page.extrasY
+    // title 26 + rows at 34 px; the last row may overhang by 13 px (see extrasNeed): 227 px = 6 rows
+    readonly property int topN: Math.max(1, Math.min(6, Math.floor((page.extrasH - 57) / 34) + 1))
 
     // ---- extras: CPU cores + top processes ----
     Item {
@@ -405,7 +418,7 @@ Item {
             width: parent.width * 0.38
             height: parent.height
             title: "Top processes by CPU"
-            rows: page.type === "cpu" ? page.col.topBy("cpu", 6).map(r => ({ name: r.name, value: r.value, text: r.value.toFixed(1) + " %", frac: Math.min(1, r.value / 100) })) : []
+            rows: page.type === "cpu" ? page.col.topBy("cpu", page.topN).map(r => ({ name: r.name, value: r.value, text: r.value.toFixed(1) + " %", frac: Math.min(1, r.value / 100) })) : []
             barColor: Theme.blue
             textRender: page.textRender
         }
@@ -445,7 +458,8 @@ Item {
                 Rectangle {
                     required property var modelData
 
-                    width: Math.max(0, (page.detailW * 0.58 - 6) * modelData.v / Math.max(1, page.col.s.mem ? page.col.s.mem.total : 1))
+                    // used + cached + buffers + free can add up to more than total (shmem), so never divide by less
+                    width: Math.max(0, (page.detailW * 0.58 - 6) * modelData.v / Math.max(1, page.col.s.mem ? Math.max(page.col.s.mem.total, page.col.s.mem.used + page.col.s.mem.cached + page.col.s.mem.buffers + Math.max(0, page.col.s.mem.free)) : 1))
                     height: 36
                     radius: 6
                     color: modelData.c
@@ -489,7 +503,7 @@ Item {
             width: parent.width * 0.38
             height: parent.height
             title: "Top processes by memory"
-            rows: page.type === "mem" ? page.col.topBy("mem", 6).map(r => ({ name: r.name, value: r.value, text: Fmt.bytes(r.value), frac: page.col.s.mem ? Math.min(1, r.value / page.col.s.mem.total * 4) : 0 })) : []
+            rows: page.type === "mem" ? page.col.topBy("mem", page.topN).map(r => ({ name: r.name, value: r.value, text: Fmt.bytes(r.value), frac: page.col.s.mem ? Math.min(1, r.value / page.col.s.mem.total * 4) : 0 })) : []
             barColor: Theme.mauve
             textRender: page.textRender
         }

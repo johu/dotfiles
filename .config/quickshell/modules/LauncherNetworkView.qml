@@ -1845,8 +1845,19 @@ Item {
 
         // ----- normal detail
         Item {
+            id: detail
+
             visible: view.card !== null && !view.pskTarget && !view.adding
             anchors.fill: parent
+
+            // The throughput graph gives way to the detail rows: 150 px when the card is tall (1040 px box).
+            // On a 1080p laptop (816 px box) a connected Wi-Fi network has 12 rows and the action buttons sit 70 px
+            // above the bottom, so the rows tighten from 34 to 30 px and the graph shrinks (60..150 px).
+            readonly property int rowCount: view.card ? view.card.rows.length : 0
+            readonly property int roomBelowGraph: height - 82 - 170
+            readonly property int rowPitch: detail.rowCount * 34 <= detail.roomBelowGraph - 110 ? 34 : 30
+            readonly property int graphH: Math.max(60, Math.min(150, detail.roomBelowGraph - detail.rowCount * detail.rowPitch))
+            readonly property int graphEnd: 140 + detail.graphH
 
             Rectangle {
                 x: 36
@@ -1921,7 +1932,7 @@ Item {
                 x: 30
                 y: 140
                 width: parent.width - 60
-                height: 150
+                height: detail.graphH
                 series: [{ values: view.rxHist, color: Theme.teal }, { values: view.txHist, color: Theme.blue }]
                 maxValue: 0
                 unit: "rate"
@@ -1932,7 +1943,7 @@ Item {
             // detail rows
             Column {
                 x: 36
-                y: view.card !== null && view.card.graph ? 320 : 130
+                y: view.card !== null && view.card.graph ? detail.graphEnd + 30 : 130
                 width: view.detailW
 
                 Repeater {
@@ -1942,7 +1953,7 @@ Item {
                         required property var modelData
 
                         width: view.detailW
-                        height: 34
+                        height: detail.rowPitch
 
                         Text {
                             width: 190
@@ -1974,7 +1985,7 @@ Item {
             Rectangle {
                 visible: view.qrRows.length > 0 && view.qrKey === view.selectedKey
                 x: parent.width - 36 - 250
-                y: view.card !== null && view.card.graph ? 310 : 120
+                y: view.card !== null && view.card.graph ? detail.graphEnd + 20 : 120
                 width: 250
                 height: 250
                 radius: 12
@@ -2012,7 +2023,7 @@ Item {
             Text {
                 visible: view.qrRows.length > 0 && view.qrKey === view.selectedKey
                 x: parent.width - 36 - 250
-                y: (view.card !== null && view.card.graph ? 310 : 120) + 256
+                y: (view.card !== null && view.card.graph ? detail.graphEnd + 20 : 120) + 256
                 width: 250
                 horizontalAlignment: Text.AlignHCenter
                 text: "Scan to join · Esc hides"
