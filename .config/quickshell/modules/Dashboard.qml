@@ -177,11 +177,6 @@ PanelWindow {
         active: root.visible
     }
 
-    AgentUsage {
-        id: agentLogic
-        visible: false
-    }
-
     AudioMixer {
         id: audioLogic
         visible: false
@@ -426,12 +421,12 @@ PanelWindow {
                 AgentUsageRow {
                     id: agentRow
                     Layout.fillWidth: true
-                    ok: agentLogic.ok
-                    status: agentLogic.status
-                    sessionPercent: agentLogic.sessionPercent
-                    sessionResetsAt: agentLogic.sessionResetsAt
-                    weeklyPercent: agentLogic.weeklyPercent
-                    weeklyResetsAt: agentLogic.weeklyResetsAt
+                    ok: AgentUsage.ok
+                    status: AgentUsage.status
+                    sessionPercent: AgentUsage.sessionPercent
+                    sessionResetsAt: AgentUsage.sessionResetsAt
+                    weeklyPercent: AgentUsage.weeklyPercent
+                    weeklyResetsAt: AgentUsage.weeklyResetsAt
                 }
             }
         }

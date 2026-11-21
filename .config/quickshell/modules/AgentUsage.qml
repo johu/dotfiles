@@ -1,10 +1,13 @@
+pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
-// Logic-only: polls Anthropic's OAuth usage endpoint (as Claude Code does)
+// Single owner of the Claude rate-limit data (see docs/plans/shared-data-sources.md): the dashboard
+// card and the AI usage view both bind to this singleton. Logic-only: polls Anthropic's OAuth usage endpoint (as Claude Code does)
 // for session (5h) and weekly (7d) rate-limit percentages. UI is in
 // AgentUsageCard.qml.
-Item {
+Singleton {
     id: root
 
     readonly property int pollInterval: 5 * 60 * 1000
