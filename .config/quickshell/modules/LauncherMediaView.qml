@@ -336,7 +336,10 @@ Item {
 
     Process {
         running: view.hasPlayer
-        command: ["cava", "-p", Quickshell.shellPath("assets/cava-view.conf")]
+        command: ["sh", Quickshell.shellPath("scripts/cava-run.sh"), Quickshell.shellPath("assets/cava-view.conf")]
+        stderr: SplitParser {
+            onRead: data => console.warn("cava: " + data)
+        }
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {

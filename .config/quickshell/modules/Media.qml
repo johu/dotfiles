@@ -106,7 +106,11 @@ Item {
     Process {
         id: cava
         running: root.player !== null
-        command: ["cava", "-p", Quickshell.shellPath("assets/cava.conf")]
+        // cava-run.sh falls back from the PipeWire to the PulseAudio input if the first one fails at once
+        command: ["sh", Quickshell.shellPath("scripts/cava-run.sh"), Quickshell.shellPath("assets/cava.conf")]
+        stderr: SplitParser {
+            onRead: data => console.warn("cava: " + data)
+        }
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
