@@ -80,12 +80,13 @@ PanelWindow {
     }
 
     // A virtual default sink (e.g. easyeffects_sink) can absorb volume changes,
-    // so target a real "alsa_output.*" sink.
+    // so target a real hardware sink: "alsa_output.*" (wired / built-in) or "bluez_output.*" (Bluetooth headphones,
+    // else the slider on a laptop would move the speakers while the headset is the default).
     readonly property string preferredHardwareSinkName: "alsa_output.usb-JDS_Labs_JDS_Labs_UAC2_DAC__XU208_-00.iec958-stereo"
 
     readonly property var hardwareSink: {
         const def = Pipewire.defaultAudioSink;
-        if (def && def.name && def.name.startsWith("alsa_output."))
+        if (def && def.name && (def.name.startsWith("alsa_output.") || def.name.startsWith("bluez_output.")))
             return def;
         // Prefer the sink wired to the monitor speakers, else the first real ALSA sink.
         return Pipewire.nodes.values.find(n => n.isSink && !n.isStream && n.name === root.preferredHardwareSinkName) ?? Pipewire.nodes.values.find(n => n.isSink && !n.isStream && n.name && n.name.startsWith("alsa_output.")) ?? def;
