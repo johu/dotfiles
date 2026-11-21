@@ -1434,6 +1434,16 @@ PanelWindow {
     }
 
     Component {
+        id: aiUsageView
+
+        LauncherAiUsageView {
+            textRender: root.textRendering
+            onCloseRequested: root.close()
+            onLeaveRequested: root.close()
+        }
+    }
+
+    Component {
         id: clockView
 
         LauncherClockView {
@@ -1558,7 +1568,7 @@ PanelWindow {
                 anchors.fill: parent
                 anchors.margins: 22
                 active: root.viewExists
-                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, keybindings: keybindsView, clock: clockView, network: networkView, clipboard: clipboardView, system: systemView, gentoo: gentooView })[root.viewName] ?? null
+                sourceComponent: ({ calendar: calendarView, notifications: notificationsView, weather: weatherView, media: mediaView, audio: audioView, bluetooth: bluetoothView, keybindings: keybindsView, clock: clockView, aiusage: aiUsageView, network: networkView, clipboard: clipboardView, system: systemView, gentoo: gentooView })[root.viewName] ?? null
             }
         }
 
