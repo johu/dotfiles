@@ -3,6 +3,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
+// Weather: the single owner of the open-meteo data (see
+// docs/plans/shared-data-sources.md). One request fills both the detailed
+// shape (`detail`, launcher view) and the compact card fields, so the two
+// can never disagree. Views are presentational and bind to this singleton.
 Singleton {
     id: root
 
@@ -13,8 +17,22 @@ Singleton {
 
     property real lat: 0
     property real lon: 0
-    property bool loaded: false
+    property bool hasLocation: false
+    property string locationError: ""
 
+    // ---- Shared data vocabulary ----
+    readonly property bool loaded: fetcher.loaded
+    readonly property bool loading: fetcher.loading
+    readonly property string error: root.locationError !== "" ? root.locationError : fetcher.error
+    readonly property real updatedAt: fetcher.updatedAt
+    function refresh(force) {
+        fetcher.refresh(force);
+    }
+
+    // Detailed forecast: { current, hourly[168], daily[7] }.
+    property var detail: ({ current: null, hourly: [], daily: [] })
+
+    // Card fields, derived from `detail` in one pass.
     property int currentTemp: 0
     property int currentCode: 0
     property bool currentIsDay: true
@@ -34,13 +52,6 @@ Singleton {
 
     Component.onCompleted: reload()
 
-    Timer {
-        interval: 15 * 60 * 1000
-        running: true
-        repeat: true
-        onTriggered: root.reload()
-    }
-
     Process {
         id: configReader
         command: ["cat", root.secretsPath]
@@ -51,36 +62,81 @@ Singleton {
                     const cfg = JSON.parse(this.text);
                     loc = cfg.weatherLocation || null;
                 } catch (e) {
-                    // No secrets.json yet, or it's invalid - weather just stays unloaded.
+                    // No secrets.json yet, or it's invalid.
                 }
                 if (loc && typeof loc.lat === "number" && typeof loc.lon === "number") {
                     root.lat = loc.lat;
                     root.lon = loc.lon;
-                    fetchProc.running = true;
+                    root.locationError = "";
+                    root.hasLocation = true;
+                } else {
+                    root.hasLocation = false;
+                    root.locationError = "No weatherLocation in secrets.json";
                 }
             }
         }
     }
 
-    // Retry soon after a failed card fetch instead of waiting for the 15 min tick.
-    Timer {
-        id: retryTimer
-        interval: 20 * 1000
-        onTriggered: if (!root.loaded) root.reload()
+    function buildDetail_(d) {
+        const r = v => Math.round(v ?? 0);
+        const h = d.hourly;
+        const hourly = h.time.map((t, i) => ({
+                    time: new Date(t),
+                    temp: r(h.temperature_2m[i]),
+                    feels: r(h.apparent_temperature[i]),
+                    pop: r(h.precipitation_probability[i]),
+                    precip: h.precipitation[i] ?? 0,
+                    code: h.weather_code[i] ?? 0,
+                    wind: r(h.wind_speed_10m[i]),
+                    humidity: r(h.relative_humidity_2m[i]),
+                    isDay: h.is_day[i] === 1
+                }));
+        const y = d.daily;
+        const daily = y.time.map((t, i) => ({
+                    date: new Date(t),
+                    code: y.weather_code[i] ?? 0,
+                    tMax: r(y.temperature_2m_max[i]),
+                    tMin: r(y.temperature_2m_min[i]),
+                    precipSum: y.precipitation_sum[i] ?? 0,
+                    popMax: r(y.precipitation_probability_max[i]),
+                    windMax: r(y.wind_speed_10m_max[i]),
+                    sunrise: new Date(y.sunrise[i]),
+                    sunset: new Date(y.sunset[i]),
+                    uvMax: Math.round((y.uv_index_max[i] ?? 0) * 10) / 10
+                }));
+        const c = d.current;
+        if (hourly.length === 0 || daily.length === 0 || !c)
+            throw new Error("empty forecast");
+        return {
+            current: {
+                temp: r(c.temperature_2m),
+                feels: r(c.apparent_temperature),
+                code: c.weather_code ?? 0,
+                isDay: c.is_day === 1,
+                humidity: r(c.relative_humidity_2m),
+                wind: r(c.wind_speed_10m),
+                windDir: c.wind_direction_10m ?? 0,
+                gusts: r(c.wind_gusts_10m),
+                pressure: r(c.pressure_msl),
+                clouds: r(c.cloud_cover),
+                precip: c.precipitation ?? 0
+            },
+            hourly: hourly,
+            daily: daily
+        };
     }
 
-    // Fill the card fields from the detailed forecast, so the cards and the
-    // launcher view never disagree about whether data is available.
-    function applyDetailToCard() {
-        const d = root.detail;
-        if (!d.current || d.hourly.length === 0 || d.daily.length === 0)
-            return;
+    // Fill the card fields from the detailed forecast.
+    function applyDetail_(d) {
+        root.detail = d;
         root.currentTemp = d.current.temp;
         root.currentCode = d.current.code;
         root.currentIsDay = d.current.isDay;
         root.currentHumidity = d.current.humidity;
         root.currentWindSpeed = d.current.wind;
 
+        // Hourly data is on the hour but "now" has minutes; round (not
+        // floor) so the trend starts at the closest reading.
         const now = new Date();
         now.setMinutes(now.getMinutes() + 30, 0, 0);
         now.setMinutes(0, 0, 0);
@@ -97,156 +153,17 @@ Singleton {
         }
         root.hourly = trend;
         root.daily = d.daily.slice(0, 4).map(y => ({ date: y.date, code: y.code, tempMax: y.tMax, tempMin: y.tMin }));
-        root.loaded = true;
     }
 
-    Process {
-        id: fetchProc
-        command: ["curl", "-sL", "--max-time", "10", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const data = JSON.parse(this.text);
-                    root.currentTemp = Math.round(data.current.temperature_2m);
-                    root.currentCode = data.current.weather_code;
-                    root.currentIsDay = data.current.is_day === 1;
-                    root.currentHumidity = Math.round(data.current.relative_humidity_2m);
-                    root.currentWindSpeed = Math.round(data.current.wind_speed_10m);
-
-                    // Hourly data is on the hour but current.time has minutes; round (not
-                    // floor) so the trend starts at the closest reading.
-                    const hourKey = iso => iso.slice(0, 13);
-                    const curDate = new Date(data.current.time);
-                    curDate.setMinutes(curDate.getMinutes() + 30, 0, 0);
-                    curDate.setMinutes(0, 0, 0);
-                    const pad = n => String(n).padStart(2, "0");
-                    const curHourKey = curDate.getFullYear() + "-" + pad(curDate.getMonth() + 1) + "-" + pad(curDate.getDate()) + "T" + pad(curDate.getHours());
-                    const hourlyTime = data.hourly.time;
-                    const startIdx = hourlyTime.findIndex(t => hourKey(t) === curHourKey);
-
-                    root.currentPrecipProb = startIdx >= 0 ? Math.round(data.hourly.precipitation_probability[startIdx]) : 0;
-
-                    const trend = [];
-                    if (startIdx >= 0) {
-                        for (let i = 0; i < 8; i++) {
-                            const hi = startIdx + i * 3;
-                            if (hi >= hourlyTime.length)
-                                break;
-                            trend.push({
-                                time: new Date(hourlyTime[hi]),
-                                temp: Math.round(data.hourly.temperature_2m[hi])
-                            });
-                        }
-                    }
-                    root.hourly = trend;
-
-                    const days = [];
-                    const time = data.daily.time;
-                    for (let i = 0; i < time.length; i++) {
-                        days.push({
-                            date: new Date(time[i]),
-                            code: data.daily.weather_code[i],
-                            tempMax: Math.round(data.daily.temperature_2m_max[i]),
-                            tempMin: Math.round(data.daily.temperature_2m_min[i])
-                        });
-                    }
-                    root.daily = days;
-                    root.loaded = true;
-                } catch (e) {
-                    // Network hiccup or malformed response - keep showing the last good data.
-                    if (!root.loaded)
-                        retryTimer.restart();
-                }
-            }
-        }
-    }
-
-    // ---- Detailed forecast for the launcher's weather view ----
-    // Fetched on demand (loadDetail), not every 15 minutes like the card data:
-    // detail = { current, hourly[168], daily[7] }, all from one open-meteo call.
-    property bool detailLoaded: false
-    property bool detailLoading: false
-    property string detailError: ""
-    property var detail: ({ current: null, hourly: [], daily: [] })
-    property real detailAt: 0
-
-    function loadDetail(force) {
-        if (root.detailLoading)
-            return;
-        if (!force && root.detailLoaded && Date.now() - root.detailAt < 10 * 60 * 1000)
-            return;
-        if (root.lat === 0 && root.lon === 0) {
-            root.detailError = "No weatherLocation in secrets.json";
-            return;
-        }
-        root.detailError = "";
-        root.detailLoading = true;
-        detailProc.running = true;
-    }
-
-    Process {
-        id: detailProc
-
-        command: ["curl", "-sL", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,cloud_cover,precipitation&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.detailLoading = false;
-                try {
-                    const d = JSON.parse(this.text);
-                    const r = v => Math.round(v ?? 0);
-                    const h = d.hourly;
-                    const hourly = h.time.map((t, i) => ({
-                                time: new Date(t),
-                                temp: r(h.temperature_2m[i]),
-                                feels: r(h.apparent_temperature[i]),
-                                pop: r(h.precipitation_probability[i]),
-                                precip: h.precipitation[i] ?? 0,
-                                code: h.weather_code[i] ?? 0,
-                                wind: r(h.wind_speed_10m[i]),
-                                humidity: r(h.relative_humidity_2m[i]),
-                                isDay: h.is_day[i] === 1
-                            }));
-                    const y = d.daily;
-                    const daily = y.time.map((t, i) => ({
-                                date: new Date(t),
-                                code: y.weather_code[i] ?? 0,
-                                tMax: r(y.temperature_2m_max[i]),
-                                tMin: r(y.temperature_2m_min[i]),
-                                precipSum: y.precipitation_sum[i] ?? 0,
-                                popMax: r(y.precipitation_probability_max[i]),
-                                windMax: r(y.wind_speed_10m_max[i]),
-                                sunrise: new Date(y.sunrise[i]),
-                                sunset: new Date(y.sunset[i]),
-                                uvMax: Math.round((y.uv_index_max[i] ?? 0) * 10) / 10
-                            }));
-                    const c = d.current;
-                    root.detail = {
-                        current: {
-                            temp: r(c.temperature_2m),
-                            feels: r(c.apparent_temperature),
-                            code: c.weather_code ?? 0,
-                            isDay: c.is_day === 1,
-                            humidity: r(c.relative_humidity_2m),
-                            wind: r(c.wind_speed_10m),
-                            windDir: c.wind_direction_10m ?? 0,
-                            gusts: r(c.wind_gusts_10m),
-                            pressure: r(c.pressure_msl),
-                            clouds: r(c.cloud_cover),
-                            precip: c.precipitation ?? 0
-                        },
-                        hourly: hourly,
-                        daily: daily
-                    };
-                    root.detailAt = Date.now();
-                    root.detailLoaded = true;
-                    root.detailError = "";
-                    if (!root.loaded)
-                        root.applyDetailToCard();
-                } catch (e) {
-                    root.detailError = root.detailLoaded ? "" : "Could not load the forecast";
-                }
-            }
-        }
+    Fetcher {
+        id: fetcher
+        active: root.hasLocation
+        interval: 15 * 60 * 1000
+        staleAfter: 10 * 60 * 1000
+        failureText: "Could not load the forecast"
+        command: root.hasLocation ? ["curl", "-sLf", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,cloud_cover,precipitation&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7"] : []
+        parse: text => root.buildDetail_(JSON.parse(text))
+        onFetched: d => root.applyDetail_(d)
     }
 
     // Hand-drawn flat SVGs in the tokyonight palette rather than

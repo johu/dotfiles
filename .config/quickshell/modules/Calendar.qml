@@ -87,7 +87,7 @@ PopupWindow {
                 }
 
                 Text {
-                    text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : "Loading\u2026"
+                    text: WeatherData.loaded ? (WeatherData.currentTemp + "\u00b0C, " + WeatherData.descriptionForCode(WeatherData.currentCode)) : (WeatherData.error !== "" ? WeatherData.error : "Loading\u2026")
                     color: Theme.subtext1
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.small(-2)

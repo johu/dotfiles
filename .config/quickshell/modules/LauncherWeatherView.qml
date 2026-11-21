@@ -16,7 +16,7 @@ Item {
 
     readonly property var loc: Qt.locale("en_GB")
     readonly property var detail: WeatherData.detail
-    readonly property bool ready: WeatherData.detailLoaded && view.detail.daily.length > 0
+    readonly property bool ready: WeatherData.loaded && view.detail.daily.length > 0
 
     property int dayIndex: 0
     property int hour: new Date().getHours()
@@ -39,7 +39,7 @@ Item {
             { keys: ["q"], text: "close" }
         ]]
 
-    Component.onCompleted: WeatherData.loadDetail(false)
+    Component.onCompleted: WeatherData.refresh(false)
 
     function moveHour(delta) {
         if (!view.ready)
@@ -89,7 +89,7 @@ Item {
             view.hour = new Date().getHours();
             return true;
         case Qt.Key_R:
-            WeatherData.loadDetail(true);
+            WeatherData.refresh(true);
             return true;
         case Qt.Key_Q:
             view.leaveRequested();
@@ -156,8 +156,8 @@ Item {
         width: view.leftWidth
         height: 24
         verticalAlignment: Text.AlignVCenter
-        text: WeatherData.detailLoading ? "Updating…" : (WeatherData.detailError !== "" ? WeatherData.detailError : (WeatherData.detailLoaded ? "Updated " + view.clock(new Date(WeatherData.detailAt)) + " · " + WeatherData.lat.toFixed(2) + ", " + WeatherData.lon.toFixed(2) : "Loading the forecast…"))
-        color: WeatherData.detailError !== "" ? Theme.red : Theme.subtext1
+        text: WeatherData.loading ? "Updating…" : ((!WeatherData.loaded && WeatherData.error !== "") ? WeatherData.error : (WeatherData.loaded ? "Updated " + view.clock(new Date(WeatherData.updatedAt)) + " · " + WeatherData.lat.toFixed(2) + ", " + WeatherData.lon.toFixed(2) : "Loading the forecast…"))
+        color: (!WeatherData.loaded && WeatherData.error !== "") ? Theme.red : Theme.subtext1
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
         elide: Text.ElideRight
@@ -652,8 +652,8 @@ Item {
         y: 200
         width: view.width - view.rightX
         horizontalAlignment: Text.AlignHCenter
-        text: WeatherData.detailError !== "" ? WeatherData.detailError : "Loading the forecast…"
-        color: WeatherData.detailError !== "" ? Theme.red : Theme.subtext1
+        text: WeatherData.error !== "" ? WeatherData.error : "Loading the forecast…"
+        color: WeatherData.error !== "" ? Theme.red : Theme.subtext1
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize + 6
         renderType: view.textRender
