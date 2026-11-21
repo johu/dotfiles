@@ -11,7 +11,9 @@ import "SysMonFormat.js" as Fmt
 //             connect / connectWithPsk / disconnect / forget) plus ONE helper
 //             script (scripts/netinfo.py: nmcli for what the native API lacks:
 //             saved profiles incl. out-of-range and VPN, band / channel,
-//             addresses, secrets). Passwords never go on a command line.
+//             addresses, secrets). The snapshot is owned by the NetworkData
+//             singleton (shared with the dashboard card); throughput history
+//             comes from SystemData. Passwords never go on a command line.
 //   Keys      j k g G Ctrl-d/u move, Enter connect / disconnect (wired asks twice),
 //             / filter, r rescan, n add (hidden) network, a autoconnect, f forget
 //             (twice), p show the saved password, Q QR to share a network,
@@ -64,9 +66,10 @@ Item {
     }
 
     // netinfo snapshot (see scripts/netinfo.py)
-    property var snap: ({ devices: [], saved: [], aps: [] })
+    readonly property var snap: NetworkData.snap
     readonly property var info: view.live ? view.snap : (view.fixture.info ?? ({ devices: [], saved: [], aps: [] }))
-    property bool infoLoaded: false
+    // Loaded once the shared snapshot includes access points.
+    readonly property bool infoLoaded: view.live && NetworkData.loaded && NetworkData.apsLoaded
     // The wired / VPN rows only exist once the first snapshot arrived: start on
     // the first row of the complete list, not on whatever was there before.
     onInfoLoadedChanged: if (view.infoLoaded)
@@ -362,59 +365,51 @@ Item {
     readonly property var envPrefix: Object.keys(view.testEnv).length > 0 ? ["env"].concat(Object.keys(view.testEnv).map(k => k + "=" + view.testEnv[k])) : []
     readonly property string helper: Quickshell.shellPath("scripts/netinfo.py")
 
-    Process {
-        id: snapProc
-
-        command: view.envPrefix.concat(["python3", "-I", view.helper, "snapshot", "--aps"])
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: {
-                try {
-                    view.snap = JSON.parse(this.text);
-                    view.infoLoaded = true;
-                } catch (e) {
-                    console.warn("netinfo snapshot unreadable");
-                }
-            }
-        }
+    // Shared snapshot: NetworkData polls netinfo.py while a Consumer is
+    // active. The fixture harness's env is forwarded to it (live views only).
+    Consumer {
+        target: NetworkData
+        active: view.live && view.visible
+    }
+    Consumer {
+        target: NetworkData
+        counter: "apConsumers"
+        active: view.live && view.visible
+    }
+    Binding {
+        target: NetworkData
+        property: "testEnv"
+        value: view.testEnv
+        when: view.live && Object.keys(view.testEnv).length > 0
     }
 
     function refresh() {
         view.now = Date.now();
-        if (view.live && !snapProc.running)
-            snapProc.running = true;
+        if (view.live)
+            NetworkData.refresh(true);
     }
-    property int soonLeft: 0
     function refreshSoon() {
-        view.soonLeft = 3;
-        soonTimer.restart();
-    }
-    Timer {
-        id: soonTimer
-
-        interval: 1500
-        repeat: true
-        onTriggered: {
-            view.refresh();
-            if (--view.soonLeft <= 0)
-                stop();
-        }
+        if (view.live)
+            NetworkData.refreshSoon();
     }
     Timer {
         interval: 10000
         running: view.live
         repeat: true
         onTriggered: {
-            view.refresh();
+            view.now = Date.now();
             if (view.wifiDevice && view.wifiOn)
                 view.wifiDevice.scannerEnabled = true;
         }
     }
     Component.onCompleted: {
         if (view.live) {
-            view.refresh();
+            view.now = Date.now();
             if (view.wifiDevice)
                 view.wifiDevice.scannerEnabled = true;
+            // The singleton may already hold a snapshot from an earlier open.
+            if (view.infoLoaded)
+                view.selectedKey = view.items.length > 0 ? view.items[0].key : "";
         }
         view.applyWifi();
     }
@@ -472,45 +467,9 @@ Item {
         const d = view.info.devices.find(x => x.type === "wifi" && x.state === "connected");
         return d ? d.name : "";
     }
-    property var rxHist: []
-    property var txHist: []
-    property double prevRx: -1
-    property double prevTx: -1
-    property double prevT: 0
-    onRateIfaceChanged: {
-        view.rxHist = [];
-        view.txHist = [];
-        view.prevRx = -1;
-    }
-
-    Process {
-        id: rateProc
-
-        command: ["cat", "/sys/class/net/" + view.rateIface + "/statistics/rx_bytes", "/sys/class/net/" + view.rateIface + "/statistics/tx_bytes"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const [rx, tx] = this.text.trim().split("\n").map(Number);
-                if (isNaN(rx) || isNaN(tx))
-                    return;
-                const t = Date.now();
-                if (view.prevRx >= 0 && t > view.prevT) {
-                    const dt = (t - view.prevT) / 1000;
-                    view.rxHist = view.rxHist.concat([Math.max(0, (rx - view.prevRx) / dt)]).slice(-60);
-                    view.txHist = view.txHist.concat([Math.max(0, (tx - view.prevTx) / dt)]).slice(-60);
-                }
-                view.prevRx = rx;
-                view.prevTx = tx;
-                view.prevT = t;
-            }
-        }
-    }
-    Timer {
-        interval: 1000
-        running: view.rateIface !== ""
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: rateProc.running = true
-    }
+    // Last minute of per-second samples from the shared system sampler.
+    readonly property var rxHist: view.rateIface !== "" ? NetworkData.history(view.rateIface, 60).rx : []
+    readonly property var txHist: view.rateIface !== "" ? NetworkData.history(view.rateIface, 60).tx : []
 
     // ------------------------------------------------------------ actions
     property string wiredArm: ""
