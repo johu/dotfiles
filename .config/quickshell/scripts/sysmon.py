@@ -236,7 +236,7 @@ def read_netdev():
     for line in rd("/proc/net/dev").splitlines()[2:]:
         name, _, rest = line.partition(":")
         name = name.strip()
-        if name == "lo" or re.match(r"^(docker|veth|br-|virbr|vmnet|tun|tap)", name):
+        if name == "lo" or re.match(r"^(docker|veth|br-|virbr|vmnet)", name):
             continue
         p = rest.split()
         out[name] = (int(p[0]), int(p[8]))

@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Networking
-import Quickshell.Io
 
 // Detail content for NetworkRow's expand section. No background of its own:
 // it sits on the dashboard card instead of nesting another surface tone.
@@ -19,23 +18,31 @@ ColumnLayout {
     // so IPv4/IPv6/DNS come from an on-demand nmcli call keyed on this.
     readonly property string activeIface: root.wiredDevice?.connected ? root.wiredDevice.name : (root.activeWifiNetwork ? root.wifiDevice?.name ?? "" : "")
 
-    property string detailIp4Address: ""
-    property string detailIp4Gateway: ""
-    property string detailIp4Dns: ""
-    property string detailIp6Address: ""
-    property string detailIp6Gateway: ""
-    property string detailIp6Dns: ""
-    property string detailMac: ""
-    property bool detailsLoaded: false
+    // Details and throughput come from the shared NetworkData / SystemData
+    // singletons; this card only formats them.
+    readonly property var activeDevice: NetworkData.device(root.activeIface)
+    readonly property bool detailsLoaded: root.activeDevice !== null
+    readonly property string detailIp4Address: root.activeDevice ? root.activeDevice.ip4.join(", ") : ""
+    readonly property string detailIp4Gateway: root.activeDevice ? root.activeDevice.gateway : ""
+    readonly property string detailIp4Dns: root.activeDevice ? root.activeDevice.dns.join(", ") : ""
+    readonly property string detailIp6Address: root.activeDevice ? root.activeDevice.ip6.join(", ") : ""
+    readonly property string detailIp6Gateway: root.activeDevice ? root.activeDevice.gateway6 : ""
+    readonly property string detailIp6Dns: root.activeDevice ? root.activeDevice.dns6.join(", ") : ""
+    readonly property string detailMac: root.activeDevice ? root.activeDevice.hwaddr.trim() : ""
 
-    // Throughput from sysfs byte counters, diffed each 1s tick while shown.
     // Starts at 0 KB/s so the rows don't pop in later.
     readonly property string zeroRate: "0 KB/s"
-    property string rateDown: zeroRate
-    property string rateUp: zeroRate
-    property real prevRx: -1
-    property real prevTx: -1
-    property real prevRateTime: 0
+    readonly property var rate: root.activeIface.length > 0 && SystemData.ready ? NetworkData.rate(root.activeIface) : null
+    readonly property string rateDown: root.rate ? root.formatRate(root.rate.rx) : root.zeroRate
+    readonly property string rateUp: root.rate ? root.formatRate(root.rate.tx) : root.zeroRate
+
+    Consumer {
+        target: NetworkData
+        active: root.visible
+    }
+
+    // A different interface may not be in the snapshot yet.
+    onActiveIfaceChanged: if (root.visible && root.activeIface.length > 0) NetworkData.refresh(true)
 
     function formatRate(bps) {
         const units = ["B/s", "KB/s", "MB/s", "GB/s"];
@@ -46,84 +53,6 @@ ColumnLayout {
             i++;
         }
         return (i === 0 ? Math.round(v) : v.toFixed(v < 10 ? 2 : 1)) + " " + units[i];
-    }
-
-    function resetRate() {
-        root.rateDown = root.zeroRate;
-        root.rateUp = root.zeroRate;
-        root.prevRx = -1;
-        root.prevTx = -1;
-    }
-
-    function clearDetails() {
-        root.detailIp4Address = "";
-        root.detailIp4Gateway = "";
-        root.detailIp4Dns = "";
-        root.detailIp6Address = "";
-        root.detailIp6Gateway = "";
-        root.detailIp6Dns = "";
-        root.detailMac = "";
-        root.detailsLoaded = false;
-    }
-
-    onActiveIfaceChanged: {
-        root.resetRate();
-        root.detailsLoaded = false;
-        if (root.visible && root.activeIface.length > 0)
-            detailsProc.running = true;
-        else
-            root.clearDetails();
-    }
-
-    Process {
-        id: rateProc
-        command: ["cat", "/sys/class/net/" + root.activeIface + "/statistics/rx_bytes", "/sys/class/net/" + root.activeIface + "/statistics/tx_bytes"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const [rx, tx] = this.text.trim().split("\n").map(Number);
-                if (isNaN(rx) || isNaN(tx))
-                    return;
-                const now = Date.now();
-                if (root.prevRx >= 0 && now > root.prevRateTime) {
-                    const dt = (now - root.prevRateTime) / 1000;
-                    root.rateDown = root.formatRate(Math.max(0, (rx - root.prevRx) / dt));
-                    root.rateUp = root.formatRate(Math.max(0, (tx - root.prevTx) / dt));
-                }
-                root.prevRx = rx;
-                root.prevTx = tx;
-                root.prevRateTime = now;
-            }
-        }
-    }
-
-    Timer {
-        interval: 1000
-        running: root.visible && root.activeIface.length > 0
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: rateProc.running = true
-    }
-
-    Process {
-        id: detailsProc
-        command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,IP6.ADDRESS,IP6.GATEWAY,IP6.DNS,GENERAL.HWADDR", "device", "show", root.activeIface]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                // nmcli -g escapes colons inside fields and joins multi-value fields
-                // with " | ".
-                const unescape = s => (s ?? "").replace(/\\:/g, ":");
-                const list = s => unescape(s).split(" | ").filter(v => v.length > 0).join(", ");
-                const lines = this.text.split("\n");
-                root.detailIp4Address = unescape(lines[0]);
-                root.detailIp4Gateway = unescape(lines[1]);
-                root.detailIp4Dns = list(lines[2]);
-                root.detailIp6Address = list(lines[3]);
-                root.detailIp6Gateway = unescape(lines[4]);
-                root.detailIp6Dns = list(lines[5]);
-                root.detailMac = unescape(lines[6]).trim();
-                root.detailsLoaded = true;
-            }
-        }
     }
 
     // Secured, unknown network just clicked: shows an inline password prompt.
@@ -164,13 +93,8 @@ ColumnLayout {
     onVisibleChanged: {
         if (root.wifiDevice)
             root.wifiDevice.scannerEnabled = root.visible;
-        if (!root.visible) {
+        if (!root.visible)
             root.cancelPsk();
-            root.clearDetails();
-            root.resetRate();
-        } else if (root.activeIface.length > 0) {
-            detailsProc.running = true;
-        }
     }
 
     RowLayout {
